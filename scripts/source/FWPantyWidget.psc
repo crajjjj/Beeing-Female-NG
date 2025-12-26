@@ -19,6 +19,12 @@ int property STATUS_BLOODY = 2 autoReadOnly
 
 actor property PlayerRef auto
 
+armor property Sanitary_Napkin_Normal auto
+armor property Tampon_Normal auto
+armor property Sanitary_Napkin_Bloody auto
+armor property Tampon_Bloody auto
+GlobalVariable property GlobalMenstruating auto
+
 string property SWF_Name
 	{Set the SWF Filename like 'Widget.swf'}
 	string function get()
@@ -162,37 +168,37 @@ function UpdateContent()
 	else;if System==none
 		Debug.Trace("FWPantyWidget::UpdateContent - System is none")
 	endif
-	if System.Sanitary_Napkin_Bloody ;Tkc (Loverslab) optimization
+	if Sanitary_Napkin_Bloody ;Tkc (Loverslab) optimization
 	else;if System.Sanitary_Napkin_Bloody == none
 		Debug.Trace("FWPantyWidget::UpdateContent - Sanitary_Napkin_Bloody is none")
 	endif
-	if System.Tampon_Bloody ;Tkc (Loverslab) optimization
+	if Tampon_Bloody ;Tkc (Loverslab) optimization
 	else;if System.Tampon_Bloody == none
 		Debug.Trace("FWPantyWidget::UpdateContent - Tampon_Bloody is none")
 	endif
-	if System.Sanitary_Napkin_Normal ;Tkc (Loverslab) optimization
+	if Sanitary_Napkin_Normal ;Tkc (Loverslab) optimization
 	else;if System.Sanitary_Napkin_Normal == none
 		Debug.Trace("FWPantyWidget::UpdateContent - Sanitary_Napkin_Normal is none")
 	endif
-	if System.Tampon_Normal ;Tkc (Loverslab) optimization
+	if Tampon_Normal ;Tkc (Loverslab) optimization
 	else;if System.Tampon_Normal == none
 		Debug.Trace("FWPantyWidget::UpdateContent - Tampon_Normal is none")
 	endif
 	
 	if System;/!=none/;
-	if System.Player && System.GlobalMenstruating.GetValueInt()==1 ; Check if female player
-		if PlayerRef.GetWornForm(System.Sanitary_Napkin_Bloody.GetSlotMask()) == System.Sanitary_Napkin_Bloody
+	if System.Player && GlobalMenstruating.GetValue() As int == 1 ; Check if female player
+		if PlayerRef.GetWornForm(Sanitary_Napkin_Bloody.GetSlotMask()) == Sanitary_Napkin_Bloody
 			Icon = STATUS_BLOODY
 			Shown = true
-		elseif PlayerRef.GetWornForm(System.Tampon_Bloody.GetSlotMask())  == System.Tampon_Bloody
+		elseif PlayerRef.GetWornForm(Tampon_Bloody.GetSlotMask())  == Tampon_Bloody
 			Icon = STATUS_BLOODY
 			Shown = true
 		elseif System.Player.currentState == 3 ; If menstruating
-			if PlayerRef.GetWornForm(System.Sanitary_Napkin_Normal.GetSlotMask()) == System.Sanitary_Napkin_Normal
+			if PlayerRef.GetWornForm(Sanitary_Napkin_Normal.GetSlotMask()) == Sanitary_Napkin_Normal
 				; Wearing normal panties
 				Icon = STATUS_NORMAL
 				Shown = false
-			elseif PlayerRef.GetWornForm(System.Tampon_Normal.GetSlotMask()) == System.Tampon_Normal
+			elseif PlayerRef.GetWornForm(Tampon_Normal.GetSlotMask()) == Tampon_Normal
 				; Wearing Tampon
 				Icon = STATUS_NORMAL
 				Shown = false

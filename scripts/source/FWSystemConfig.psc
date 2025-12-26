@@ -40,19 +40,24 @@ int AddOnActiveRacesGroup=-1
 int[] UI_Compatible
 int SpellType = 0
 
+int AddOnActiveGlobal = -1
+int[] UI_AddOnGlobal
+string[] UIS_AddOnGlobal
+int UI_AddOnGlobalWarning
+int UI_AddOnRaceWarning
 ;---------------------------------------------
 ; Element values
 ;---------------------------------------------
 ; General settings
 int   Property Messages = 3 Auto Hidden
 bool  Property PlayerTimer = true Auto Hidden
-int   Property Difficulty = 2 Auto Hidden
+int   Property Difficulty = 0 Auto Hidden
 bool  Property CreatureSperm = true Auto Hidden
 bool  Property RelevantPlayer = true auto Hidden
 bool  Property RelevantFollower = true auto Hidden
 bool  Property RelevantNPC = true auto Hidden
 int   Property KeyStateWidget = 9 auto Hidden
-bool  Property PlayAnimations = false auto hidden
+bool  Property PlayAnimations = true auto hidden
 ; Menstual Cycle & Conception Element values
 int   Property FollicularDuration = 5 Auto Hidden
 int   Property OvulationDuration = 2 Auto Hidden
@@ -84,28 +89,28 @@ float Property BellyMaxScale = 4.2 Auto Hidden
 float Property BreastsMaxScale = 0.4 Auto Hidden
 int   Property WeightGainMax = 50 Auto Hidden
 int   Property MaxBabys = 3 Auto Hidden
-int   Property BabySpawn = 2 Auto Hidden
-int   Property BabySpawnNPC = 2 Auto Hidden
+int   Property BabySpawn = 1 Auto Hidden
+int   Property BabySpawnNPC = 1 Auto Hidden
 ;int   Property BirthCamera = 0 Auto Hidden
 ; NPC
 bool  Property NPCCanBecomePregnant = true Auto Hidden
 bool  Property NPCFeelPain = false Auto Hidden
-bool  Property NPCMenstruationBlood = true Auto Hidden
-bool  Property NPCMenstrualMood = true Auto Hidden
-bool  Property NPCMenstrualNoTalk = true Auto Hidden
-bool  Property NPCBornChild = false Auto Hidden
-bool  Property NPCHaveItems = true Auto Hidden
+bool  Property NPCMenstruationBlood = false Auto Hidden
+bool  Property NPCMenstrualMood = false Auto Hidden
+bool  Property NPCMenstrualNoTalk = false Auto Hidden
+bool  Property NPCBornChild = true Auto Hidden
+bool  Property NPCHaveItems = false Auto Hidden
 ; Children
 bool property ChildrenMayCry = true auto hidden
 ; Impregnation
-bool property ImpregnateActive = true auto hidden
+bool property ImpregnateActive = false auto hidden
 bool property ImpregnateHusband = true auto hidden
 bool property ImpregnateAffairs = true auto hidden
 bool property ImpregnatePartners = true auto hidden
 bool property ImpregnateLastNPC = false auto hidden
 bool property ImpregnateLoreFriendly = true auto hidden
 bool property ImpregnatePlayerSpouse = false auto hidden
-bool property ImpregnatePlayerSleep = true auto hidden
+bool property ImpregnatePlayerSleep = false auto hidden
 bool property ImpregnatePlayerHusband = true auto hidden
 bool property ImpregnatePlayerFollower = true auto hidden
 bool property ImpregnateLastPlayerNPCs = true auto hidden
@@ -131,7 +136,7 @@ string property WidgetProfile = "default.ini" auto hidden
 int MessagesDef = 3
 int SpellTypeDef = 0
 bool PlayerTimerDef = true
-int DifficultyDef = 2
+int DifficultyDef = 0
 bool CreatureSpermDef = true
 bool RelevantPlayerDef = true
 bool RelevantFollowerDef = true
@@ -173,28 +178,33 @@ float WashOutChanceDef = 0.0
 float WashOutWaterChanceDef = 0.1
 float WashOutFluidChanceDef = 0.6
 float WashOutHourDelayDef = 0.25
-int BabySpawnDef = 2
-int BabySpawnNPCDef = 2
+int BabySpawnDef = 1
+int BabySpawnNPCDef = 1
 ;int BirthCameraDef = 0
 ; NPC
 bool NPCCanBecomePregnantDef = true
 bool NPCFeelPainDef = false
-bool NPCMenstruationBloodDef = true
-bool NPCMenstrualMoodDef = true
-bool NPCMenstrualNoTalkDef = true
-bool NPCBornChildDef = false
-bool NPCHaveItemsDef = true
+bool NPCMenstruationBloodDef = false
+bool NPCMenstrualMoodDef = false
+bool NPCMenstrualNoTalkDef = false
+bool NPCBornChildDef = true
+bool NPCHaveItemsDef = false
+;bool NPCMenstruationBloodDef = true
+;bool NPCMenstrualMoodDef = true
+;bool NPCMenstrualNoTalkDef = true
+;bool NPCBornChildDef = false
+;bool NPCHaveItemsDef = true
 ; Children
 bool ChildrenMayCryDef = true
 ; Impregnate
-bool ImpregnateActiveDef = true
+bool ImpregnateActiveDef = false
 bool ImpregnateHusbandDef = true
 bool ImpregnateAffairsDef = true
 bool ImpregnatePartnersDef = true
 bool ImpregnateLastNPCDef = false
 bool ImpregnateLoreFriendlyDef = true
 bool ImpregnatePlayerSpouseDef = false
-bool ImpregnatePlayerSleepDef = true
+bool ImpregnatePlayerSleepDef = false
 bool ImpregnatePlayerHusbandDef = true
 bool ImpregnatePlayerFollowerDef = true
 bool ImpregnateLastPlayerNPCsDef = true
@@ -274,6 +284,67 @@ bool bBathingInSkyrim=false
 bool bASX=false
 bool bHAnimations=false
 
+FWStateWidget property StateWidget auto
+FWContraceptionWidget property ContraceptionWidget auto
+FWBabyHealthWidget property BabyHealthWidget auto
+FWPantyWidget property PantyWidget auto
+FWProgressWidget property Progress auto
+FWCoupleWidget property CoupleWidget auto
+FWChildSettings property ChildSettings auto
+spell[] Property StatCycleID_List Auto
+spell Property StatMenstruationCycle Auto
+spell Property StatPregnancyCycle Auto
+FWAddOnManager property Manager auto
+GlobalVariable Property ModEnabled Auto
+Globalvariable property CloakingSpellEnabled auto
+FWController property Controller auto
+FWBabyItemList Property BabyItemList Auto
+GlobalVariable Property GameDaysPassed Auto
+spell property BeeingFemaleInfoSpell auto
+GlobalVariable property GlobalMenstruating auto
+Actor Property PlayerRef Auto
+Keyword Property keywordVampire Auto
+Keyword Property keywordBeast Auto
+Keyword Property keywordCreature Auto
+spell property Effect_Vorwehen auto
+spell property Effect_Eroeffnungswehen auto
+spell property Effect_Presswehen auto
+spell property Effect_Nachwehen auto
+Spell Property BeeingFemaleSpell Auto
+spell[] property BeeingFemaleInfoSpellExtra auto
+FWSaveLoad property Data auto
+Spell Property BeeingMaleSpell Auto
+Quest property ChildFinder auto
+GlobalVariable Property myBFA_ProbChildRaceDeterminedByFather Auto
+String Property InflateMorph Auto
+String Property BreastInflateMorph Auto
+bool  Property FemaleSummonedCanBecomePregnant = false Auto Hidden
+bool  Property MaleSummonedCanImpregnate = false Auto Hidden
+bool  Property FemaleGhostCanBecomePregnant = false Auto Hidden
+bool  Property MaleGhostCanImpregnate = false Auto Hidden
+bool  Property ElderFemaleCanBecomePregnant = false Auto Hidden
+bool FemaleSummonedCanBecomePregnantDef = false
+bool MaleSummonedCanImpregnateDef = false
+bool FemaleGhostCanBecomePregnantDef = false
+bool MaleGhostCanImpregnateDef = false
+bool ElderFemaleCanBecomePregnantDef = false
+;bool Property ChildNoEssential = false Auto Hidden
+bool Property ShowDebugMessage = false Auto Hidden
+;bool ChildNoEssentialDef = false
+bool ShowDebugMessageDef = false
+
+GlobalVariable Property myBFA_ProbChildSexDetermMale Auto
+GlobalVariable Property BFOpt_MatureTimeInDays Auto
+int MatureTimeInDaysDef = 50
+
+int function GetAnimationVersion()
+	if Game.GetCameraState() == 0 ;Tkc (Loverslab): Check if first person view. GetAnimationVariableInt will be get only when player is in 3rd person view
+		return FWVersion.GetAnimationVersionRequired() ; will be default if actor is in 1st person
+	else
+		return PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion")
+	endif
+endFunction
+
 bool property SexModInstalled
 	bool function get()
 		return bSexModInstalled
@@ -289,6 +360,9 @@ function OnLoadGame()
 	bTestPerkRan=false
 	selectedPerk=-1
 	lastPerkTested=-1
+
+	AddOnActiveGlobal = -1
+
 	AddOnActiveRaces=-1
 	AddOnActiveCME=-1
 	AddOnActiveMisc=-1
@@ -341,41 +415,41 @@ function CheckForSexMods()
 		endif
 	endWhile/;
 	;;;;; ;Tkc (Loverslab): optimization. standart detection with using FWUtility.ModFile(ModName) wich is faster(in optimized variant ofcourse), especially when installed 254 mods
-		if FWUtility.ModFile("SexLab.esm")
+		if FWUtility.ModFile("SexLab")
 			bSexModInstalled=true
 			bSexLab=true
 		endif		
-		if FWUtility.ModFile("OSA.esm")
+		if FWUtility.ModFile("OSA")
 			bSexModInstalled=true
 			bOSA=true
 		endif		
-		if FWUtility.ModFile("AP Skyrim.esm")
+		if FWUtility.ModFile("AP Skyrim")
 			bSexModInstalled=true
 			bAP=true
 		endif		
-		if FWUtility.ModFile("zzEstrus.esp")
+		if FWUtility.ModFile("zzEstrus")
 			bEstrus=true
 		endif		
-		if FWUtility.ModFile("Bathing in Skyrim - Main.esp")
+		if FWUtility.ModFile("Bathing in Skyrim - Main")
 			bBathingInSkyrim=true
 		endif		
-		if FWUtility.ModFile("ASX_Spells.esp")
+		if FWUtility.ModFile("ASX_Spells")
 			bSexModInstalled=true
 			bASX=true
 		endif		
-		if FWUtility.ModFile("HAnimations.esp")
+		if FWUtility.ModFile("HAnimations")
 			bSexModInstalled=true
 			bHAnimations=true
 		endif		
-		if FWUtility.ModFile("FlowerGirls.esp")
+		if FWUtility.ModFile("FlowerGirls")
 			bSexModInstalled=true
 			bFlowerGirls=true
 		endif		
-		if FWUtility.ModFile("Schlongs of Skyrim - Core.esm") || \
-		   FWUtility.ModFile("Scent of Sex.esp") || \
-		   FWUtility.ModFile("HentaiCreatures.esp") || \
-		   FWUtility.ModFile("SLAnimLoader.esp") || \
-		   FWUtility.ModFile("FemaleWerewolf.esp")
+		if FWUtility.ModFile("Schlongs of Skyrim - Core") || \
+		   FWUtility.ModFile("Scent of Sex") || \
+		   FWUtility.ModFile("HentaiCreatures") || \
+		   FWUtility.ModFile("SLAnimLoader") || \
+		   FWUtility.ModFile("FemaleWerewolf")
 			bSexModInstalled=true
 		endif		
 endFunction
@@ -463,7 +537,9 @@ bool function IsProfile(string File)
 			WashOutWaterChance == JsonUtil.GetFloatValue(s, "CYCLE_WashOutWaterChance", WashOutWaterChance) && \
 			WashOutFluidChance == JsonUtil.GetFloatValue(s, "CYCLE_WashOutFluidChance", WashOutFluidChance) && \
 			ImpregnatePlayerChance == JsonUtil.GetIntValue(s, "IMPREGNATE_Player_Chance", ImpregnatePlayerChance) && \
-			NoVaginalCumChance == JsonUtil.GetIntValue(s, "MEN_NoVaginalCumChance", NoVaginalCumChance)
+			NoVaginalCumChance == JsonUtil.GetIntValue(s, "MEN_NoVaginalCumChance", NoVaginalCumChance) && \
+			(myBFA_ProbChildRaceDeterminedByFather.GetValue() as int) == JsonUtil.GetIntValue(s, "ProbChildRaceDeterminedByFather", myBFA_ProbChildRaceDeterminedByFather.GetValue() as int) && \
+			(myBFA_ProbChildSexDetermMale.GetValue() as int) == JsonUtil.GetIntValue(s, "ProbChildSexDetermMale", myBFA_ProbChildSexDetermMale.GetValue() as int)
 				bContinue=true
 		endif
 	endif
@@ -489,7 +565,9 @@ bool function IsProfile(string File)
 			MaleVirilityRecovery == JsonUtil.GetFloatValue(s, "MEN_MaleVirilityRecovery", MaleVirilityRecovery) && \
 			UpdateInterval == JsonUtil.GetFloatValue(s, "SYSTEM_UpdateInterval", UpdateInterval) && \
 			KeyStateWidget == JsonUtil.GetIntValue(s, "GENERAL_HotKey", KeyStateWidget) && \
-			VisualScaling == JsonUtil.GetIntValue(s, "PREGNANCY_VisualScaling", VisualScaling)
+			VisualScaling == JsonUtil.GetIntValue(s, "PREGNANCY_VisualScaling", VisualScaling) && \
+			(BFOpt_MatureTimeInDays.GetValue() as int) == JsonUtil.GetIntValue(s, "MatureTimeInDays", BFOpt_MatureTimeInDays.GetValue() as int) && \
+			(GlobalMenstruating.GetValue() as int) == JsonUtil.GetIntValue(s, "GlobalMenstruating", GlobalMenstruating.GetValue() as int)
 				bContinue=true
 		endif
 	endif
@@ -506,6 +584,16 @@ bool function IsProfile(string File)
 		bool tmpVisualScalingKind = JsonUtil.GetIntValue(s, "PREGNANCY_VisualScalingKind", VisualScalingKind)
 		bool tmpBellyScale = JsonUtil.GetIntValue(s, "PREGNANCY_BellyScale", FWUtility.SwitchInt(BellyScale,1,0))==1
 		bool tmpBreastScale = JsonUtil.GetIntValue(s, "PREGNANCY_BreastScale", FWUtility.SwitchInt(BreastScale,1,0))==1
+
+		bool tmpImpregnateLoreFriendly = JsonUtil.GetIntValue(s, "GENERAL_ImpregnateLoreFriendly", FWUtility.SwitchInt(ImpregnateLoreFriendly, 1, 0)) == 1
+		bool tmpCreatureSperm = JsonUtil.GetIntValue(s, "GENERAL_CreatureSperm", FWUtility.SwitchInt(CreatureSperm, 1, 0)) == 1
+		bool tmpFemaleSummonedCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_FemaleSummonedCanBecomePregnant", FWUtility.SwitchInt(FemaleSummonedCanBecomePregnant, 1, 0)) == 1
+		bool tmpMaleSummonedCanImpregnate = JsonUtil.GetIntValue(s, "GENERAL_MaleSummonedCanImpregnate", FWUtility.SwitchInt(MaleSummonedCanImpregnate, 1, 0)) == 1
+		bool tmpFemaleGhostCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_FemaleGhostCanBecomePregnant", FWUtility.SwitchInt(FemaleGhostCanBecomePregnant, 1, 0)) == 1
+		bool tmpMaleGhostCanImpregnate = JsonUtil.GetIntValue(s, "GENERAL_MaleGhostCanImpregnate", FWUtility.SwitchInt(MaleGhostCanImpregnate, 1, 0)) == 1
+		bool tmpElderFemaleCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_ElderFemaleCanBecomePregnant", FWUtility.SwitchInt(ElderFemaleCanBecomePregnant, 1, 0)) == 1
+		bool tmpShowDebugMessage = JsonUtil.GetIntValue(s, "GENERAL_ShowDebugMessage", FWUtility.SwitchInt(ShowDebugMessage, 1, 0)) == 1
+
 		bContinue=false
 		if 	tmpPlayerTimer==PlayerTimer && \
 			tmpRelevantPlayer==RelevantPlayer && \
@@ -515,7 +603,15 @@ bool function IsProfile(string File)
 			tmpabortus==abortus && \
 			tmpVisualScalingKind==VisualScalingKind && \
 			tmpBellyScale==BellyScale && \
-			tmpBreastScale==BreastScale
+			tmpBreastScale==BreastScale && \
+			(tmpImpregnateLoreFriendly == ImpregnateLoreFriendly) && \
+			(tmpCreatureSperm == CreatureSperm) && \
+			(tmpFemaleSummonedCanBecomePregnant == FemaleSummonedCanBecomePregnant) && \
+			(tmpMaleSummonedCanImpregnate == MaleSummonedCanImpregnate) && \
+			(tmpFemaleGhostCanBecomePregnant == FemaleGhostCanBecomePregnant) && \
+			(tmpMaleGhostCanImpregnate == MaleGhostCanImpregnate) && \
+			(tmpElderFemaleCanBecomePregnant == ElderFemaleCanBecomePregnant) && \
+			(tmpShowDebugMessage == ShowDebugMessage)
 				bContinue=true
 		endif
 	endif
@@ -590,6 +686,15 @@ function LoadProfile(string File)
 	KeyStateWidget = JsonUtil.GetIntValue(s, "GENERAL_HotKey", KeyStateWidget)
 	PlayAnimations = JsonUtil.GetIntValue(s, "GENERAL_PlayAnimations", FWUtility.SwitchInt(PlayAnimations,1,0))==1
 	
+	ImpregnateLoreFriendly = JsonUtil.GetIntValue(s, "GENERAL_ImpregnateLoreFriendly", FWUtility.SwitchInt(ImpregnateLoreFriendly, 1, 0)) == 1
+	CreatureSperm = JsonUtil.GetIntValue(s, "GENERAL_CreatureSperm", FWUtility.SwitchInt(CreatureSperm, 1, 0)) == 1
+	FemaleSummonedCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_FemaleSummonedCanBecomePregnant", FWUtility.SwitchInt(FemaleSummonedCanBecomePregnant, 1, 0)) == 1
+	MaleSummonedCanImpregnate = JsonUtil.GetIntValue(s, "GENERAL_MaleSummonedCanImpregnate", FWUtility.SwitchInt(MaleSummonedCanImpregnate, 1, 0)) == 1
+	FemaleGhostCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_FemaleGhostCanBecomePregnant", FWUtility.SwitchInt(FemaleGhostCanBecomePregnant, 1, 0)) == 1
+	MaleGhostCanImpregnate = JsonUtil.GetIntValue(s, "GENERAL_MaleGhostCanImpregnate", FWUtility.SwitchInt(MaleGhostCanImpregnate, 1, 0)) == 1
+	ElderFemaleCanBecomePregnant = JsonUtil.GetIntValue(s, "GENERAL_ElderFemaleCanBecomePregnant", FWUtility.SwitchInt(ElderFemaleCanBecomePregnant, 1, 0)) == 1
+	ShowDebugMessage = JsonUtil.GetIntValue(s, "GENERAL_ShowDebugMessage", FWUtility.SwitchInt(ShowDebugMessage, 1, 0)) == 1
+
 	; Menstrual cycle
 	FollicularDuration = JsonUtil.GetIntValue(s, "CYCLE_FollicularDuration", FollicularDuration)
 	OvulationDuration = JsonUtil.GetIntValue(s, "CYCLE_OvulationDuration", OvulationDuration)
@@ -606,7 +711,9 @@ function LoadProfile(string File)
 	WashOutWaterChance = JsonUtil.GetFloatValue(s, "CYCLE_WashOutWaterChance", WashOutWaterChance)
 	WashOutFluidChance = JsonUtil.GetFloatValue(s, "CYCLE_WashOutFluidChance", WashOutFluidChance)
 	WashOutHourDelay = JsonUtil.GetFloatValue(s, "CYCLE_WashOutHourDelay", WashOutHourDelay)
-	
+
+	GlobalMenstruating.SetValueInt(JsonUtil.GetIntValue(s, "GlobalMenstruating", GlobalMenstruating.GetValue() as int))
+
 	; Pregnancy
 	Trimster1Duration = JsonUtil.GetIntValue(s, "PREGNANCY_Trimster1Duration", Trimster1Duration)
 	Trimster2Duration = JsonUtil.GetIntValue(s, "PREGNANCY_Trimster2Duration", Trimster2Duration)
@@ -624,6 +731,10 @@ function LoadProfile(string File)
 	MaxBabys = JsonUtil.GetIntValue(s, "PREGNANCY_MaxBabys", MaxBabys)
 	BabySpawn = JsonUtil.GetIntValue(s, "PREGNANCY_BabySpawn_Player", BabySpawn)
 	BabySpawnNPC = JsonUtil.GetIntValue(s, "PREGNANCY_BabySpawn_NPC", BabySpawnNPC)
+	
+	myBFA_ProbChildRaceDeterminedByFather.SetValueInt(JsonUtil.GetIntValue(s, "ProbChildRaceDeterminedByFather", myBFA_ProbChildRaceDeterminedByFather.GetValue() as int))
+	myBFA_ProbChildSexDetermMale.SetValueInt(JsonUtil.GetIntValue(s, "ProbChildSexDetermMale", myBFA_ProbChildSexDetermMale.GetValue() as int))
+	BFOpt_MatureTimeInDays.SetValueInt(JsonUtil.GetIntValue(s, "MatureTimeInDays", BFOpt_MatureTimeInDays.GetValue() as int))
 	
 	; NPC
 	NPCCanBecomePregnant = JsonUtil.GetIntValue(s, "NPC_CanBecomePregnant", FWUtility.SwitchInt(NPCCanBecomePregnant,1,0))==1
@@ -682,6 +793,15 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetIntValue(s, "GENERAL_RelevantNPC", FWUtility.SwitchInt(RelevantNPC,1,0))==1
 	JsonUtil.SetIntValue(s, "GENERAL_HotKey", KeyStateWidget)
 	JsonUtil.SetIntValue(s, "GENERAL_PlayAnimations", FWUtility.SwitchInt(PlayAnimations,1,0))
+
+	JsonUtil.SetIntValue(s, "GENERAL_ImpregnateLoreFriendly", FWUtility.SwitchInt(ImpregnateLoreFriendly, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_CreatureSperm", FWUtility.SwitchInt(CreatureSperm, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_FemaleSummonedCanBecomePregnant", FWUtility.SwitchInt(FemaleSummonedCanBecomePregnant, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_MaleSummonedCanImpregnate", FWUtility.SwitchInt(MaleSummonedCanImpregnate, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_FemaleGhostCanBecomePregnant", FWUtility.SwitchInt(FemaleGhostCanBecomePregnant, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_MaleGhostCanImpregnate", FWUtility.SwitchInt(MaleGhostCanImpregnate, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_ElderFemaleCanBecomePregnant", FWUtility.SwitchInt(ElderFemaleCanBecomePregnant, 1, 0))
+	JsonUtil.SetIntValue(s, "GENERAL_ShowDebugMessage", FWUtility.SwitchInt(ShowDebugMessage, 1, 0))
 	
 	; Menstrual cycle
 	JsonUtil.SetIntValue(s, "CYCLE_FollicularDuration", FollicularDuration)
@@ -699,6 +819,8 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetFloatValue(s, "CYCLE_WashOutWaterChance", WashOutWaterChance)
 	JsonUtil.SetFloatValue(s, "CYCLE_WashOutFluidChance", WashOutFluidChance)
 	JsonUtil.SetFloatValue(s, "CYCLE_WashOutHourDelay", WashOutHourDelay)
+
+	JsonUtil.SetIntValue(s, "GlobalMenstruating", GlobalMenstruating.GetValue() as int)
 	
 	; Pregnancy
 	JsonUtil.SetIntValue(s, "PREGNANCY_Trimster1Duration", Trimster1Duration)
@@ -717,6 +839,10 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetIntValue(s, "PREGNANCY_MaxBabys", MaxBabys)
 	JsonUtil.SetIntValue(s, "PREGNANCY_BabySpawn_Player", BabySpawn)
 	JsonUtil.SetIntValue(s, "PREGNANCY_BabySpawn_NPC", BabySpawnNPC)
+
+	JsonUtil.SetIntValue(s, "ProbChildRaceDeterminedByFather", myBFA_ProbChildRaceDeterminedByFather.GetValue() as int)
+	JsonUtil.SetIntValue(s, "ProbChildSexDetermMale", myBFA_ProbChildSexDetermMale.GetValue() as int)
+	JsonUtil.SetIntValue(s, "MatureTimeInDays", BFOpt_MatureTimeInDays.GetValue() as int)
 	
 	; NPC
 	JsonUtil.SetIntValue(s, "NPC_CanBecomePregnant", FWUtility.SwitchInt(NPCCanBecomePregnant,1,0))
@@ -769,84 +895,84 @@ function LoadWidgetProfile(string ProfileName="")
 	if WidgetProfile==""
 		WidgetProfile=WidgetProfileDef
 	endif
-	if(System.StateWidget;/!=none/;)
-		System.StateWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "HAnchor", System.StateWidget.CFG_HAnchor)
-		System.StateWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "VAnchor", System.StateWidget.CFG_VAnchor)
+	if(StateWidget;/!=none/;)
+		StateWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "HAnchor", StateWidget.CFG_HAnchor)
+		StateWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "VAnchor", StateWidget.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.StateWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "PositionX", System.StateWidget.CFG_PosX)
-		System.StateWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "PositionY", System.StateWidget.CFG_PosY)
-		System.StateWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "StateWidget", "Enabled", System.StateWidget.CFG_Enabled)
-		System.StateWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "Alpha", System.StateWidget.CFG_Alpha)
-		System.StateWidget.CFG_FillDirection = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "FillDirection", System.StateWidget.CFG_FillDirection)
-		System.StateWidget.CFG_Color = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "Color", System.StateWidget.CFG_Color)
-		System.StateWidget.CFG_DarkColor = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "DarkColor", System.StateWidget.CFG_DarkColor)
-		System.StateWidget.CFG_FlashColor = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "FlashColor", System.StateWidget.CFG_FlashColor)
-		System.StateWidget.CFG_IconPosition = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "IconPosition", System.StateWidget.CFG_IconPosition)
+		StateWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "PositionX", StateWidget.CFG_PosX)
+		StateWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "PositionY", StateWidget.CFG_PosY)
+		StateWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "StateWidget", "Enabled", StateWidget.CFG_Enabled)
+		StateWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "Alpha", StateWidget.CFG_Alpha)
+		StateWidget.CFG_FillDirection = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "FillDirection", StateWidget.CFG_FillDirection)
+		StateWidget.CFG_Color = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "Color", StateWidget.CFG_Color)
+		StateWidget.CFG_DarkColor = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "DarkColor", StateWidget.CFG_DarkColor)
+		StateWidget.CFG_FlashColor = FWUtility.getIniCInt("HUD", WidgetProfile, "StateWidget", "FlashColor", StateWidget.CFG_FlashColor)
+		StateWidget.CFG_IconPosition = FWUtility.getIniCString("HUD", WidgetProfile, "StateWidget", "IconPosition", StateWidget.CFG_IconPosition)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  StateWidget configuration")
 	endif
 	
-	if(System.ContraceptionWidget;/!=none/;)
-		System.ContraceptionWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "HAnchor", System.ContraceptionWidget.CFG_HAnchor)
-		System.ContraceptionWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "VAnchor", System.ContraceptionWidget.CFG_VAnchor)
+	if(ContraceptionWidget;/!=none/;)
+		ContraceptionWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "HAnchor", ContraceptionWidget.CFG_HAnchor)
+		ContraceptionWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "VAnchor", ContraceptionWidget.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.ContraceptionWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "PositionX", System.ContraceptionWidget.CFG_PosX)
-		System.ContraceptionWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "PositionY", System.ContraceptionWidget.CFG_PosY)
-		System.ContraceptionWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "ContraceptionWidget", "Enabled", System.ContraceptionWidget.CFG_Enabled)
-		System.ContraceptionWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "Alpha", System.ContraceptionWidget.CFG_Alpha)
-		System.ContraceptionWidget.CFG_FillDirection = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "FillDirection", System.ContraceptionWidget.CFG_FillDirection)
-		System.ContraceptionWidget.CFG_Color = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "Color", System.ContraceptionWidget.CFG_Color)
-		System.ContraceptionWidget.CFG_DarkColor = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "DarkColor", System.ContraceptionWidget.CFG_DarkColor)
-		System.ContraceptionWidget.CFG_FlashColor = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "FlashColor", System.ContraceptionWidget.CFG_FlashColor)
-		System.ContraceptionWidget.CFG_IconPosition = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "IconPosition", System.ContraceptionWidget.CFG_IconPosition)
+		ContraceptionWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "PositionX", ContraceptionWidget.CFG_PosX)
+		ContraceptionWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "PositionY", ContraceptionWidget.CFG_PosY)
+		ContraceptionWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "ContraceptionWidget", "Enabled", ContraceptionWidget.CFG_Enabled)
+		ContraceptionWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "Alpha", ContraceptionWidget.CFG_Alpha)
+		ContraceptionWidget.CFG_FillDirection = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "FillDirection", ContraceptionWidget.CFG_FillDirection)
+		ContraceptionWidget.CFG_Color = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "Color", ContraceptionWidget.CFG_Color)
+		ContraceptionWidget.CFG_DarkColor = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "DarkColor", ContraceptionWidget.CFG_DarkColor)
+		ContraceptionWidget.CFG_FlashColor = FWUtility.getIniCInt("HUD", WidgetProfile, "ContraceptionWidget", "FlashColor", ContraceptionWidget.CFG_FlashColor)
+		ContraceptionWidget.CFG_IconPosition = FWUtility.getIniCString("HUD", WidgetProfile, "ContraceptionWidget", "IconPosition", ContraceptionWidget.CFG_IconPosition)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  ContraceptionWidget configuration")
 	endif
 	
-	if(System.BabyHealthWidget;/!=none/;)
-		System.BabyHealthWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "IconWidget", "HAnchor", System.BabyHealthWidget.CFG_HAnchor)
-		System.BabyHealthWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "IconWidget", "VAnchor", System.BabyHealthWidget.CFG_VAnchor)
+	if(BabyHealthWidget;/!=none/;)
+		BabyHealthWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "IconWidget", "HAnchor", BabyHealthWidget.CFG_HAnchor)
+		BabyHealthWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "IconWidget", "VAnchor", BabyHealthWidget.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.BabyHealthWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "PositionX", System.BabyHealthWidget.CFG_PosX)
-		System.BabyHealthWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "PositionY", System.BabyHealthWidget.CFG_PosY)
-		System.BabyHealthWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "IconWidget", "Enabled", System.BabyHealthWidget.CFG_Enabled)
-		System.BabyHealthWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "Alpha", System.BabyHealthWidget.CFG_Alpha)
+		BabyHealthWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "PositionX", BabyHealthWidget.CFG_PosX)
+		BabyHealthWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "PositionY", BabyHealthWidget.CFG_PosY)
+		BabyHealthWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "IconWidget", "Enabled", BabyHealthWidget.CFG_Enabled)
+		BabyHealthWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "IconWidget", "Alpha", BabyHealthWidget.CFG_Alpha)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  BabyHealthWidget configuration")
 	endif
 	
-	if(System.PantyWidget;/!=none/;)
-		System.PantyWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "PantyWidget", "HAnchor", System.PantyWidget.CFG_HAnchor)
-		System.PantyWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "PantyWidget", "VAnchor", System.PantyWidget.CFG_VAnchor)
+	if(PantyWidget;/!=none/;)
+		PantyWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "PantyWidget", "HAnchor", PantyWidget.CFG_HAnchor)
+		PantyWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "PantyWidget", "VAnchor", PantyWidget.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.PantyWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "PositionX", System.PantyWidget.CFG_PosX)
-		System.PantyWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "PositionY", System.PantyWidget.CFG_PosY)
-		System.PantyWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "PantyWidget", "Enabled", System.PantyWidget.CFG_Enabled)
-		System.PantyWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "Alpha", System.PantyWidget.CFG_Alpha)
+		PantyWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "PositionX", PantyWidget.CFG_PosX)
+		PantyWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "PositionY", PantyWidget.CFG_PosY)
+		PantyWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "PantyWidget", "Enabled", PantyWidget.CFG_Enabled)
+		PantyWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "PantyWidget", "Alpha", PantyWidget.CFG_Alpha)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  PantyWidget configuration")
 	endif
 	
-	if(System.Progress;/!=none/;)
-		System.Progress.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ProgressWidget", "HAnchor", System.Progress.CFG_HAnchor)
-		System.Progress.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ProgressWidget", "VAnchor", System.Progress.CFG_VAnchor)
+	if(Progress;/!=none/;)
+		Progress.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ProgressWidget", "HAnchor", Progress.CFG_HAnchor)
+		Progress.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "ProgressWidget", "VAnchor", Progress.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.Progress.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "PositionX", System.Progress.CFG_PosX)
-		System.Progress.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "PositionY", System.Progress.CFG_PosY)
-		System.Progress.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "ProgressWidget", "Enabled", System.Progress.CFG_Enabled)
-		System.Progress.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "Alpha", System.Progress.CFG_Alpha)
+		Progress.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "PositionX", Progress.CFG_PosX)
+		Progress.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "PositionY", Progress.CFG_PosY)
+		Progress.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "ProgressWidget", "Enabled", Progress.CFG_Enabled)
+		Progress.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "ProgressWidget", "Alpha", Progress.CFG_Alpha)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  Progress configuration")
 	endif
 	
-	if(System.CoupleWidget;/!=none/;)
-		System.CoupleWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "CoupleWidget", "HAnchor", System.CoupleWidget.CFG_HAnchor)
-		System.CoupleWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "CoupleWidget", "VAnchor", System.CoupleWidget.CFG_VAnchor)
+	if(CoupleWidget;/!=none/;)
+		CoupleWidget.CFG_HAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "CoupleWidget", "HAnchor", CoupleWidget.CFG_HAnchor)
+		CoupleWidget.CFG_VAnchor = FWUtility.getIniCString("HUD", WidgetProfile, "CoupleWidget", "VAnchor", CoupleWidget.CFG_VAnchor)
 		Utility.WaitMenuMode(0.1)
-		System.CoupleWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "PositionX", System.CoupleWidget.CFG_PosX)
-		System.CoupleWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "PositionY", System.CoupleWidget.CFG_PosY)
-		System.CoupleWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "CoupleWidget", "Enabled", System.CoupleWidget.CFG_Enabled)
-		System.CoupleWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "Alpha", System.CoupleWidget.CFG_Alpha)
+		CoupleWidget.CFG_PosX = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "PositionX", CoupleWidget.CFG_PosX)
+		CoupleWidget.CFG_PosY = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "PositionY", CoupleWidget.CFG_PosY)
+		CoupleWidget.CFG_Enabled = FWUtility.getIniCBool("HUD", WidgetProfile, "CoupleWidget", "Enabled", CoupleWidget.CFG_Enabled)
+		CoupleWidget.CFG_Alpha = FWUtility.getIniCInt("HUD", WidgetProfile, "CoupleWidget", "Alpha", CoupleWidget.CFG_Alpha)
 	else
 		Debug.Trace("FWSystemConfig::LoadWidgetProfile() - Failed to load  CoupleWidget configuration")
 	endif
@@ -862,7 +988,7 @@ function CheckNextPerk()
 	lastPerkTested+=1
 	
 	; Check if all done
-	if System.ChildSettings.ChildPerkFile[lastPerkTested] == ""
+	if ChildSettings.ChildPerkFile[lastPerkTested] == ""
 		; All done, enable them all
 		int tmp=lastPerkTested
 		while tmp>0
@@ -877,12 +1003,12 @@ function CheckNextPerk()
 	SetTextOptionValue(UI_TestPerk[lastPerkTested], "$FW_MENU_BASIC_Checking")
 	
 	; Get Perk informations
-	string file = System.ChildSettings.ChildPerkFile[lastPerkTested]
-	int posX = System.ChildSettings.ChildPerkX[lastPerkTested]
-	int posY = System.ChildSettings.ChildPerkY[lastPerkTested]
-	int ranks = System.ChildSettings.ChildPerkRank[lastPerkTested]
-	bool bUseAll = System.ChildSettings.ChildPerkBool[lastPerkTested]
-	bool bEnabled = System.ChildSettings.ChildPerkEnabled[lastPerkTested]
+	string file = ChildSettings.ChildPerkFile[lastPerkTested]
+	int posX = ChildSettings.ChildPerkX[lastPerkTested]
+	int posY = ChildSettings.ChildPerkY[lastPerkTested]
+	int ranks = ChildSettings.ChildPerkRank[lastPerkTested]
+	bool bUseAll = ChildSettings.ChildPerkBool[lastPerkTested]
+	bool bEnabled = ChildSettings.ChildPerkEnabled[lastPerkTested]
 	bool bSuccess=true
 	string res="General;"
 	
@@ -914,13 +1040,13 @@ function CheckNextPerk()
 	; Check if the current perk is not close to another perk position
 	bool bFound=false
 	int j=0
-	int c=System.ChildSettings.ChildPerkFile.length
+	int c=ChildSettings.ChildPerkFile.length
 	while j<c
 		if j!=lastPerkTested
-			if System.ChildSettings.ChildPerkX[j] > posX - 3 && System.ChildSettings.ChildPerkX[j] < posX + 3
-				if System.ChildSettings.ChildPerkY[j] > posY - 10 && System.ChildSettings.ChildPerkY[j] < posY + 10
+			if ChildSettings.ChildPerkX[j] > posX - 3 && ChildSettings.ChildPerkX[j] < posX + 3
+				if ChildSettings.ChildPerkY[j] > posY - 10 && ChildSettings.ChildPerkY[j] < posY + 10
 					bSuccess=false
-					res+="<font color='#ff0000'>-</font> To Close to "+System.ChildSettings.ChildPerkFile[j]+";"
+					res+="<font color='#ff0000'>-</font> To Close to "+ChildSettings.ChildPerkFile[j]+";"
 				endif
 			endif
 		endif
@@ -942,7 +1068,7 @@ function CheckNextPerk()
 		string modFile = FWUtility.getIniCString("ChildPerk", file, "Rank"+i, "ModName")
 		string rModFile = FWUtility.modFile(modFile)
 		int rFormID = FWUtility.getIniCInt("ChildPerk", file, "Rank"+i, "FormID")
-		int[] req = System.ChildSettings.getPerkRequirement(file,i)		
+		int[] req = ChildSettings.getPerkRequirement(file,i)		
 		bool bRankSuccess=false
 		res+="Rank "+i+";"
 		
@@ -1113,7 +1239,7 @@ function InitCompatiblity()
 	CompatiblityActive[6] = true
 	
 	if Compatible.length != 7
-		System.Message(System.Content.Compatiblity_Reset)
+		System.Message(Content.Compatiblity_Reset)
 		Compatible = new int[7]
 		int i=0
 		while i<CompatiblityModCount
@@ -1155,38 +1281,50 @@ function SetCompatibleOptions()
 endFunction
 
 int function GetCompatibleIndexByRank(int Rank, int index)
-	if Rank==0
-		return 0
-	elseif Rank==1
-		return 1
-	elseif Rank==2
-		if index==0
-			return 0
-		elseif index==1
-			return 2
-		elseif index==2
-			return 3
+	if Rank >= 0
+		if Rank < 2
+			if Rank==0
+				return 0
+			else;if Rank==1
+				return 1
+			endIf
+		elseif Rank==2
+			if index >= 0
+				if index < 2
+					if index==0
+						return 0
+					else;if index==1
+						return 2
+					endIf
+				elseif index==2
+					return 3
+				endif
+			endIf
 		endif
-	endif
+	endIf
 endFunction
 
 string[] function GetCompatibleOptions(int Rank)
 	string[] res
-	if Rank==0
-		; Only got the Not Compatible option
-		res = new string[1]
-		res[0] = "$FW_MENU_OPTIONS_Compatible_None"
-	elseif Rank==1
-		; Only got the Full Compatible option
-		res = new string[1]
-		res[0] = "$FW_MENUTXT_OPTIONS_Compatible_Full"
-	elseif Rank==2
-		; Only got the Not Compatible option
-		res = new string[3]
-		res[0] = "$FW_MENU_OPTIONS_Compatible_None"
-		res[1] = "$FW_MENU_OPTIONS_Compatible_ChangeBFState"
-		res[2] = "$FW_MENUTXT_OPTIONS_Compatible_ForbideEachotherPregnancy"
-	endif
+	if Rank >= 0
+		if Rank < 2
+			if Rank==0
+				; Only got the Not Compatible option
+				res = new string[1]
+				res[0] = "$FW_MENU_OPTIONS_Compatible_None"
+			else;if Rank==1
+				; Only got the Full Compatible option
+				res = new string[1]
+				res[0] = "$FW_MENUTXT_OPTIONS_Compatible_Full"
+			endIf
+		elseif Rank==2
+			; Only got the Not Compatible option
+			res = new string[3]
+			res[0] = "$FW_MENU_OPTIONS_Compatible_None"
+			res[1] = "$FW_MENU_OPTIONS_Compatible_ChangeBFState"
+			res[2] = "$FW_MENUTXT_OPTIONS_Compatible_ForbideEachotherPregnancy"
+		endif
+	endIf
 	return res
 endFunction
 
@@ -1251,15 +1389,15 @@ function ResetActorBaseSettings(actor a)
 	a.SetAnimationVariableBool("bSprintOK", true)
 	a.ClearExpressionOverride()
 	a.AllowPCDialogue(a.GetRace().AllowPCDialogue())
-	FWUtility.ActorRemoveSpells(a, System.StatCycleID_List)
-	FWUtility.ActorRemoveSpell(a, System.StatMenstruationCycle)
-	FWUtility.ActorRemoveSpell(a, System.StatPregnancyCycle)
-	System.Manager.removeCME(a,-1)
+	FWUtility.ActorRemoveSpells(a, StatCycleID_List)
+	FWUtility.ActorRemoveSpell(a, StatMenstruationCycle)
+	FWUtility.ActorRemoveSpell(a, StatPregnancyCycle)
+	Manager.removeCME(a,-1)
 endFunction
 
 string Function GetEggState()
 	If System.Player && (System.Player.currentState == 1)
-		If Utility.GetCurrentGameTime() - System.Player.stateEnterTime < (OvulationDuration * 0.5)
+		If GameDaysPassed.GetValue() - System.Player.stateEnterTime < (OvulationDuration * 0.5)
 			Return "$FW_MENU_OPTIONS_Travelling"
 		Else
 			Return "$FW_MENU_OPTIONS_InUterus"
@@ -1269,30 +1407,30 @@ EndFunction
 
 function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 	; Deactivate all
-	System.ModEnabled.SetValueInt(0);Tkc (Loverslab): temporary disable mod and npc scanning to prevent activity like scanning while BF is resetting.
-	System.CloakingSpellEnabled.SetValueInt(0) ;--------------------------------------------/
+	ModEnabled.SetValueInt(0);Tkc (Loverslab): temporary disable mod and npc scanning to prevent activity like scanning while BF is resetting.
+	CloakingSpellEnabled.SetValueInt(0) ;--------------------------------------------/
 	if ResetBaseSystem
 		System.Stop()
 	endif
 	
-	int i = System.ChildSettings.ChildPerkFile.length
+	int i = ChildSettings.ChildPerkFile.length
 	while i >0
 		i-=1
-		System.ChildSettings.ChildPerkX[i]=0
-		System.ChildSettings.ChildPerkY[i]=0
-		System.ChildSettings.ChildPerkRank[i]=0
-		System.ChildSettings.ChildPerkBool[i]=false
-		System.ChildSettings.ChildPerkFile[i]=""
+		ChildSettings.ChildPerkX[i]=0
+		ChildSettings.ChildPerkY[i]=0
+		ChildSettings.ChildPerkRank[i]=0
+		ChildSettings.ChildPerkBool[i]=false
+		ChildSettings.ChildPerkFile[i]=""
 	endWhile
 	
-	System.Controller.Stop()
-	System.Manager.Stop()
-	System.Content.Stop()
-	System.BabyItemList.Stop()
-	System.StateWidget.Stop()
-	System.ContraceptionWidget.Stop()
-	System.BabyHealthWidget.Stop()
-	System.ChildSettings.Stop()
+	Controller.Stop()
+	Manager.Stop()
+	Content.Stop()
+	BabyItemList.Stop()
+	StateWidget.Stop()
+	ContraceptionWidget.Stop()
+	BabyHealthWidget.Stop()
+	ChildSettings.Stop()
 	
 	if System.Player;/!=none/;
 		System.Player.dispel()
@@ -1306,6 +1444,8 @@ function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 	SpellType = SpellTypeDef
 	
 	; Restart all
+	ResetConfigArrays()
+	
 	if ResetBaseSystem
 		System.Start()
 	endif
@@ -1316,31 +1456,32 @@ function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 			WaitforSystem = 0
 		EndIf
 	endWhile
-	System.Controller.Start()
-	System.Manager.Start()
-	System.Content.Start()
-	System.BabyItemList.Start()
-	System.StateWidget.Start()
-	System.ContraceptionWidget.Start()
-	System.BabyHealthWidget.Start()
-	System.ChildSettings.Start()
+	Controller.Start()
+	Manager.Start()
+	Content.Start()
+	BabyItemList.Start()
+	StateWidget.Start()
+	ContraceptionWidget.Start()
+	BabyHealthWidget.Start()
+	ChildSettings.Start()
 	
 	; Run the Reset-Function
-	System.ChildSettings.ResetChildPerks() ;Edit by Bane
-	System.StateWidget.OnWidgetReset()
-	System.ContraceptionWidget.OnWidgetReset()
-	System.BabyHealthWidget.OnWidgetReset()
+	ChildSettings.ResetChildPerks() ;Edit by Bane
+	StateWidget.OnWidgetReset()
+	ContraceptionWidget.OnWidgetReset()
+	BabyHealthWidget.OnWidgetReset()
 	
 	; Run OnPlayerLoadGame()
 	int ac = GetNumAliases()
 	bool bFoundPlayer = false
-	actor p = System.PlayerRef ;Tkc (LoversLab): optimization
+	actor p = PlayerRef ;Tkc (LoversLab): optimization
 	while ac>0
 		ac-=1
 		Referencealias ra = GetNthAlias(ac) as Referencealias
-		if ra.GetActorReference();/!=none/;  ;**edit by Bane
+		Actor raActor = ra.GetReference() as Actor
+		if raActor;/!=none/;  ;**edit by Bane
 			(ra as FWPlayerAlias).OnModReset() ;**edit by Bane
-			if ra.GetActorReference() == p
+			if raActor == p
 				bFoundPlayer = true
 			endif
 		endif
@@ -1348,7 +1489,7 @@ function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 	if bFoundPlayer==false
 		Debug.Notification(Content.Req_PlayerNotFoundOnRef)
 		Debug.Notification(Content.FixProblem)
-		(GetAlias(0) as ReferenceAlias).ForceRefTo(Game.GetPlayer())
+		(GetAlias(0) as ReferenceAlias).ForceRefTo(PlayerRef)
 	endif
 	System.initArrays()
 	System.refreshObjective()
@@ -1360,8 +1501,8 @@ function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 	System.RegisterForModEvent("AddActorSperm", "onAddActorSperm")
 	System.RegisterForModEvent("AddSperm", "onAddActorSperm")
 	System.RegisterForModEvent("BeeingFemale", "onBeeingFemaleCommand")
-	System.ModEnabled.SetValueInt(1)
-	System.CloakingSpellEnabled.SetValueInt(1)
+	ModEnabled.SetValueInt(1)
+	CloakingSpellEnabled.SetValueInt(1)
 	; Refresh addons
 	RefreshAddons() ; Tkc (Loverslab): using new standalone both with Refresh addons function because on BF LL forum thread was report about not all things was working correctly after reset and before using Refresh addons option again
 	;/
@@ -1379,10 +1520,10 @@ endFunction
 
 Function RefreshAddons()
 	; Tkc (Loverslab): optimization and issue fix. moved to standalone function to use it from Refresh Addons and Reset functions
-	System.Manager.Clear()
+	Manager.Clear()
 	;System.Manager.sendmodevent("FWAddOnRefresh", "", 0.0)
-	System.Manager.RefreshAddOn()
-	System.ChildSettings.ResetChildPerks()
+	Manager.RefreshAddOn()
+	ChildSettings.ResetChildPerks()
 	System.OnGameLoad(true) ;***Added by Bane
 endFunction
 
@@ -1395,20 +1536,22 @@ endFunction
 int Function GetJobID(actor target = none)
 	if target==none
 		If System.Player
-			If System.Player.currentState>=4 && System.Player.currentState <20
-				If System.Player.CurrentState >=4 && System.Player.CurrentState<7
-					Return 1
-				Else
-					Return 2
-				EndIf
-			elseif System.Player.currentState >= 20
-				return 3
+			if System.Player.currentState > 3
+				If System.Player.currentState <20
+					If System.Player.CurrentState<7
+						Return 1
+					Else
+						Return 2
+					EndIf
+				else;if System.Player.currentState >= 20
+					return 3
+				endIf
 			Else
 				Return 0
 			EndIf
 		EndIf
 	else
-		int npcState = System.Controller.GetFemaleState(target)
+		int npcState = Controller.GetFemaleState(target)
 		If npcState>=4 && npcState <20
 			If npcState >=4 && npcState<7
 				Return 1
@@ -1427,20 +1570,22 @@ EndFunction
 string Function GetJobTitle(actor target = none)
 	if target==none
 		If System.Player;/!=none/;
-			If System.Player.currentState>=4 && System.Player.currentState <20
-				If System.Player.currentState <= 6
-					Return "$FW_MENU_OPTIONS_ForceBirth"
-				Else
-					Return "$FW_MENU_OPTIONS_SpeedUpRecovery"
-				EndIf
-			elseif System.Player.currentState >= 20
-				Return "$FW_MENU_OPTIONS_Locked"
+			if System.Player.currentState > 3
+				If System.Player.currentState <20
+					If System.Player.currentState <= 6
+						Return "$FW_MENU_OPTIONS_ForceBirth"
+					Else
+						Return "$FW_MENU_OPTIONS_SpeedUpRecovery"
+					EndIf
+				else;if System.Player.currentState >= 20
+					Return "$FW_MENU_OPTIONS_Locked"
+				endIf
 			Else
 				Return "$FW_MENU_OPTIONS_Impregnation"
 			EndIf
 		EndIf
 	else
-		int npcState = System.Controller.GetFemaleState(target)
+		int npcState = Controller.GetFemaleState(target)
 		If npcState>=4 && npcState <20
 			If npcState <= 6
 				Return "$FW_MENU_OPTIONS_ForceBirth"
@@ -1457,18 +1602,25 @@ string Function GetJobTitle(actor target = none)
 EndFunction
 
 string function getNumberOfChilds()
-	If System.Player.currentState>=4 && System.Player.currentState <20
-		if System.Player.currentState  >= 5
-			return System.Player.NumChilds
-		else
-			return "$FW_MENU_OPTIONS_UnknownChildNumber"
+	if System.Player
+		If System.Player.currentState>=4 && System.Player.currentState <20
+			if System.Player.currentState  >= 5
+				return System.Player.NumChilds
+			else
+				return "$FW_MENU_OPTIONS_UnknownChildNumber"
+			endIf
 		endIf
 	endIf
 endFunction
 
 string function getRemainingTime(bool mayBeZero = true)
 	string signed = ""
-	float xtime = System.Player.timeRemaining()
+	float xtime
+	if System.Player
+		xtime = System.Player.timeRemaining()
+	else
+		xtime = 0
+	endIf
 	if xtime < 0 && mayBeZero;/==true/;
 		signed = " - "
 		xtime *= -1
@@ -1484,15 +1636,15 @@ string function getRemainingTime(bool mayBeZero = true)
 endFunction
 
 int function getContraception()
-	;return (StorageUtil.GetFloatValue( Game.GetPlayer(),"FW.Contraception",0) as int)
-	float res = System.Controller.getContraception(Game.GetPlayer())
+	;return (StorageUtil.GetFloatValue( PlayerRef,"FW.Contraception",0) as int)
+	float res = Controller.getContraception(PlayerRef)
 	return res as int
 endFunction
 
 string function getContraceptionTime()
-	if System.Controller.getContraception(Game.GetPlayer()) > 1.5
-		float cTime = StorageUtil.GetFloatValue( Game.GetPlayer(),"FW.ContraceptionTime",0)
-		float GT = Utility.GetCurrentGameTime()
+	if Controller.getContraception(PlayerRef) > 1.5
+		float cTime = StorageUtil.GetFloatValue( PlayerRef,"FW.ContraceptionTime",0)
+		float GT = GameDaysPassed.GetValue()
 		float cDur = System.MaxContraceptionTime
 		
 		return GetTimeString((cTime + cDur) - GT,true,"$FW_MENU_OPTIONS_Contraception_delay",false)
@@ -1502,40 +1654,72 @@ string function getContraceptionTime()
 endFunction
 
 string function OvulationPainString()
-	if System.Player.stateDamageScale == 0
-		return " - "
-	elseif System.Player.stateDamageScale < 0.3
-		return "$FW_MENU_OPTIONS_Painless"
-	elseif System.Player.stateDamageScale < 0.6
-		return "$FW_MENU_OPTIONS_Humane"
-	elseif System.Player.stateDamageScale < 1.0
-		return "$FW_MENU_OPTIONS_Easy"
-	elseif System.Player.stateDamageScale < 1.5
-		return "$FW_MENU_OPTIONS_Hurts"
-	elseif System.Player.stateDamageScale < 1.8
-		return "$FW_MENU_OPTIONS_Painful"
-	elseif System.Player.stateDamageScale < 2.2
-		return "$FW_MENU_OPTIONS_VeryPainful"
+	if System.Player
+		if((System.Player.stateDamageScale < 2.2) && (System.Player.stateDamageScale >= 0))
+			if System.Player.stateDamageScale < 1.8
+				if System.Player.stateDamageScale < 1.5
+					if System.Player.stateDamageScale < 1.0
+						if System.Player.stateDamageScale < 0.6
+							if System.Player.stateDamageScale < 0.3
+								if System.Player.stateDamageScale == 0
+									return " - "
+								else;if System.Player.stateDamageScale < 0.3
+									return "$FW_MENU_OPTIONS_Painless"
+								endIf
+							else;if System.Player.stateDamageScale < 0.6
+								return "$FW_MENU_OPTIONS_Humane"
+							endIf
+						else;if System.Player.stateDamageScale < 1.0
+							return "$FW_MENU_OPTIONS_Easy"
+						endIf
+					else;if System.Player.stateDamageScale < 1.5
+						return "$FW_MENU_OPTIONS_Hurts"
+					endIf
+				else;if System.Player.stateDamageScale < 1.8
+					return "$FW_MENU_OPTIONS_Painful"
+				endIf
+			else;if System.Player.stateDamageScale < 2.2
+				return "$FW_MENU_OPTIONS_VeryPainful"
+			endIf
+		else
+			return "$FW_MENU_OPTIONS_Dolorous"
+		endIf
 	else
 		return "$FW_MENU_OPTIONS_Dolorous"
-	endIf
+	endIf	
 endFunction
 
 string function MenstruationPainString()
-	if System.Player.stateDamageScale == 0
-		return " - "
-	elseif System.Player.stateDamageScale < 0.3
-		return "$FW_MENU_OPTIONS_Painless"
-	elseif System.Player.stateDamageScale < 0.6
-		return "$FW_MENU_OPTIONS_Humane"
-	elseif System.Player.stateDamageScale < 1.0
-		return "$FW_MENU_OPTIONS_Easy"
-	elseif System.Player.stateDamageScale < 1.5
-		return "$FW_MENU_OPTIONS_Hurts"
-	elseif System.Player.stateDamageScale < 1.8
-		return "$FW_MENU_OPTIONS_Painful"
-	elseif System.Player.stateDamageScale < 2.2
-		return "$FW_MENU_OPTIONS_VeryPainful"
+	if System.Player
+		if((System.Player.stateDamageScale >= 0) && (System.Player.stateDamageScale < 2.2))
+			if System.Player.stateDamageScale < 1.8
+				if System.Player.stateDamageScale < 1.5
+					if System.Player.stateDamageScale < 1.0
+						if System.Player.stateDamageScale < 0.6
+							if System.Player.stateDamageScale < 0.3
+								if System.Player.stateDamageScale == 0
+									return " - "
+								else;if System.Player.stateDamageScale < 0.3
+									return "$FW_MENU_OPTIONS_Painless"
+								endIf
+							else;if System.Player.stateDamageScale < 0.6
+								return "$FW_MENU_OPTIONS_Humane"
+							endIf
+						else;if System.Player.stateDamageScale < 1.0
+							return "$FW_MENU_OPTIONS_Easy"
+						endIf
+					else;if System.Player.stateDamageScale < 1.5
+						return "$FW_MENU_OPTIONS_Hurts"
+					endIf
+				else;if System.Player.stateDamageScale < 1.8
+					return "$FW_MENU_OPTIONS_Painful"
+				endIf
+			else;if System.Player.stateDamageScale < 2.2
+				return "$FW_MENU_OPTIONS_VeryPainful"
+			endIf
+		else
+			return "$FW_MENU_OPTIONS_Dolorous"
+		endIf
 	else
 		return "$FW_MENU_OPTIONS_Dolorous"
 	endIf
@@ -1633,24 +1817,48 @@ Function SetStatsSpellOptions()
 EndFunction
 
 Function SetVisualScalingOptions()
-	If (VisualScalingOptions.Length != 4)
-		VisualScalingOptions = New String[4]
-	EndIf
-	If (VisualScalingHighlightTexts.Length != 4)
-		VisualScalingHighlightTexts = New String[4]
-	EndIf
-	
-	VisualScalingOptions[0] = "$FW_MENU_OPTIONS_None"
-	VisualScalingHighlightTexts[0] = "$FW_MENUTXT_OPTIONS_VisualScalingNone"
-	
-	VisualScalingOptions[1] = "$FW_MENU_OPTIONS_VisualScaleSkeleton"
-	VisualScalingHighlightTexts[1] = "$FW_MENUTXT_OPTIONS_VisualScalingSkel"
-	
-	VisualScalingOptions[2] = "$FW_MENU_OPTIONS_VisualScaleSkeletonNi"
-	VisualScalingHighlightTexts[2] = "$FW_MENUTXT_OPTIONS_VisualScalingSkelNi"
-	
-	VisualScalingOptions[3] = "$FW_MENU_OPTIONS_VisualScaleWeight"
-	VisualScalingHighlightTexts[3] = "$FW_MENUTXT_OPTIONS_VisualScalingWeight"
+	if Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+		If (VisualScalingOptions.Length != 5)
+			VisualScalingOptions = New String[5]
+		EndIf
+		If (VisualScalingHighlightTexts.Length != 5)
+			VisualScalingHighlightTexts = New String[5]
+		EndIf
+		
+		VisualScalingOptions[0] = "$FW_MENU_OPTIONS_None"
+		VisualScalingHighlightTexts[0] = "$FW_MENUTXT_OPTIONS_VisualScalingNone"
+		
+		VisualScalingOptions[1] = "$FW_MENU_OPTIONS_VisualScaleSkeleton"
+		VisualScalingHighlightTexts[1] = "$FW_MENUTXT_OPTIONS_VisualScalingSkel"
+		
+		VisualScalingOptions[2] = "$FW_MENU_OPTIONS_VisualScaleSkeletonNi"
+		VisualScalingHighlightTexts[2] = "$FW_MENUTXT_OPTIONS_VisualScalingSkelNi"
+		
+		VisualScalingOptions[3] = "$FW_MENU_OPTIONS_VisualScaleWeight"
+		VisualScalingHighlightTexts[3] = "$FW_MENUTXT_OPTIONS_VisualScalingWeight"
+
+		VisualScalingOptions[4] = InflateMorph
+		VisualScalingHighlightTexts[4] = "$FW_MENUTXT_OPTIONS_VisualScalingPregnancyBelly"
+	else
+		If (VisualScalingOptions.Length != 4)
+			VisualScalingOptions = New String[4]
+		EndIf
+		If (VisualScalingHighlightTexts.Length != 4)
+			VisualScalingHighlightTexts = New String[4]
+		EndIf
+		
+		VisualScalingOptions[0] = "$FW_MENU_OPTIONS_None"
+		VisualScalingHighlightTexts[0] = "$FW_MENUTXT_OPTIONS_VisualScalingNone"
+		
+		VisualScalingOptions[1] = "$FW_MENU_OPTIONS_VisualScaleSkeleton"
+		VisualScalingHighlightTexts[1] = "$FW_MENUTXT_OPTIONS_VisualScalingSkel"
+		
+		VisualScalingOptions[2] = "$FW_MENU_OPTIONS_VisualScaleSkeletonNi"
+		VisualScalingHighlightTexts[2] = "$FW_MENUTXT_OPTIONS_VisualScalingSkelNi"
+		
+		VisualScalingOptions[3] = "$FW_MENU_OPTIONS_VisualScaleWeight"
+		VisualScalingHighlightTexts[3] = "$FW_MENUTXT_OPTIONS_VisualScalingWeight"
+	endIf
 EndFunction
 
 Function SetVisualScalingKindOptions()
@@ -1691,6 +1899,8 @@ Function ResetMenuArrays()
 EndFunction
 
 function ResetConfigArrays()
+	UI_AddOnGlobal = new int[128]
+
 	UI_AddOnRaces = new int[128]
 	UI_AddOnPMS = new int[128]
 	UI_AddOnCME = new int[128]
@@ -1741,7 +1951,7 @@ Event OnConfigInit()
 EndEvent
 
 Event OnVersionUpdate(int version)
-	System = Game.GetFormFromFile(0xD63, "BeeingFemale.esm") as FWSystem
+	System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
 	content = Game.GetFormFromFile(0x3e31, "BeeingFemale.esm") as FWTextContents
 	If (CurrentVersion < FWVersion.GetMCMVersion()) && (CurrentVersion > 1)
 		; All upgrades run on System
@@ -1764,8 +1974,8 @@ Event OnPageReset(string page)
 	; Check if BeeingFemale is still loading
 	int LoadingStateSystem = FWUtility.SwitchInt(System==none, 255, System.LoadState)
 	int UpdateStateSystem = FWUtility.SwitchInt(System==none, 255, System.UpdateState)
-	int LoadingStateChildSettings = FWUtility.SwitchInt(System.ChildSettings==none, 255, System.ChildSettings.LoadingState)
-	int LoadingStateManager = FWUtility.SwitchInt(System.Manager==none, 255, System.Manager.LoadingState)
+	int LoadingStateChildSettings = FWUtility.SwitchInt(ChildSettings==none, 255, ChildSettings.LoadingState)
+	int LoadingStateManager = FWUtility.SwitchInt(Manager==none, 255, Manager.LoadingState)
 	
 	if (System.LoadState>0 || UpdateStateSystem>0 || LoadingStateChildSettings>0 || LoadingStateManager>0 || PageResetJobID>0) && bForceMenu==false
 		SetTitleText("Beeing Female v" + FWVersion.GetVersionString();/ + GetBanePatchVersion()/;) ;Tkc (LOverslab): now version can be easy changed in BeeingFemale\Version\BF_version.ini
@@ -1780,7 +1990,7 @@ Event OnPageReset(string page)
 	
 	; Chjeck if BeeingFemale is disabled or not.
 	; A reason could't be that SKSE or PapyrusUtil is not installed.
-	If System.ModEnabled.GetValueInt()==0 && System.CloakingSpellEnabled.GetValueInt()==0 && bForceMenu==false
+	If ModEnabled.GetValue() As int == 0 && CloakingSpellEnabled.GetValue() As int == 0 && bForceMenu==false
 		SetTitleText("Beeing Female v" + FWVersion.GetVersionString();/ + GetBanePatchVersion()/;) ;Tkc (LOverslab): now version can be easy changed in BeeingFemale\Version\BF_version.ini
 		AddTextOption("Beeing Female is Disabled","")
 		AddEmptyOption()
@@ -1798,6 +2008,8 @@ Event OnPageReset(string page)
 	PageResetJobID=2
 	; Reset AddOn Selection properties, when not in Debug-Page
 	if page != Pages[FW_MENU_PAGE_AddOn]
+		AddOnActiveGlobal = -1
+
 		AddOnActiveRaces=-1
 		AddOnActiveCME=-1
 		AddOnActiveMisc=-1
@@ -1806,11 +2018,11 @@ Event OnPageReset(string page)
 	
 	
 	; the bSSL Variable defines if SexLab Framework is active or not
-	bool bSSL = System.Manager.IsAddOnActive("BF_SSL")
+	bool bSSL = Manager.IsAddOnActive("BF_SSL")
 	int iOptionBSSL = OPTION_FLAG_NONE
 	PageResetJobID=4
-	bool bPlayerAllowed = System.IsValidateActor(Game.GetPlayer(), true) > 0
-	bool bPlayerIsFemale= Game.GetPlayer().GetLeveledActorBase().GetSex()==1
+	bool bPlayerAllowed = System.IsValidateActor(PlayerRef, true) > 0
+	bool bPlayerIsFemale= PlayerRef.GetLeveledActorBase().GetSex()==1
 	PageResetJobID=5
 	if !bSSL
 		;CreatureSperm=false
@@ -1840,7 +2052,7 @@ Event OnPageReset(string page)
 	
 	; Here some variables for future use are defined
 	int optionFlag = OPTION_FLAG_NONE
-	float currentTime = Utility.GetCurrentGameTime()
+	float currentTime = GameDaysPassed.GetValue()
 	int i = 0
 	int j = 0
 	PageResetJobID=12
@@ -1859,9 +2071,9 @@ Event OnPageReset(string page)
 		if System.Player;/!=none/;
 			AddToggleOptionST("TogglePlayerTimer", "$FW_MENU_SETTINGS_PlayerTimer", PlayerTimer)
 		endIf
-		if bPlayerInfoSpell;/==true/; && System.BeeingFemaleInfoSpell;/!=none/;
+		if bPlayerInfoSpell;/==true/; && BeeingFemaleInfoSpell;/!=none/;
 			AddMenuOptionST("MenuStatsSpell", "$FW_MENU_SETTINGS_StatsSpell", StatsSpellOptions[SpellType]) ;Tkc (Loverslab)
-			;AddToggleOptionST("ToggleShowStatsSpell", "$FW_MENU_SETTINGS_StatsSpell", Game.GetPlayer().hasSpell(System.BeeingFemaleInfoSpell))
+			;AddToggleOptionST("ToggleShowStatsSpell", "$FW_MENU_SETTINGS_StatsSpell", PlayerRef.hasSpell(System.BeeingFemaleInfoSpell))
 		endIf
 		AddToggleOptionST("ToggleAbortus","$FW_MENU_PREGNANCY_Abortus", abortus, optionFlag)
 		
@@ -1869,6 +2081,8 @@ Event OnPageReset(string page)
 		AddToggleOptionST("TogglePlayAnimations","$FW_MENU_SETTINGS_PlayAnimations", PlayAnimations, OPTION_FLAG_NONE)
 		
 		AddToggleOptionST("ToggleImpregnateLoreFriendly","$FW_MENU_Impregnate_LoreFriendly", ImpregnateLoreFriendly, OPTION_FLAG_NONE)
+
+		AddToggleOptionST("ToggleShowDebugMessage","$FW_MENU_ShowDebugMessage", ShowDebugMessage, OPTION_FLAG_NONE)
 		
 		if(bSexLab )
 			; Creature Sperm is only for SexLab Framework allowed
@@ -1898,6 +2112,11 @@ Event OnPageReset(string page)
 		AddToggleOptionST("ToggleNPCMood", "$FW_MENU_SETTINGS_NPCMood", NPCMenstrualMood)
 		AddToggleOptionST("ToggleNPCNoTalk", "$FW_MENU_SETTINGS_NPCWayward", NPCMenstrualNoTalk)
 		AddToggleOptionST("ToggleNPCBabySpawn", "$FW_MENU_SETTINGS_NPCSpawnBabies", NPCBornChild)
+		AddToggleOptionST("ToggleFemaleSummonedCanBecomePregnant", "$FW_MENU_SETTINGS_FemaleSummonedCanBecomePregnant", FemaleSummonedCanBecomePregnant)
+		AddToggleOptionST("ToggleMaleSummonedCanImpregnate", "$FW_MENU_SETTINGS_MaleSummonedCanImpregnate", MaleSummonedCanImpregnate)
+		AddToggleOptionST("ToggleFemaleGhostCanBecomePregnant", "$FW_MENU_SETTINGS_FemaleGhostCanBecomePregnant", FemaleGhostCanBecomePregnant)
+		AddToggleOptionST("ToggleMaleGhostCanImpregnate", "$FW_MENU_SETTINGS_MaleGhostCanImpregnate", MaleGhostCanImpregnate)
+		AddToggleOptionST("ToggleElderFemaleCanBecomePregnant", "$FW_MENU_SETTINGS_ElderFemaleCanBecomePregnant", ElderFemaleCanBecomePregnant)
 		AddToggleOptionST("ToggleNPCHaveItems", "$FW_MENU_SETTINGS_NPCHaveItems", NPCHaveItems)
 	
 	; Menstrual Cycle Properties
@@ -1919,7 +2138,7 @@ Event OnPageReset(string page)
 		AddHeaderOption("$FW_MENU_CYCLE_TitleMenstruation")
 		AddSliderOptionST("SliderPMSChance", "$FW_MENU_CYCLE_PMSChance", PMSChance, "{1}%")
 		AddSliderOptionST("SliderPMSNoEffects", "$FW_MENU_CYCLE_PMSEffects", PMSEffects, "$FW_MENU_BASIC_Effects")
-		AddToggleOptionST("ToggleMenstrualBlood", "$FW_MENU_CYCLE_MenstrualBlood", System.GlobalMenstruating.GetValueInt()==1)
+		AddToggleOptionST("ToggleMenstrualBlood", "$FW_MENU_CYCLE_MenstrualBlood", GlobalMenstruating.GetValue() As int == 1)
 		AddSliderOptionST("SliderMenstrualCrampsChance", "$FW_MENU_CYCLE_MenstrualCramps", MenstrualCramps, "{1}%")
 		
 		; Right column
@@ -1960,6 +2179,10 @@ Event OnPageReset(string page)
 		
 		AddMenuOptionST("MenuBabySpawn", "$FW_MENU_PREGNANCY_SpawnType", BabySpawnOptions[BabySpawn],OPTION_FLAG_NONE)
 		AddMenuOptionST("MenuBabySpawnNPC", "$FW_MENU_PREGNANCY_SpawnTypeNPC", BabySpawnOptions[BabySpawnNPC], SwitchInt(RelevantFollower || RelevantNPC,OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
+		AddSliderOptionST("SliderBabyRaceDeterm", "$FW_MENU_PREGNANCY_BabyRaceDeterm", myBFA_ProbChildRaceDeterminedByFather.GetValue() As int, "{0}%")
+		AddSliderOptionST("SliderBabySexDeterm", "$FW_MENU_PREGNANCY_BabySexDeterm", myBFA_ProbChildSexDetermMale.GetValue() As int, "{0}%")
+		AddSliderOptionST("SliderMatureTimeInDays", "$FW_MENU_PREGNANCY_MatureTimeInDays", BFOpt_MatureTimeInDays.GetValue() As int, "$FW_MENU_BASIC_Days")
+		;AddToggleOptionST("ToggleBabyNoEssential", "$FW_MENU_SETTINGS_ToggleBabyNoEssential", ChildNoEssential)
 	
 		; Right column
 		SetCursorPosition(1)
@@ -1969,7 +2192,7 @@ Event OnPageReset(string page)
 		AddMenuOptionST("MenuScalingKind", "$FW_MENU_PREGNANCY_VisualScalingKind", VisualScalingKindOptions[VisualScalingKind])
 		
 		optionFlag = OPTION_FLAG_DISABLED
-		If VisualScaling == 1 || VisualScaling == 2
+		If VisualScaling == 1 || VisualScaling == 2 || VisualScaling == 4
 			optionFlag = OPTION_FLAG_NONE
 		EndIf
 		AddEmptyOption()
@@ -2093,14 +2316,22 @@ Event OnPageReset(string page)
 		int c = StorageUtil.FormListCount(none, "FW.Babys")
 		int ind = 0
 		int n = 0
-		actor player = Game.GetPlayer()
+		actor player = PlayerRef
 		PageResetJobID=21
 		while ind<c
-			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", ind) as FWChildActor
+;			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", ind) as FWChildActor
+			Actor ca = StorageUtil.FormListGet(none, "FW.Babys", ind) as Actor
 			If(ca;/!=none/;)
-				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
+;				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
+				FWChildActor FWChildca = ca as FWChildActor
+				if(FWChildca)
+					If((FWChildca as FWChildActorPlayer);/!=none/; || StorageUtil.GetFormValue(FWChildca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(FWChildca, "FW.Child.Father", none) == player)
+						UI_Child[n] = AddTextOption(FWChildca.GetDisplayName(), "")
+						n+=1
+					endIf
+				elseIf((StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player) || (StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player))
 					UI_Child[n] = AddTextOption(ca.GetDisplayName(), "")
-					n+=1
+					n += 1
 				endif
 			endif
 			ind+=1
@@ -2112,8 +2343,52 @@ Event OnPageReset(string page)
 		PageResetJobID=22
 		int offset = 0
 		
+		; Check if a Global-AddOn was selected. Display the Global-AddOn Infos
+		if(AddOnActiveGlobal >= 0)
+			string f = UIS_AddOnGlobal[AddOnActiveGlobal]
+			bool bAddOnEnabled = FWUtility.getIniCBool("AddOn", f, "AddOn", "enabled", false)
+			bool bAddOnLocked = FWUtility.getIniCBool("AddOn", f, "AddOn", "locked", false)
+			string sAddOnName = FWUtility.getIniCString("AddOn", f, "AddOn", "name", "")
+			string sAddOnType = FWUtility.getIniCString("AddOn", f, "AddOn", "type", "")
+			string author = FWUtility.getIniCString("AddOn", f, "AddOn", "author", f)
+			string required = FWUtility.getIniCString("AddOn", f, "AddOn", "required")
+			bool bUse = true
+			if required;/!=""/;
+				string[] requiredA = StringUtil.Split(required, ",")
+				if(FWUtility.AreModsInstalled(requiredA))
+				else
+					bUse = false
+				endif
+			endif
+			
+			;PageResetJobID=25
+			SetCursorFillMode(LEFT_TO_RIGHT)
+			SetCursorPosition(offset)
+			AddHeaderOption("Global AddOn: " + sAddOnName)
+			UI_AddOnBack = AddTextOption("", "$FW_MENU_ADDON_Back")
+			UI_Activator = AddToggleOption("$FW_MENU_ADDON_Activate", ((bAddOnEnabled || bAddOnLocked) && bUse), SwitchInt((bAddOnLocked || !bUse), OPTION_FLAG_DISABLED, OPTION_FLAG_NONE))
+			offset += 4
+			SetCursorPosition(offset)
+			if author;/!=""/;
+				AddTextOption("$FW_MENU_ADDON_Author", author, OPTION_FLAG_DISABLED)
+			endif
+			
+			if(!bUse)
+				offset += 4
+				offset += (offset % 2)
+				SetCursorPosition(offset)
+				string[] requiredA = StringUtil.Split(required, ",")
+				int k = requiredA.length
+				while(k > 0)
+					k -= 1
+					if FWUtility.IsModInstalled(requiredA[k])
+					else
+						AddTextOption("<font color='#ff0000'>" + requiredA[k] + "</font>", "")
+					endif
+				endWhile
+			endif		
 		; Check if an Race-AddOn was selected. Display the Race-AddOn Infos
-		if AddOnActiveRaces>=0
+		elseif AddOnActiveRaces>=0
 			string f = UIS_AddOnRaces[AddOnActiveRaces]
 			
 			bool bAddOnEnabled=FWUtility.getIniCBool("AddOn",f,"AddOn","enabled",false)
@@ -2125,7 +2400,9 @@ Event OnPageReset(string page)
 			bool bUse=true
 			if required;/!=""/;
 				string[] requiredA = StringUtil.Split(required,",")
-				if FWUtility.AreModsInstalled(requiredA)==false
+;				if FWUtility.AreModsInstalled(requiredA)==false
+				if(FWUtility.AreModsInstalled(requiredA))
+				else
 					bUse=false
 				endif
 			endif
@@ -2150,9 +2427,9 @@ Event OnPageReset(string page)
 			i=0
 			int xRaces=FWUtility.getIniInt("AddOn",f,"races",0)
 			int racesListed=0
-			Keyword keywordVampire = Keyword.GetKeyword("Vampire")
-			Keyword keywordBeast = Keyword.GetKeyword("IsBeastRace")
-			Keyword keywordCreature = Keyword.GetKeyword("ActorTypeCreature")
+			;Keyword keywordVampire = Keyword.GetKeyword("Vampire")
+			;Keyword keywordBeast = Keyword.GetKeyword("IsBeastRace")
+			;Keyword keywordCreature = Keyword.GetKeyword("ActorTypeCreature")
 			if xRaces==0
 				; There is only the default category - so only 1 Race Part
 				string ids=FWUtility.getIniCString("AddOn",f,"AddOn","id")
@@ -2161,7 +2438,9 @@ Event OnPageReset(string page)
 					int c2=saRaces.length
 					while c2>0
 						c2-=1
-						race r=FWUtility.GetFormFromString(saRaces[c2]) as Race
+;						race r=FWUtility.GetFormFromString(saRaces[c2]) as Race		// GetFormFromString is DEPRECATED in SE! Use FWUtility.GetFormFromStringSE() instead!
+						race r = FWUtility.GetFormFromStringSE(saRaces[c2]) as Race
+
 						if r;/!=none/; && racesListed<80 ; List a maximum of 80 races - Otherwise it may give a array overflow from MCM
 							string strR=r.GetName()
 							if r.HasKeyword(keywordVampire)
@@ -2192,7 +2471,9 @@ Event OnPageReset(string page)
 						int c2=saRaces.length
 						while c2>0
 							c2-=1
-							race r=FWUtility.GetFormFromString(saRaces[c2]) as Race
+;							race r=FWUtility.GetFormFromString(saRaces[c2]) as Race		// GetFormFromString is DEPRECATED in SE! Use FWUtility.GetFormFromStringSE() instead!
+							race r = FWUtility.GetFormFromStringSE(saRaces[c2]) as Race
+							
 							if r;/!=none/; && racesListed<80 ; List a maximum of 80 races - Otherwise it may give a array overflow from MCM
 								string strR=r.GetName()+" "
 								if r.HasKeyword(keywordVampire)
@@ -2246,12 +2527,14 @@ Event OnPageReset(string page)
 			bool bUse=true
 			if required;/!=""/;
 				string[] requiredA = StringUtil.Split(required,",")
-				if FWUtility.AreModsInstalled(requiredA)==false
+;				if FWUtility.AreModsInstalled(requiredA)==false
+				if(FWUtility.AreModsInstalled(requiredA))
+				else
 					bUse=false
 				endif
 			endif
 			
-			actor ply = Game.GetPlayer()
+			actor ply = PlayerRef
 			
 			SetCursorFillMode(LEFT_TO_RIGHT)
 			SetCursorPosition(offset)
@@ -2272,17 +2555,18 @@ Event OnPageReset(string page)
 			offset+=2 + (offset % 2)
 			i=0
 			
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsFollicular", f, "FollicularPhase", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsOvulation", f, "Ovulation", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsLutheal", f, "LuthealPhase", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsPMS", f, "PMS", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsMenstruation", f, "Menstruation", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester1", f, "Trimester1", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester2", f, "Trimester2", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester3", f, "Trimester3", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsLaborPain", f, "LaborPains", System.Player.currentState==0, ply)
-			offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsRecovery", f, "Recovery", System.Player.currentState==0, ply)
-			
+			if System.Player
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsFollicular", f, "FollicularPhase", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsOvulation", f, "Ovulation", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsLutheal", f, "LuthealPhase", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsPMS", f, "PMS", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsMenstruation", f, "Menstruation", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester1", f, "Trimester1", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester2", f, "Trimester2", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsTrimester3", f, "Trimester3", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsLaborPain", f, "LaborPains", System.Player.currentState==0, ply)
+				offset = DrawCME2(offset, "$FW_MENU_ADDON_EffectsRecovery", f, "Recovery", System.Player.currentState==0, ply)
+			endIf
 			if !bUse
 				offset+=4
 				offset+=(offset % 2)
@@ -2310,7 +2594,9 @@ Event OnPageReset(string page)
 			bool bUse=true
 			if required;/!=""/;
 				string[] requiredA = StringUtil.Split(required,",")
-				if FWUtility.AreModsInstalled(requiredA)==false
+;				if FWUtility.AreModsInstalled(requiredA)==false
+				if(FWUtility.AreModsInstalled(requiredA))
+				else
 					bUse=false
 				endif
 			endif
@@ -2344,6 +2630,7 @@ Event OnPageReset(string page)
 		
 		; No AddOn was selected. Print a list with all AddOns
 		else
+;			Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - Loading AddOns...")
 			; Var Definitions
 			int iFCount=FWUtility.GetFileCount("AddOn","ini")
 			int iCMisc=0
@@ -2358,10 +2645,17 @@ Event OnPageReset(string page)
 			string[] sNMisc = new string[128]
 			string[] sNRace = new string[128]
 			string[] sNCME = new string[128]
+
+			int iCGlobal = 0
+			UIS_AddOnGlobal = new string[128]
+			bool[] bEGlobal = new bool[128]
+			string[] sNGlobal = new string[128]
 			
 			string[] regGroup=new string[128]
 			int cGroup=0
 			
+;			Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - Number of AddOns is " + iFCount)
+
 			; Read in all AddOns
 			while iFCount>0
 				iFCount-=1
@@ -2370,43 +2664,108 @@ Event OnPageReset(string page)
 				bool bAddOnLocked=FWUtility.getIniCBool("AddOn",f,"AddOn","locked",false)
 				bool bAddOnHidden=FWUtility.getIniCBool("AddOn",f,"AddOn","hidden",false)
 				string sAddOnName=FWUtility.getIniCString("AddOn",f,"AddOn","name",f)
-				string sAddOnType=FWUtility.getIniCString("AddOn",f,"AddOn","type","")
+;				string sAddOnType=FWUtility.getIniCString("AddOn",f,"AddOn","type","")
+				string sAddOnType = FWUtility.toLower(FWUtility.getIniCString("AddOn", f, "AddOn", "type", ""))
 				string required = FWUtility.getIniCString("AddOn",f,"AddOn","required")
+
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bAddOnEnabled = " + bAddOnEnabled)
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bAddOnLocked = " + bAddOnLocked)
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bAddOnHidden = " + bAddOnHidden)
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: sAddOnName = " + sAddOnName)
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: sAddOnType = " + sAddOnType)
+;				Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: required = " + required)
+
 				bool bUse=true
 				if required;/!=""/;
 					string[] requiredA = StringUtil.Split(required,",")
-					if FWUtility.AreModsInstalled(requiredA)==false
+
+					int myIndex = 0
+					int NumOfRequired = requiredA.Length
+					while(myIndex < NumOfRequired)
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: " + (myIndex + 1) + "th required plugin is = " + requiredA[myIndex])
+						myIndex += 1
+					endWhile
+
+;					if FWUtility.AreModsInstalled(requiredA)==false
+					if(FWUtility.AreModsInstalled(requiredA))
+					else
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: requirement is not satisfied...")
 						bUse=false
 					endif
 				endif
 				
 				if bAddOnHidden==false && sAddOnName;/!=""/;
-					if sAddOnType=="race" || sAddOnType=="Race" || sAddOnType=="RACE" || sAddOnType=="RACe"
+;					if sAddOnType=="race" || sAddOnType=="Race" || sAddOnType=="RACE" || sAddOnType=="RACe"
+					if(sAddOnType == "global")
+						UIS_AddOnGlobal[iCGlobal] = f
+						bEGlobal[iCGlobal] = (bAddOnEnabled || bAddOnLocked) && bUse
+						sNGlobal[iCGlobal] = FWUtility.SwitchString(sAddOnName == "", f, sAddOnName)
+						
+						iCGlobal += 1
+					elseif sAddOnType=="race"; || sAddOnType=="Race" || sAddOnType=="RACE" || sAddOnType=="RACe"
 						UIS_AddOnRaces[iCRace]=f
 						bERace[iCRace]=(bAddOnEnabled || bAddOnLocked) && bUse
 						sNRace[iCRace]=FWUtility.SwitchString(sAddOnName=="",f,sAddOnName)
+
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: UIS_AddOnRaces[" + iCRace + "] is " + UIS_AddOnRaces[iCRace])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bERace[" + iCRace + "] is " + bERace[iCRace])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: sNRace[" + iCRace + "] is " + sNRace[iCRace])
+
 						iCRace+=1
-					elseif sAddOnType=="cme" || sAddOnType=="Cme" || sAddOnType=="CME" || sAddOnType=="CMe"
+;					elseif sAddOnType=="cme" || sAddOnType=="Cme" || sAddOnType=="CME" || sAddOnType=="CMe"
+					elseif sAddOnType=="cme"; || sAddOnType=="Cme" || sAddOnType=="CME" || sAddOnType=="CMe"
 						UIS_AddOnCME[iCCME]=f
 						bECME[iCCME]=(bAddOnEnabled || bAddOnLocked) && bUse
 						sNCME[iCCME]=FWUtility.SwitchString(sAddOnName=="",f,sAddOnName)
+
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: UIS_AddOnCME[" + iCCME + "] is " + UIS_AddOnCME[iCCME])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bECME[" + iCCME + "] is " + bECME[iCCME])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: sNCME[" + iCCME + "] is " + sNCME[iCCME])
+
 						iCCME+=1
-					elseif sAddOnType=="misc" || sAddOnType=="Misc" || sAddOnType=="MISC" || sAddOnType=="MISc"
+;					elseif sAddOnType=="misc" || sAddOnType=="Misc" || sAddOnType=="MISC" || sAddOnType=="MISc"
+					elseif sAddOnType=="misc"; || sAddOnType=="Misc" || sAddOnType=="MISC" || sAddOnType=="MISc"
 						UIS_AddOnMisc[iCMisc]=f
 						bEMisc[iCMisc]=(bAddOnEnabled || bAddOnLocked) && bUse
 						sNMisc[iCMisc]=FWUtility.SwitchString(sAddOnName=="",f,sAddOnName)
+
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: UIS_AddOnMisc[" + iCMisc + "] is " + UIS_AddOnMisc[iCMisc])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: bEMisc[" + iCMisc + "] is " + bEMisc[iCMisc])
+;						Debug.Trace("BeeingFemaleSE_Opt - FWSystemConfig - " + iFCount + "th AddOn: sNMisc[" + iCMisc + "] is " + sNMisc[iCMisc])
+
 						iCMisc+=1
 					endif
 				endif
 			endwhile
 			
 			
-			; Print Race AddOns
+			; Print AddOns
 			SetCursorFillMode(LEFT_TO_RIGHT)
 			i = 0
 			j = 0
+			
+			; Print Global AddOns
+			SetCursorPosition(offset + 2 + i)
+			UI_AddOnGlobalWarning = AddTextOption("", "$FW_MENU_ADDON_Global_Warning")
+			While(i < iCGlobal)
+				SetCursorPosition(offset + 3 + i)
+				UI_AddOnGlobal[i] = AddToggleOption(sNGlobal[i], bEGlobal[i])
+				i += 1
+			EndWhile
+			SetCursorPosition(offset)
+			AddHeaderOption("$FW_MENU_ADDON_Global")
+			if(Messages <= 1)
+				SetCursorPosition(offset + 1)
+				AddTextOption("", iCGlobal)
+			endif			
+			
+			; Print Race AddOns
+			offset += i + (i % 2) + 4
+			SetCursorPosition(offset + 2)
+			UI_AddOnRaceWarning = AddTextOption("", "$FW_MENU_ADDON_Race_Warning")
+			i = 0
 			While i<iCRace
-				SetCursorPosition(offset+2+i)
+				SetCursorPosition(offset + 3 + i)
 				UI_AddOnRaces[i] = AddToggleOption(sNRace[i], bERace[i])
 				i += 1
 			EndWhile
@@ -2461,8 +2820,8 @@ Event OnPageReset(string page)
 		
 		; Display the Male Informations
 		If System.PlayerMale;/!=none/;
-			actor PlayerMaleActor=Game.GetPlayer()
-			actor[] females = System.Controller.getWomansWithSperm(PlayerMaleActor,true)
+			actor PlayerMaleActor=PlayerRef
+			actor[] females = Controller.getWomansWithSperm(PlayerMaleActor,true)
 			int c=0
 			PageResetJobID=32
 			while c<females.length
@@ -2479,27 +2838,29 @@ Event OnPageReset(string page)
 		ElseIf System.Player;/!=none/;
 			PageResetJobID=33
 			; Left column
-			If System.Player.currentState>=4 && System.Player.currentState<20
-				AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
-				AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
-				AddTextOption("$FW_MENU_INFO_NumberOfChildren", getNumberOfChilds())
-				
-				float UnbornHealth = StorageUtil.GetFloatValue(Game.GetPlayer(),"FW.UnbornHealth",100.0)
-				int abortusPhase = StorageUtil.GetIntValue(Game.GetPlayer(), "FW.Abortus",0)
-				if abortusPhase==0
-					AddTextOption("$FW_MENU_INFO_UnbornsHealth", UnbornHealth+"%")
-				else
-					AddTextOption("$FW_MENU_INFO_Abortus", "$FW_MENU_OPTIONS_Abortus"+abortusPhase)
-				endif
-			elseIf System.Player.currentState>=20 && System.Player.currentState<40
-				AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
-				AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
+			if((System.Player.currentState >= 4) && (System.Player.currentState < 40))
+				If System.Player.currentState<20
+					AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
+					AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
+					AddTextOption("$FW_MENU_INFO_NumberOfChildren", getNumberOfChilds())
+					
+					float UnbornHealth = StorageUtil.GetFloatValue(PlayerRef,"FW.UnbornHealth",100.0)
+					int abortusPhase = StorageUtil.GetIntValue(PlayerRef, "FW.Abortus",0)
+					if abortusPhase==0
+						AddTextOption("$FW_MENU_INFO_UnbornsHealth", UnbornHealth+"%")
+					else
+						AddTextOption("$FW_MENU_INFO_Abortus", "$FW_MENU_OPTIONS_Abortus"+abortusPhase)
+					endif
+				else;If System.Player.currentState>=20 && System.Player.currentState<40
+					AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
+					AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
+				endIf
 			Else
 				AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_No")
 				AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
-				AddTextOption("$FW_MENU_INFO_PregnancyChance", Math.Floor(System.Controller.getRelativePregnancyChance(Game.GetPlayer()))+"%")
+				AddTextOption("$FW_MENU_INFO_PregnancyChance", Math.Floor(Controller.getRelativePregnancyChance(PlayerRef))+"%")
 			EndIf
-			if System.Controller.IsPaused(Game.GetPlayer());/==true/;
+			if Controller.IsPaused(PlayerRef);/==true/;
 				AddTextOption("$FW_MENU_INFO_TimeRemaining", "$FW_MENU_OPTIONS_Paused")
 			else
 				AddTextOption("$FW_MENU_INFO_TimeRemaining", getRemainingTime())
@@ -2510,42 +2871,44 @@ Event OnPageReset(string page)
 		
 			AddEmptyOption()
 			AddHeaderOption("$FW_MENU_INFO_StateInformation")
-			If System.Player.currentState>=0 && System.Player.currentState<4
-				If System.Player.currentState == 1
-					AddTextOption("$FW_MENU_INFO_EggState", GetEggState())
-					AddTextOption("$FW_MENU_INFO_OvulationPain", OvulationPainString())
-				ElseIf System.Player.currentState == 3 ; ; Menstruation
-					AddTextOption("$FW_MENU_INFO_MenstrualPain", MenstruationPainString())
+			if((System.Player.currentState >= 0) && (System.Player.currentState < 20))
+				If System.Player.currentState<4
+					If System.Player.currentState == 1
+						AddTextOption("$FW_MENU_INFO_EggState", GetEggState())
+						AddTextOption("$FW_MENU_INFO_OvulationPain", OvulationPainString())
+					ElseIf System.Player.currentState == 3 ; ; Menstruation
+						AddTextOption("$FW_MENU_INFO_MenstrualPain", MenstruationPainString())
+					EndIf
+				Else;if System.Player.currentState>=4 && System.Player.currentState<20
+					if PlayerRef.hasspell(Effect_Vorwehen);/==true/;
+						AddTextOption("$FW_MENU_INFO_Vorwehen","")
+					endif
+					if PlayerRef.hasspell(Effect_Eroeffnungswehen);/==true/;
+						AddTextOption("$FW_MENU_INFO_Eroeffnungswehen","")
+					endif
+					if PlayerRef.hasspell(Effect_Presswehen);/==true/;
+						AddTextOption("$FW_MENU_INFO_Presswehen","")
+					endif
+					if PlayerRef.hasspell(Effect_Nachwehen);/==true/;
+						AddTextOption("$FW_MENU_INFO_Nachwehen","")
+					endif
+					If System.Player.currentState == 7
+					EndIf
 				EndIf
-			Elseif System.Player.currentState>=4 && System.Player.currentState<20
-				if Game.GetPlayer().hasspell(System.Effect_Vorwehen);/==true/;
-					AddTextOption("$FW_MENU_INFO_Vorwehen","")
-				endif
-				if Game.GetPlayer().hasspell(System.Effect_Eroeffnungswehen);/==true/;
-					AddTextOption("$FW_MENU_INFO_Eroeffnungswehen","")
-				endif
-				if Game.GetPlayer().hasspell(System.Effect_Presswehen);/==true/;
-					AddTextOption("$FW_MENU_INFO_Presswehen","")
-				endif
-				if Game.GetPlayer().hasspell(System.Effect_Nachwehen);/==true/;
-					AddTextOption("$FW_MENU_INFO_Nachwehen","")
-				endif
-				If System.Player.currentState == 7
-				EndIf
-			EndIf
+			endIf
 			
 			; Right column
 			SetCursorPosition(1)
 			
 			AddHeaderOption("$FW_MENU_INFO_TotalSperm")
 			
-			actor xPlayer = Game.GetPlayer()
+			actor xPlayer = PlayerRef
 			i = 0
 			j = 1
 			int c = StorageUtil.FormListCount(xPlayer,"FW.SpermName")
 			PageResetJobID=34
 			while i < c
-				if (StorageUtil.FloatListGet(xPlayer,"FW.SpermAmount",i) > 0.0) && (StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor;/!=none/;) && (currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i) <= System.cfg.SpermDuration)
+				if (StorageUtil.FloatListGet(xPlayer,"FW.SpermAmount",i) > 0.0) && (StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor;/!=none/;) && (currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i) <= SpermDuration)
 					
 					UI_SpermInside[(j - 1)] = AddTextOption("(" + j + ") " + (StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor).GetLeveledActorBase().GetName(), GetTimeString(currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i),true,"-"))
 					j += 1
@@ -2578,7 +2941,7 @@ Event OnPageReset(string page)
 			AddTextOptionST("TextResetPC", "$FW_MENU_CHEAT_ResetPC", "$FW_MENU_OPTIONS_Reset")
 		
 			if(targetNpc;/!=none/;)
-				if(targetNpc.HasSpell(System.BeeingFemaleSpell))
+				if(targetNpc.HasSpell(BeeingFemaleSpell))
 					AddHeaderOption(targetNpc.GetDisplayName())
 					AddTextOptionST("TextResetNPC", "$FW_MENU_CHEAT_ResetNPC", "$FW_MENU_OPTIONS_Reset")
 					AddTextOptionST("TextUpdateNPC", "$FW_MENU_CHEAT_Update", "$FW_MENU_OPTIONS_Refresh")
@@ -2608,7 +2971,7 @@ Event OnPageReset(string page)
 				AddTextOptionST("TextSpawnChildren", "$FW_MENU_CHEAT_SpawnChildren", "")
 			endif
 			
-			AddToggleOptionST("ToggleCoupleWidget", "$FW_MENU_CHEAT_CoupleMaker", System.CoupleWidget.enabled)
+			AddToggleOptionST("ToggleCoupleWidget", "$FW_MENU_CHEAT_CoupleMaker", CoupleWidget.enabled)
 		
 			; Right column
 			SetCursorPosition(1)
@@ -2632,8 +2995,8 @@ Event OnPageReset(string page)
 			
 				Else
 					optionFlag = SwitchInt((System.Player.currentState>=4 && System.Player.currentState<20), OPTION_FLAG_DISABLED, OPTION_FLAG_NONE)
-					AddToggleOptionST("TogglePlayerFertility", "$FW_MENU_CHEAT_CanBecomePregnant", System.Controller.canBecomePregnant(Game.GetPlayer()), optionFlag)
-					AddToggleOptionST("TogglePlayerPMS", "$FW_MENU_CHEAT_CanBecomePMS", System.Controller.canBecomePMS(Game.GetPlayer()), optionFlag)
+					AddToggleOptionST("TogglePlayerFertility", "$FW_MENU_CHEAT_CanBecomePregnant", Controller.canBecomePregnant(PlayerRef), optionFlag)
+					AddToggleOptionST("TogglePlayerPMS", "$FW_MENU_CHEAT_CanBecomePMS", Controller.canBecomePMS(PlayerRef), optionFlag)
 					AddEmptyOption()
 				
 					optionFlag = OPTION_FLAG_NONE ; IntSwitch(System.Player.isChangingState, OPTION_FLAG_DISABLED, OPTION_FLAG_NONE)
@@ -2649,14 +3012,14 @@ Event OnPageReset(string page)
 						if(targetChild;/!=none/;)
 							AddTextOptionST("TextChildAddLevel", "$FW_MENU_CHEAT_ChildAddLevel", targetChild.GetLevel(), FWUtility.SwitchInt(targetChild.GetLevel() < FWChildSettings.ChildMaxLevel(), OPTION_FLAG_NONE,OPTION_FLAG_DISABLED))
 						elseif(targetNpc.GetLeveledActorBase().GetSex()==1)
-							AddTextOptionST("TextNpcChangeState", "$FW_MENU_CHEAT_ChangeState", getStateNameTranslated(System.Controller.GetNextState(targetNpc)))
+							AddTextOptionST("TextNpcChangeState", "$FW_MENU_CHEAT_ChangeState", getStateNameTranslated(Controller.GetNextState(targetNpc)))
 							AddTextOptionST("TextNpcJobToDo", "$FW_MENU_CHEAT_JobToDo", GetJobTitle(targetNpc), FWUtility.SwitchInt(NPCCanBecomePregnant,OPTION_FLAG_NONE,OPTION_FLAG_DISABLED))
 						endif
 					endif
 					
 					
 					; Display the Storage Variables for the player
-					actor p = Game.GetPlayer()
+					actor p = PlayerRef
 					int iFW
 					int cFW
 					AddHeaderOption("StorageUtil - "+p.GetLeveledActorBase().GetName())
@@ -2713,8 +3076,8 @@ Event OnPageReset(string page)
 				int k = 0
 				PageResetJobID=41
 				while k<120
-					If System.ChildSettings.ChildPerkFile[k];/!=""/;
-						string x1 = System.ChildSettings.ChildPerkFile[k]
+					If ChildSettings.ChildPerkFile[k];/!=""/;
+						string x1 = ChildSettings.ChildPerkFile[k]
 						string x2 = perkTestResult[k]
 						UI_TestPerk[k] = AddTextOption(x1, x2, flg)
 					EndIf
@@ -2735,7 +3098,7 @@ Event OnPageReset(string page)
 				SetCursorPosition(0)
 				
 				AddHeaderOption("$FW_MENU_CHEAT_TestPerks")
-				AddHeaderOption(System.ChildSettings.ChildPerkFile[selectedPerk])
+				AddHeaderOption(ChildSettings.ChildPerkFile[selectedPerk])
 				
 				int items=0
 				string res = perkTestResultText[selectedPerk]
@@ -2818,17 +3181,17 @@ Event OnPageReset(string page)
 		else
 			AddTextOption("$FW_MENU_SYSTEM_VersionMCM", CurrentVersion)
 		endif
-		int Version = FWVersion.GetAnimationVersion() ;Tkc (Loverslab): optimization
-		if Version;/Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion")/; == FWVersion.GetAnimationVersionRequired()
-			AddTextOption("$FW_MENU_SETTINGS_PlayAnimations", Version;/Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion")/;)
-		else;if Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") != FWVersion.GetAnimationVersionRequired()
-			AddTextOption("$FW_MENU_SETTINGS_PlayAnimations", Version;/Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion")/; + "/" + FWVersion.GetAnimationVersionRequired())
+		int Version = GetAnimationVersion() ;Tkc (Loverslab): optimization
+		if Version;/PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion")/; == FWVersion.GetAnimationVersionRequired()
+			AddTextOption("$FW_MENU_SETTINGS_PlayAnimations", Version;/PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion")/;)
+		else;if PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") != FWVersion.GetAnimationVersionRequired()
+			AddTextOption("$FW_MENU_SETTINGS_PlayAnimations", Version;/PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion")/; + "/" + FWVersion.GetAnimationVersionRequired())
 		endif
 		AddHeaderOption("$FW_MENU_SYSTEM")
 		AddTextOptionST("TextRefreshAddOn", "$FW_MENU_CHEAT_RefreshAddOn", "$FW_MENU_OPTIONS_Refresh")
 		AddTextOptionST("TextResetSystem", "$FW_MENU_SYSTEM_Reset", "$FW_MENU_OPTIONS_Execute")
 		AddTextOptionST("TextUninstall", "$FW_MENU_SYSTEM_Uninstall", "$FW_MENU_OPTIONS_Execute")
-		AddToggleOptionST("ToggleOnActiveMagicEffects", "$FW_MENU_OPTIONS_DisableOnMagicEffectApplyEvents", StorageUtil.GetIntValue(System.PlayerRef, "FWAbiltyOnMEApplyDisabled")) ;Tkc (LoversLab): string moved to mcm txt
+		AddToggleOptionST("ToggleOnActiveMagicEffects", "$FW_MENU_OPTIONS_DisableOnMagicEffectApplyEvents", StorageUtil.GetIntValue(PlayerRef, "FWAbiltyOnMEApplyDisabled")) ;Tkc (LoversLab): string moved to mcm txt
 		
 		AddHeaderOption("$FW_MENU_SYSTEM_Profile")
 		if FWUtility.GetFileCount("Profile")>0
@@ -2859,7 +3222,7 @@ Event OnPageReset(string page)
 		AddTextOption("BeeingFemale Animations", cTxt[getCompatiblity_Animation()],OPTION_FLAG_DISABLED)
 		
 		if bBathingInSkyrim
-			bool bBiS = System.Manager.IsAddOnActive("BF_BathingInSkyrim")
+			bool bBiS = Manager.IsAddOnActive("BF_BathingInSkyrim")
 			if bBiS;/==true/;
 				AddTextOption("Bathing in Skyrim", cTxt[1],OPTION_FLAG_DISABLED)
 			else
@@ -2941,7 +3304,7 @@ int function getCompatiblity_FNIS()
 endFunction
 
 int function getCompatiblity_Animation()
-	int Version = FWVersion.GetAnimationVersion() ;Tkc (Loverslab): Note. For correct result Player must have 3dloaded in 3rd person view or will be error here.
+	int Version = GetAnimationVersion() ;Tkc (Loverslab): Note. For correct result Player must have 3dloaded in 3rd person view or will be error here.
 	if !Version
 		return 0
 	elseif Version < FWVersion.GetAnimationVersionRequired()
@@ -2959,9 +3322,9 @@ Event OnOptionSelect(int option)
 		If System.PlayerMale;/!=none/;
 			int i= UI_SpermInside.Find(option)
 			if i>=0
-				;actor PlayerMaleActor=Game.GetPlayer() ;Tkc (Loverslab): optimization
-				actor[] females = System.Controller.getWomansWithSperm(System.PlayerRef,true)
-				System.Controller.showRankedInfoBox(females[i],100)
+				;actor PlayerMaleActor=PlayerRef ;Tkc (Loverslab): optimization
+				actor[] females = Controller.getWomansWithSperm(PlayerRef,true)
+				Controller.showRankedInfoBox(females[i],100)
 			endif
 		endif
 	
@@ -2972,18 +3335,33 @@ Event OnOptionSelect(int option)
 		int c = StorageUtil.FormListCount(none, "FW.Babys")
 		int i = 0
 		int n = 0
-		actor player = Game.GetPlayer()
+		actor player = PlayerRef
 		while i<c
-			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", i) as FWChildActor
-			If(ca;/!=none/;)
-				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
-					if n==index
-						i=c
-						System.Controller.showRankedInfoBox(ca, 100)
-						return
+;			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", i) as FWChildActor
+			Actor ca = StorageUtil.FormListGet(none, "FW.Babys", i) as Actor
+;			If(ca;/!=none/;)
+			If(ca && !ca.IsDead())
+;				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
+				FWChildActor fwca = ca as FWChildActor
+				if(fwca)
+					if((StorageUtil.GetFormValue(fwca, "FW.Child.Mother", none) == player) || (StorageUtil.GetFormValue(fwca, "FW.Child.Father", none) == player))
+						if n == index
+							i = c
+							Controller.showRankedInfoBox(ca, 100)
+							return
+						endif
+						n += 1
 					endif
-					n+=1
-				endif
+				else
+					if((StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player) || (StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player))
+						if n==index
+							i=c
+							Controller.showRankedInfoBox(ca, 100)
+							return
+						endif
+						n+=1
+					endif
+				endIf
 			endif
 			i+=1
 		endwhile
@@ -2998,9 +3376,20 @@ Event OnOptionSelect(int option)
 	
 	; The AddOn Page is open, handle the addon clicks
 	elseif CurrentPage==Pages[FW_MENU_PAGE_AddOn] ; AddOn Page
-		if AddOnActiveRaces==-1 && AddOnActiveCME==-1 && AddOnActiveMisc==-1
-			int index = UI_AddOnRaces.Find(option)
+;		if AddOnActiveRaces==-1 && AddOnActiveCME==-1 && AddOnActiveMisc==-1
+		if((AddOnActiveGlobal == -1) && (AddOnActiveRaces == -1) && (AddOnActiveCME == -1) && (AddOnActiveMisc == -1))
+;			int index = UI_AddOnRaces.Find(option)
+			int index
 			int i=0
+			
+			index = UI_AddOnGlobal.Find(option)
+			If index >= 0
+				AddOnActiveGlobal = index
+				ForcePageReset()
+				Return
+			EndIf
+				
+			index = UI_AddOnRaces.Find(option)
 			If index >= 0
 				AddOnActiveRaces=index
 				ForcePageReset()
@@ -3023,7 +3412,11 @@ Event OnOptionSelect(int option)
 	
 		elseif option==UI_Activator
 			SetOptionFlags(option,OPTION_FLAG_DISABLED)
-			if AddOnActiveRaces>=0
+			if(AddOnActiveGlobal >= 0)
+				bool bActive = !FWUtility.getIniCBool("AddOn", UIS_AddOnGlobal[AddOnActiveGlobal], "AddOn", "enabled", false)
+				FWUtility.setIniCBool("AddOn", UIS_AddOnGlobal[AddOnActiveGlobal], "AddOn", "enabled", bActive)
+				SetToggleOptionValue(option, bActive)
+			elseif AddOnActiveRaces>=0
 				bool bActive=!FWUtility.getIniCBool("AddOn",UIS_AddOnRaces[AddOnActiveRaces],"AddOn","enabled",false)
 				FWUtility.setIniCBool("AddOn",UIS_AddOnRaces[AddOnActiveRaces],"AddOn","enabled",bActive)
 				SetToggleOptionValue(option, bActive)
@@ -3036,26 +3429,30 @@ Event OnOptionSelect(int option)
 				FWUtility.setIniCBool("AddOn",UIS_AddOnMisc[AddOnActiveMisc],"AddOn","enabled",bActive)
 				SetToggleOptionValue(option, bActive)
 				; Raise the Event
-				int i=System.Manager.iMisc
+				int i=Manager.iMisc
 				while i>0
 					i-=1
-					if System.Manager.sMisc[i]==UIS_AddOnMisc[AddOnActiveMisc]
+					if Manager.sMisc[i]==UIS_AddOnMisc[AddOnActiveMisc]
 						if bActive;/==true/;
-							System.Manager.Misc[i].OnAddOnActivate()
+							Manager.Misc[i].OnAddOnActivate()
 						else
-							System.Manager.Misc[i].OnAddOnDeactivate()
+							Manager.Misc[i].OnAddOnDeactivate()
 						endif
 						i=0
 					endif
 				endWhile
 			endif
+			AddOnActiveGlobal = -1
+
 			AddOnActiveRaces=-1
 			AddOnActiveCME=-1
 			AddOnActiveMisc=-1
-			System.Manager.RefreshAddOn()
+			Manager.RefreshAddOn()
 			SetOptionFlags(option,OPTION_FLAG_NONE)
 			ForcePageReset()
 		elseif option==UI_AddOnBack
+			AddOnActiveGlobal = -1
+
 			AddOnActiveRaces=-1
 			AddOnActiveCME=-1
 			AddOnActiveMisc=-1
@@ -3074,7 +3471,10 @@ int function DrawCME2(int offset, string Header, string f, string phase, bool bI
 		int c1=saSpells1.length
 		while c1>0
 			c1-=1
-			spell s=FWUtility.GetFormFromString(saSpells1[c1]) as spell
+;			spell s=FWUtility.GetFormFromString(saSpells1[c1]) as spell		// GetFormFromString is DEPRECATED in SE! Use FWUtility.GetFormFromStringSE() instead!
+
+			spell s = FWUtility.GetFormFromStringSE(saSpells1[c1]) as spell
+
 			if s;/!=none/;
 				if bDrawedHeader==false
 					AddHeaderOption(Header)
@@ -3096,7 +3496,10 @@ int function DrawCME2(int offset, string Header, string f, string phase, bool bI
 		int c2=saSpells2.length
 		while c2>0
 			c2-=1
-			spell s=FWUtility.GetFormFromString(saSpells2[c2]) as spell
+;			spell s=FWUtility.GetFormFromString(saSpells2[c2]) as spell		// GetFormFromString is DEPRECATED in SE! Use FWUtility.GetFormFromStringSE() instead!
+
+			spell s = FWUtility.GetFormFromStringSE(saSpells2[c2]) as spell
+
 			if s;/!=none/;
 				if bDrawedHeader==false
 					AddHeaderOption(Header)
@@ -3120,8 +3523,28 @@ endFunction
 
 Event OnOptionHighlight(int option)
 	if CurrentPage==Pages[FW_MENU_PAGE_AddOn]
-		if AddOnActiveRaces==-1 && AddOnActiveCME==-1 && AddOnActiveMisc==-1
-			int index = UI_AddOnRaces.Find(option)
+;		if AddOnActiveRaces==-1 && AddOnActiveCME==-1 && AddOnActiveMisc==-1
+		if((AddOnActiveGlobal == -1) && (AddOnActiveRaces == -1) && (AddOnActiveCME == -1) && (AddOnActiveMisc == -1))
+;			int index = UI_AddOnRaces.Find(option)
+			int index
+
+			if(option == UI_AddOnGlobalWarning)
+				SetInfoText("$FW_MENU_ADDON_Global_Warning_TXT")
+				return
+			endIf
+			
+			index = UI_AddOnGlobal.Find(option)
+			If(index >= 0)
+				SetInfoText(UIS_AddOnGlobal[index] + " AddOn: " + FWUtility.getIniCString("AddOn", UIS_AddOnGlobal[index], "AddOn", "description"))
+				return
+			endIf
+	
+			if(option == UI_AddOnRaceWarning)
+				SetInfoText("$FW_MENU_ADDON_Race_Warning_TXT")
+				return
+			endIf
+			
+			index = UI_AddOnRaces.Find(option)
 			If index >= 0
 				SetInfoText(UIS_AddOnRaces[index]+" AddOn: "+FWUtility.getIniCString("AddOn",UIS_AddOnRaces[index],"AddOn","description"))
 				return
@@ -3398,11 +3821,11 @@ State MenuStatsSpell ;Tkc (Loverslab)
 EndState
 
 Function PlayerShowInfosManage(string DelAction, string AddType = "")
-		Actor player = Game.GetPlayer()
-		Spell BFShowNPCInfoAsPower = System.BeeingFemaleInfoSpell
-		Spell BFShowPlayerInfoAsPower = System.BeeingFemaleInfoSpellExtra[0]
-		Spell BFShowNPCInfoAsSpell = System.BeeingFemaleInfoSpellExtra[1]
-		Spell BFShowPlayerInfoAsSpell = System.BeeingFemaleInfoSpellExtra[2]
+		Actor player = PlayerRef
+		Spell BFShowNPCInfoAsPower = BeeingFemaleInfoSpell
+		Spell BFShowPlayerInfoAsPower = BeeingFemaleInfoSpellExtra[0]
+		Spell BFShowNPCInfoAsSpell = BeeingFemaleInfoSpellExtra[1]
+		Spell BFShowPlayerInfoAsSpell = BeeingFemaleInfoSpellExtra[2]
 		if DelAction == "removespells" || DelAction == "removeall"
 			if BFShowNPCInfoAsSpell
 				If player.HasSpell(BFShowNPCInfoAsSpell)
@@ -3467,7 +3890,7 @@ State MenuVisualScaling
 		SetMenuOptionValueST(VisualScalingOptions[VisualScaling])
 		
 		int optionFlag = OPTION_FLAG_DISABLED
-		If VisualScaling == 1 || VisualScaling == 2
+		If VisualScaling == 1 || VisualScaling == 2 || VisualScaling == 4
 			optionFlag = OPTION_FLAG_NONE
 		EndIf
 		SetOptionFlagsST(optionFlag, True, "ToggleBellyScale")
@@ -3542,9 +3965,17 @@ EndState
 State SliderBellyScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BellyMaxScale)
-		SetSliderDialogDefaultValue(BellyMaxScaleDef)
-		SetSliderDialogRange(0, 8)
-		SetSliderDialogInterval(0.1)
+		if VisualScaling == 4
+			BellyMaxScaleDef = 7.5
+			SetSliderDialogDefaultValue(BellyMaxScaleDef)
+			SetSliderDialogRange(0, 10)
+			SetSliderDialogInterval(0.1)
+		else
+			BellyMaxScaleDef = 4.2
+			SetSliderDialogDefaultValue(BellyMaxScaleDef)
+			SetSliderDialogRange(0, 8)
+			SetSliderDialogInterval(0.1)
+		endIf
 	EndEvent
 	
 	Event OnSliderAcceptST(float value)
@@ -3557,6 +3988,11 @@ State SliderBellyScaleMax
 	EndEvent
 	
 	Event OnDefaultST()
+		if VisualScaling == 4
+			BellyMaxScaleDef = 7.5
+		else
+			BellyMaxScaleDef = 4.2
+		endIf
 		BellyMaxScale = BellyMaxScaleDef
 		SetSliderOptionValueST(BellyMaxScale, "{1}")
 		
@@ -3573,14 +4009,24 @@ EndState
 State SliderBreastScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BreastsMaxScale)
-		SetSliderDialogDefaultValue(BreastsMaxScaleDef)
-		SetSliderDialogRange(0, 3)
-		SetSliderDialogInterval(0.01)
+		if VisualScaling == 4
+			BreastsMaxScaleDef = 10
+			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
+			SetSliderDialogRange(0, 20)
+			SetSliderDialogInterval(0.1)
+		else
+			BreastsMaxScaleDef = 0.4
+			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
+			SetSliderDialogRange(0, 10)
+			SetSliderDialogInterval(0.1)
+			;SetSliderDialogInterval(0.01)
+		endIf
 	EndEvent
 	
 	Event OnSliderAcceptST(float value)
 		BreastsMaxScale = value
-		SetSliderOptionValueST(BreastsMaxScale, "{2}")
+		SetSliderOptionValueST(BreastsMaxScale, "{1}")
+		;SetSliderOptionValueST(BreastsMaxScale, "{2}")
 		
 		If System.Player
 			System.Player.SetBelly()
@@ -3588,8 +4034,14 @@ State SliderBreastScaleMax
 	EndEvent
 	
 	Event OnDefaultST()
+		if VisualScaling == 4
+			BreastsMaxScaleDef = 10
+		else
+			BreastsMaxScaleDef = 0.4
+		endIf
 		BreastsMaxScale = BreastsMaxScaleDef
-		SetSliderOptionValueST(BreastsMaxScale, "{2}")
+		SetSliderOptionValueST(BreastsMaxScale, "{1}")
+		;SetSliderOptionValueST(BreastsMaxScale, "{2}")
 		
 		If System.Player
 			System.Player.SetBelly()
@@ -3612,13 +4064,13 @@ State SliderConceptionChance
 	Event OnSliderAcceptST(float value)
 		ConceiveChance = value
 		SetSliderOptionValueST(ConceiveChance, "{1}%")
-		System.Controller.setAutoFlag(Game.GetPlayer())
+		Controller.setAutoFlag(PlayerRef)
 	EndEvent
 	
 	Event OnDefaultST()
 		ConceiveChance = ConceiveChanceDef
 		SetSliderOptionValueST(ConceiveChance, "{1}%")
-		System.Controller.setAutoFlag(Game.GetPlayer())
+		Controller.setAutoFlag(PlayerRef)
 	EndEvent
 	
 	Event OnHighlightST()
@@ -3950,6 +4402,75 @@ State SliderRecoveryDuration
 	
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_PREGNANCY_RecoveryPhase")
+	EndEvent
+EndState
+
+State SliderBabyRaceDeterm
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(myBFA_ProbChildRaceDeterminedByFather.GetValue() As int)
+		SetSliderDialogDefaultValue(50)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(1)
+	EndEvent
+	
+	Event OnSliderAcceptST(float value)
+		myBFA_ProbChildRaceDeterminedByFather.SetValue(value)
+		SetSliderOptionValueST(value, "{0}%")
+	EndEvent
+	
+	Event OnDefaultST()
+		myBFA_ProbChildRaceDeterminedByFather.SetValueInt(50)
+		SetSliderOptionValueST(myBFA_ProbChildRaceDeterminedByFather.GetValue(), "{0}%")
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_PREGNANCY_BabyRaceDeterm")
+	EndEvent
+EndState
+
+State SliderBabySexDeterm
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(myBFA_ProbChildSexDetermMale.GetValue() As int)
+		SetSliderDialogDefaultValue(53)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(1)
+	EndEvent
+	
+	Event OnSliderAcceptST(float value)
+		myBFA_ProbChildSexDetermMale.SetValue(value)
+		SetSliderOptionValueST(value, "{0}%")
+	EndEvent
+	
+	Event OnDefaultST()
+		myBFA_ProbChildSexDetermMale.SetValueInt(53)
+		SetSliderOptionValueST(myBFA_ProbChildSexDetermMale.GetValue() As int, "{0}%")
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_PREGNANCY_BabySexDeterm")
+	EndEvent
+EndState
+
+State SliderMatureTimeInDays
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(BFOpt_MatureTimeInDays.GetValue() As int)
+		SetSliderDialogDefaultValue(MatureTimeInDaysDef)
+		SetSliderDialogRange(1, 100)
+		SetSliderDialogInterval(1)
+	EndEvent
+	
+	Event OnSliderAcceptST(float value)
+		BFOpt_MatureTimeInDays.SetValue(value)
+		SetSliderOptionValueST(value, "$FW_MENU_BASIC_Days")
+	EndEvent
+	
+	Event OnDefaultST()
+		BFOpt_MatureTimeInDays.SetValueInt(MatureTimeInDaysDef)
+		SetSliderOptionValueST(BFOpt_MatureTimeInDays.GetValue() As int, "$FW_MENU_BASIC_Days")
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_PREGNANCY_MatureTimeInDays")
 	EndEvent
 EndState
 
@@ -4357,8 +4878,8 @@ State TextNpcChangeState
 		If System.Player
 			actor f = Game.GetCurrentCrosshairRef() as actor
 			If(f.GetLeveledActorBase().GetSex()==1)
-				System.Controller.changeState(f, System.Controller.GetNextState(f))
-				System.Controller.SetBelly(f)
+				Controller.changeState(f, Controller.GetNextState(f))
+				Controller.SetBelly(f)
 				ForcePageReset()
 			endif
 		EndIf
@@ -4387,9 +4908,9 @@ state TextUpdateAll
 				return
 			endif
 			
-			System.Progress.Icon = System.Progress.ICN_Update
-			System.Progress.Job = "Update ..."
-			System.Progress.showWidget()
+			Progress.Icon = Progress.ICN_Update
+			Progress.Job = "Update ..."
+			Progress.showWidget()
 			
 			SetOptionFlagsST(OPTION_FLAG_DISABLED)
 			int i= 0
@@ -4397,20 +4918,20 @@ state TextUpdateAll
 			bRunUpdateAllWoman = true
 			while i<c && bRunUpdateAllWoman;/==true/;
 			
-				System.Progress.Icon = System.Progress.ICN_Update
+				Progress.Icon = Progress.ICN_Update
 				
 				actor woman= StorageUtil.FormListGet(none,"FW.SavedNPCs",i) as actor
 				if woman
 					;SetInfoText("Update: "+woman.GetLeveledActorBase().GetName())
-					System.Progress.Job = "Update "+woman.GetLeveledActorBase().GetName()
+					Progress.Job = "Update "+woman.GetLeveledActorBase().GetName()
 					UI.InvokeString("Journal Menu", "_root.Menu_mc.setInfoText", "Update: "+woman.GetLeveledActorBase().GetName())
 					if woman==none || woman.IsDead() || woman.GetLeveledActorBase().GetSex() == 0
 						; delete this Actor
 						FWSaveLoad.Delete(woman)
 					else
-						System.Data.UpdatePerDay(woman)
+						Data.UpdatePerDay(woman)
 					endif
-					System.Progress
+					Progress
 				else
 					StorageUtil.FormListRemoveAt(none,"FW.SavedNPCs",i)
 					SetTextOptionValueST(c,"TextNoSavedNPCs")
@@ -4419,13 +4940,13 @@ state TextUpdateAll
 				endif
 				int percent=((i*100) / c) as int
 				SetTextOptionValueST(percent+"%")
-				System.Progress.Percent = percent
+				Progress.Percent = percent
 				i+=1
 			endwhile
 			bRunUpdateAllWoman = false
 			SetTextOptionValueST("$FW_MENU_OPTIONS_Refresh")
 			SetOptionFlagsST(OPTION_FLAG_NONE)
-			System.Progress.hideWidget()
+			Progress.hideWidget()
 		endif
 	EndEvent
 	
@@ -4441,7 +4962,7 @@ State TextJobToDo
 			int jobID = GetJobID()
 			
 			If jobID == 0
-				bool bHasSperm=System.Controller.HasRelevantSperm(Game.GetPlayer())
+				bool bHasSperm=Controller.HasRelevantSperm(PlayerRef)
 				If bHasSperm;/==true/; || System.CheatAddFather.Length > 0
 					Actor[] donors
 					int cSperm=0
@@ -4450,15 +4971,15 @@ State TextJobToDo
 						donors[0] = Game.GetForm(System.CheatAddFather[Utility.RandomInt(0, System.CheatAddFather.Length - 1)]) as Actor
 						cSperm = 1
 					else
-						donors=System.Controller.GetRelevantSpermActors(Game.GetPlayer())
+						donors=Controller.GetRelevantSpermActors(PlayerRef)
 						cSperm = donors.length
 					EndIf
 					
 					
-					System.Player.NumChilds = System.calculateNumChildren(Game.GetPlayer())
+					System.Player.NumChilds = System.calculateNumChildren(PlayerRef)
 					int i = System.Player.NumChilds
-					StorageUtil.FormListClear(Game.GetPlayer(),"FW.ChildFather")
-					StorageUtil.SetIntValue(Game.GetPlayer(),"FW.NumChilds",i)
+					StorageUtil.FormListClear(PlayerRef,"FW.ChildFather")
+					StorageUtil.SetIntValue(PlayerRef,"FW.NumChilds",i)
 					While i > 0
 						i -= 1
 						actor a = donors[Utility.RandomInt(0, cSperm - 1)]
@@ -4466,7 +4987,7 @@ State TextJobToDo
 							Game.GetForm(System.CheatAddFather[Utility.RandomInt(0, System.CheatAddFather.Length - 1)]) as Actor
 						endif
 						;System.Player.ChildFather[i] = donors[Utility.RandomInt(0, cSperm - 1)]
-						StorageUtil.FormListAdd(Game.GetPlayer(),"FW.ChildFather", a )
+						StorageUtil.FormListAdd(PlayerRef,"FW.ChildFather", a )
 					EndWhile
 					
 					System.Player.changeState(4)
@@ -4475,14 +4996,14 @@ State TextJobToDo
 			ElseIf jobID == 1
 				System.Player.changeState(7)
 				System.Player.SetBelly()
-				System.Controller.GiveBirth(Game.GetPlayer())
+				Controller.GiveBirth(PlayerRef)
 			
 			ElseIf jobID == 2
 				System.Player.NumChilds = 0
-				StorageUtil.FormListClear(Game.GetPlayer(),"FW.ChildFather")
-				StorageUtil.SetIntValue(Game.GetPlayer(),"FW.NumChilds",0)
-				StorageUtil.UnsetIntValue(Game.GetPlayer(),"FW.Abortus")
-				StorageUtil.UnsetFloatValue(Game.GetPlayer(),"FW.UnbornHealth")
+				StorageUtil.FormListClear(PlayerRef,"FW.ChildFather")
+				StorageUtil.SetIntValue(PlayerRef,"FW.NumChilds",0)
+				StorageUtil.UnsetIntValue(PlayerRef,"FW.Abortus")
+				StorageUtil.UnsetFloatValue(PlayerRef,"FW.UnbornHealth")
 				System.Player.changeState(0)
 				System.Player.SetBelly()
 			EndIf
@@ -4504,7 +5025,7 @@ State TextNpcJobToDo
 			int jobID = GetJobID(target)
 			
 			If jobID == 0
-				bool bHasSperm=System.Controller.HasRelevantSperm(target)
+				bool bHasSperm=Controller.HasRelevantSperm(target)
 				If bHasSperm;/==true/; || System.CheatAddFather.Length > 0
 					Actor[] donors
 					int cSperm=0
@@ -4513,7 +5034,7 @@ State TextNpcJobToDo
 						donors[0] = Game.GetForm(System.CheatAddFather[Utility.RandomInt(0, System.CheatAddFather.Length - 1)]) as Actor
 						cSperm = 1
 					else
-						donors=System.Controller.GetRelevantSpermActors(target)
+						donors=Controller.GetRelevantSpermActors(target)
 						cSperm = donors.length
 					EndIf
 					
@@ -4526,21 +5047,23 @@ State TextNpcJobToDo
 						StorageUtil.FormListAdd(target,"FW.ChildFather", donors[Utility.RandomInt(0, cSperm - 1)] )
 					EndWhile
 					
-					System.Controller.changeState(target, 4)
+					Controller.changeState(target, 4)
 				EndIf
 			
 			ElseIf jobID == 1
-				System.Controller.changeState(target, 7)
-				System.Controller.GiveBirth(target)
-				System.Controller.SetBelly(target)
+				Controller.changeState(target, 7)
+				Controller.GiveBirth(target)
+				Controller.SetBelly(target)
 			ElseIf jobID == 2
-				System.Player.NumChilds = 0
+				if System.Player
+					System.Player.NumChilds = 0
+				endIf
 				StorageUtil.FormListClear(target,"FW.ChildFather")
 				StorageUtil.SetIntValue(target,"FW.NumChilds",0)
 				StorageUtil.UnsetIntValue(target,"FW.Abortus")
 				StorageUtil.UnsetFloatValue(target,"FW.UnbornHealth")
-				System.Controller.changeState(target, 0)
-				System.Controller.SetBelly(target)
+				Controller.changeState(target, 0)
+				Controller.SetBelly(target)
 			EndIf
 			
 			ForcePageReset()
@@ -4568,13 +5091,13 @@ State TextResetPC
 	Event OnSelectST()
 		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		if ShowMessage("$FW_MESSAGE_CONTENT_ResetPlayer",true,"$FW_MESSAGE_OPTION_Reset")
-			if Game.GetPlayer().HasSpell(System.BeeingFemaleSpell)
-				Game.GetPlayer().RemoveSpell(System.BeeingFemaleSpell)
+			if PlayerRef.HasSpell(BeeingFemaleSpell)
+				PlayerRef.RemoveSpell(BeeingFemaleSpell)
 			endif
-			if Game.GetPlayer().HasSpell(System.BeeingMaleSpell)
-				Game.GetPlayer().RemoveSpell(System.BeeingMaleSpell)
+			if PlayerRef.HasSpell(BeeingMaleSpell)
+				PlayerRef.RemoveSpell(BeeingMaleSpell)
 			endif
-			FWSaveLoad.Delete(Game.GetPlayer())
+			FWSaveLoad.Delete(PlayerRef)
 			System.giveStartupItems()
 			System.giveStartupSpells()
 		endif
@@ -4591,17 +5114,17 @@ State TextResetNPC
 		actor target = Game.GetCurrentCrosshairRef() as actor
 		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		;if ShowMessage("$FW_MESSAGE_CONTENT_ResetPlayer",true,"$FW_MESSAGE_OPTION_Reset")
-			if target.HasSpell(System.BeeingFemaleSpell)
-				target.RemoveSpell(System.BeeingFemaleSpell)
+			if target.HasSpell(BeeingFemaleSpell)
+				target.RemoveSpell(BeeingFemaleSpell)
 			endif
-			if target.HasSpell(System.BeeingMaleSpell)
-				target.RemoveSpell(System.BeeingMaleSpell)
+			if target.HasSpell(BeeingMaleSpell)
+				target.RemoveSpell(BeeingMaleSpell)
 			endif
 			FWSaveLoad.Delete(target)
 			if System.IsValidateFemaleActor(target) > 0
-				target.AddSpell(System.BeeingFemaleSpell)
+				target.AddSpell(BeeingFemaleSpell)
 			elseif System.IsValidateMaleActor(target) > 0
-				target.AddSpell(System.BeeingMaleSpell)
+				target.AddSpell(BeeingMaleSpell)
 			endif
 		;endif
 		SetOptionFlagsST(OPTION_FLAG_NONE)
@@ -4617,7 +5140,7 @@ state TextUpdateNPC
 		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		actor target = Game.GetCurrentCrosshairRef() as actor
 		if System.IsValidateFemaleActor(target) > 0
-			System.Data.Update(target)
+			Data.Update(target)
 		endif
 		SetOptionFlagsST(OPTION_FLAG_NONE)
 	EndEvent
@@ -4630,8 +5153,8 @@ endstate
 State TextResetPCBreastBellyScale
 	Event OnSelectST()
 		SetOptionFlagsST(OPTION_FLAG_DISABLED)
-		Actor player = Game.GetPlayer()
-		If player.HasSpell(System.BeeingFemaleSpell)
+		Actor player = PlayerRef
+		If player.HasSpell(BeeingFemaleSpell)
 			System.Player.BaseBellySize = New Float[2]
 			System.Player.BaseBellySize[0] = 1.0
 			System.Player.BaseBellySize[1] = 1.0
@@ -4660,8 +5183,8 @@ state TextUninstall
 		SetTextOptionValueST("$FW_MESSAGE_OPTION_Wait")
 		If ShowMessage("$FW_MESSAGE_CONTENT_Uninstall",true,"$FW_MESSAGE_OPTION_Uninstall")
 			; Disable Cloaking
-			System.ModEnabled.SetValueInt(0)
-			System.CloakingSpellEnabled.SetValueInt(0)		
+			ModEnabled.SetValueInt(0)
+			CloakingSpellEnabled.SetValueInt(0)		
 			
 			alias playerAlias = System.GetAlias(0)
 			if playerAlias;/!=none/;
@@ -4683,13 +5206,13 @@ state TextUninstall
 				System.Player.UnregisterForUpdate()
 				System.Player.UnregisterForUpdateGameTime()
 			endif
-			;actor player = Game.GetPlayer() ; Tkc (LoversLab): from patch v13+ can be used System.PlayerRef to get player reference
+			;actor player = PlayerRef ; Tkc (LoversLab): from patch v13+ can be used System.PlayerRef to get player reference
 			; Remove Spells from Player
-			if System.PlayerRef.HasSpell(System.BeeingFemaleSpell);/==true/;
-				System.PlayerRef.RemoveSpell(System.BeeingFemaleSpell)
+			if PlayerRef.HasSpell(BeeingFemaleSpell);/==true/;
+				PlayerRef.RemoveSpell(BeeingFemaleSpell)
 			endif
-			if System.PlayerRef.HasSpell(System.BeeingMaleSpell);/==true/;
-				System.PlayerRef.RemoveSpell(System.BeeingMaleSpell)
+			if PlayerRef.HasSpell(BeeingMaleSpell);/==true/;
+				PlayerRef.RemoveSpell(BeeingMaleSpell)
 			endif
 			System.Player = none
 			System.PlayerMale = none
@@ -4698,16 +5221,16 @@ state TextUninstall
 			SendModEvent("BeeingFemale","Dispel")
 			
 			; Delete Storage Variables
-			FWSaveLoad.Delete(System.PlayerRef);
+			FWSaveLoad.Delete(PlayerRef);
 			FWSaveLoad.ResetNpcData(true)
 			FWSaveLoad.deleteChildren()
 			
 			; Reset AddOns
-			System.Manager.OnUninstall()
+			Manager.OnUninstall()
 			;System.Manager.ClearRaceAddOns()
 			;System.Manager.ClearCMEAddOns()
 			;System.Manager.ClearMiscAddOns()
-			System.Manager.Clear() ; Tkc (LoversLab): Clear() contains all 3 above
+			Manager.Clear() ; Tkc (LoversLab): Clear() contains all 3 above
 			
 			;Tkc (Loverslab); remove Show Info spells
 			PlayerShowInfosManage("removeall")
@@ -4715,7 +5238,7 @@ state TextUninstall
 			
 			ShowMessage("$FW_MESSAGE_CONTENT_CloseMenu",false)
 			Utility.Wait(5)
-			System.Message(System.Content.UninstallComplete,System.MSG_Always,System.MSG_Box)
+			System.Message(Content.UninstallComplete,System.MSG_Always,System.MSG_Box)
 		EndIf
 		SetTextOptionValueST("$FW_MESSAGE_OPTION_Execute")
 		SetOptionFlagsST(OPTION_FLAG_NONE)
@@ -4766,11 +5289,11 @@ state TextSpawnChildren
 			int cMale=StorageUtil.FormListCount(r,"FW.AddOn.BabyArmor_Male")
 			while cFemale>0
 				cFemale-=1
-				FWSystem.SubSpawnChildItem(StorageUtil.FormListGet(r,"FW.AddOn.BabyArmor_Female",cFemale) as Armor, 1, Game.GetPlayer(), Game.GetPlayer())
+				FWSystem.SubSpawnChildItem(StorageUtil.FormListGet(r,"FW.AddOn.BabyArmor_Female",cFemale) as Armor, 1, PlayerRef, PlayerRef)
 			endWhile
 			while cMale>0
 				cMale-=1
-				FWSystem.SubSpawnChildItem(StorageUtil.FormListGet(r,"FW.AddOn.BabyArmor_Male",cMale) as Armor, 1, Game.GetPlayer(), Game.GetPlayer())
+				FWSystem.SubSpawnChildItem(StorageUtil.FormListGet(r,"FW.AddOn.BabyArmor_Male",cMale) as Armor, 1, PlayerRef, PlayerRef)
 			endWhile
 		endwhile
 	endEvent
@@ -4828,13 +5351,13 @@ endState
 ; - Toggle Options
 state ToggleCoupleWidget
 	Event OnSelectST()
-		System.CoupleWidget.enabled = !System.CoupleWidget.enabled
-		SetToggleOptionValueST(System.CoupleWidget.enabled)
+		CoupleWidget.enabled = !CoupleWidget.enabled
+		SetToggleOptionValueST(CoupleWidget.enabled)
 	EndEvent
 	
 	Event OnDefaultST()
-		System.CoupleWidget.enabled = false
-		SetToggleOptionValueST(System.CoupleWidget.enabled)
+		CoupleWidget.enabled = false
+		SetToggleOptionValueST(CoupleWidget.enabled)
 	EndEvent
 	
 	Event OnHighlightST()
@@ -4860,25 +5383,25 @@ EndState
 
 State ToggleMenstrualBlood
 	Event OnSelectST()
-		if System.GlobalMenstruating.GetValueInt() == 1
+		if GlobalMenstruating.GetValue() As int == 1
 			SetToggleOptionValueST(false)
-			System.GlobalMenstruating.SetValueInt(0)
+			GlobalMenstruating.SetValueInt(0)
 		else
 			SetToggleOptionValueST(true)
-			System.GlobalMenstruating.SetValueInt(1)
+			GlobalMenstruating.SetValueInt(1)
 		endif
-		System.PantyWidget.UpdateContent()
+		PantyWidget.UpdateContent()
 	EndEvent
 	
 	Event OnDefaultST()
 		if bMenstruationBloodDef == false
 			SetToggleOptionValueST(false)
-			System.GlobalMenstruating.SetValueInt(0)
+			GlobalMenstruating.SetValueInt(0)
 		else
 			SetToggleOptionValueST(true)
-			System.GlobalMenstruating.SetValueInt(1)
+			GlobalMenstruating.SetValueInt(1)
 		endif
-		System.PantyWidget.UpdateContent()
+		PantyWidget.UpdateContent()
 	EndEvent
 	
 	Event OnHighlightST()
@@ -4902,6 +5425,86 @@ State ToggleNPCBabySpawn
 	EndEvent
 EndState
 
+state ToggleFemaleSummonedCanBecomePregnant
+	Event OnSelectST()
+		FemaleSummonedCanBecomePregnant = (! FemaleSummonedCanBecomePregnant)
+		SetToggleOptionValueST(FemaleSummonedCanBecomePregnant)
+	EndEvent
+	
+	Event OnDefaultST()
+		FemaleSummonedCanBecomePregnant = FemaleSummonedCanBecomePregnantDef
+		SetToggleOptionValueST(FemaleSummonedCanBecomePregnant)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_FemaleSummonedCanBecomePregnant")
+	EndEvent
+EndState
+
+state ToggleMaleSummonedCanImpregnate
+	Event OnSelectST()
+		MaleSummonedCanImpregnate = (! MaleSummonedCanImpregnate)
+		SetToggleOptionValueST(MaleSummonedCanImpregnate)
+	EndEvent
+	
+	Event OnDefaultST()
+		MaleSummonedCanImpregnate = MaleSummonedCanImpregnateDef
+		SetToggleOptionValueST(MaleSummonedCanImpregnate)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_MaleSummonedCanImpregnate")
+	EndEvent
+EndState
+
+state ToggleFemaleGhostCanBecomePregnant
+	Event OnSelectST()
+		FemaleGhostCanBecomePregnant = (! FemaleGhostCanBecomePregnant)
+		SetToggleOptionValueST(FemaleGhostCanBecomePregnant)
+	EndEvent
+	
+	Event OnDefaultST()
+		FemaleGhostCanBecomePregnant = FemaleGhostCanBecomePregnantDef
+		SetToggleOptionValueST(FemaleGhostCanBecomePregnant)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_FemaleGhostCanBecomePregnant")
+	EndEvent
+EndState
+
+state ToggleMaleGhostCanImpregnate
+	Event OnSelectST()
+		MaleGhostCanImpregnate = (! MaleGhostCanImpregnate)
+		SetToggleOptionValueST(MaleGhostCanImpregnate)
+	EndEvent
+	
+	Event OnDefaultST()
+		MaleGhostCanImpregnate = MaleGhostCanImpregnateDef
+		SetToggleOptionValueST(MaleGhostCanImpregnate)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_MaleGhostCanImpregnate")
+	EndEvent
+EndState
+
+state ToggleElderFemaleCanBecomePregnant
+	Event OnSelectST()
+		ElderFemaleCanBecomePregnant = (! ElderFemaleCanBecomePregnant)
+		SetToggleOptionValueST(ElderFemaleCanBecomePregnant)
+	EndEvent
+	
+	Event OnDefaultST()
+		ElderFemaleCanBecomePregnant = ElderFemaleCanBecomePregnantDef
+		SetToggleOptionValueST(ElderFemaleCanBecomePregnant)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_ElderFemaleCanBecomePregnant")
+	EndEvent
+EndState
+
 state ToggleNPCHaveItems
 	Event OnSelectST()
 		NPCHaveItems = (! NPCHaveItems)
@@ -4918,12 +5521,28 @@ state ToggleNPCHaveItems
 	EndEvent
 EndState
 
+;state ToggleBabyNoEssential
+;	Event OnSelectST()
+;		ChildNoEssential = (! ChildNoEssential)
+;		SetToggleOptionValueST(ChildNoEssential)
+;	EndEvent
+	
+;	Event OnDefaultST()
+;		ChildNoEssential = ChildNoEssentialDef
+;		SetToggleOptionValueST(ChildNoEssential)
+;	EndEvent
+	
+;	Event OnHighlightST()
+;		SetInfoText("$FW_MENUTXT_SETTINGS_ChildNoEssential")
+;	EndEvent
+;EndState
+
 State TogglePlayAnimations
 	Event OnSelectST()
 		if FNIS.VersionCompare(5, 4, 2) < 0
 			ShowMessage(Content.FNISTXTNotInstalled,False,"$OK")
 			PlayAnimations = false
-		elseif getCompatiblity_Animation() == 2;Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") < FWVersion.GetAnimationVersion() ;Tkc (Loverslab): Fix. Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") and FWVersion.GetAnimationVersion() doing same. must be GetAnimationVersionRequired
+		elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
 			ShowMessage(Content.FNISTXTOverdue,False,"$OK")
 			PlayAnimations = false
 		else
@@ -4937,7 +5556,7 @@ State TogglePlayAnimations
 			if FNIS.VersionCompare(5, 4, 2) < 0
 				ShowMessage(Content.FNISTXTNotInstalled,False,"$OK")
 				PlayAnimations = false
-			elseif getCompatiblity_Animation() == 2;Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") < FWVersion.GetAnimationVersion() ;Tkc (Loverslab): Fix. Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") and FWVersion.GetAnimationVersion() doing same. must be GetAnimationVersionRequired
+			elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
 				ShowMessage(Content.FNISTXTOverdue,False,"$OK")
 				PlayAnimations = false
 			else
@@ -4952,7 +5571,7 @@ State TogglePlayAnimations
 	Event OnHighlightST()
 		if FNIS.VersionCompare(5, 4, 2) < 0
 			SetInfoText("$GAME_CONTENT_FNIS_TXTNotInstalled")
-		elseif getCompatiblity_Animation() == 2;Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") < FWVersion.GetAnimationVersion() ;Tkc (Loverslab): Fix. Game.GetPlayer().GetAnimationVariableInt("BeeingFemaleAnimationVersion") and FWVersion.GetAnimationVersion() doing same. must be GetAnimationVersionRequired
+		elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
 			SetInfoText("$GAME_CONTENT_FNIS_TXTOverdue")
 		else
 			SetInfoText("$FW_MENUTXT_SETTINGS_PlayAnimations")
@@ -5042,17 +5661,21 @@ EndState
 
 State TogglePlayerFertility
 	Event OnSelectST()
-		System.Player.canBecomePregnantThisCycle = (! System.Player.canBecomePregnantThisCycle)
-		System.Controller.setCanBecomePregnant(Game.GetPlayer(),System.Player.canBecomePregnantThisCycle)
-		SetToggleOptionValueST(System.Player.canBecomePregnantThisCycle)
+		if System.Player
+			System.Player.canBecomePregnantThisCycle = (! System.Player.canBecomePregnantThisCycle)
+			Controller.setCanBecomePregnant(PlayerRef,System.Player.canBecomePregnantThisCycle)
+			SetToggleOptionValueST(System.Player.canBecomePregnantThisCycle)
+		endIf
 	EndEvent
 EndState
 
 State TogglePlayerPMS
 	Event OnSelectST()
-		System.Player.canBecomePMSThisCycle = (! System.Player.canBecomePMSThisCycle)
-		System.Controller.setCanBecomePMS(Game.GetPlayer(),System.Player.canBecomePMSThisCycle)
-		SetToggleOptionValueST(System.Player.canBecomePMSThisCycle)
+		if System.Player
+			System.Player.canBecomePMSThisCycle = (! System.Player.canBecomePMSThisCycle)
+			Controller.setCanBecomePMS(PlayerRef,System.Player.canBecomePMSThisCycle)
+			SetToggleOptionValueST(System.Player.canBecomePMSThisCycle)
+		endIf
 	EndEvent
 EndState
 
@@ -5076,7 +5699,7 @@ EndState
 ;/
 State ToggleShowStatsSpell
 	Event OnSelectST()
-		Actor player = Game.GetPlayer()
+		Actor player = PlayerRef
 		If player.HasSpell(System.BeeingFemaleInfoSpell)
 			player.RemoveSpell(System.BeeingFemaleInfoSpell)
 		Else
@@ -5093,7 +5716,7 @@ State ToggleShowStatsSpell
 	EndEvent
 	
 	Event OnDefaultST()
-		Actor player = Game.GetPlayer()
+		Actor player = PlayerRef
 		If (! player.HasSpell(System.BeeingFemaleInfoSpell))
 			player.AddSpell(System.BeeingFemaleInfoSpell)
 		EndIf
@@ -5230,25 +5853,25 @@ endstate
 
 state ToggleShowChildFinder
 	Event OnSelectST()
-		if System.ChildFinder.IsObjectiveDisplayed(1);/==true/;
-			System.ChildFinder.SetStage(0)
-			System.ChildFinder.SetObjectiveDisplayed(1,false)
-			System.ChildFinder.SetActive(false)
+		if ChildFinder.IsObjectiveDisplayed(1);/==true/;
+			ChildFinder.SetStage(0)
+			ChildFinder.SetObjectiveDisplayed(1,false)
+			ChildFinder.SetActive(false)
 			System.Stop()
 			SetToggleOptionValueST(false)
 		else
-			System.ChildFinder.SetActive(true)
-			System.ChildFinder.Start()
-			System.ChildFinder.Reset()
-			System.ChildFinder.SetStage(1)
-			System.ChildFinder.SetObjectiveDisplayed(1,true)
+			ChildFinder.SetActive(true)
+			ChildFinder.Start()
+			ChildFinder.Reset()
+			ChildFinder.SetStage(1)
+			ChildFinder.SetObjectiveDisplayed(1,true)
 			SetToggleOptionValueST(true)
 		endif
 	EndEvent
 	
 	Event OnDefaultST()
-		System.ChildFinder.SetObjectiveDisplayed(1,false)
-		System.ChildFinder.SetActive(false)
+		ChildFinder.SetObjectiveDisplayed(1,false)
+		ChildFinder.SetActive(false)
 		System.Stop()
 		SetToggleOptionValueST(false)
 	EndEvent
@@ -5586,6 +6209,23 @@ state ToggleImpregnateLoreFriendly
 endstate
 
 
+state ToggleShowDebugMessage
+	Event OnSelectST()
+		ShowDebugMessage = (! ShowDebugMessage)
+		SetToggleOptionValueST(ShowDebugMessage)
+	EndEvent
+	
+	Event OnDefaultST()
+		ShowDebugMessage = ShowDebugMessageDef
+		SetToggleOptionValueST(ShowDebugMessage)
+	EndEvent
+	
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_ShowDebugMessage")
+	EndEvent
+endstate
+
+
 state KeyMapShowState
 	event OnKeyMapChangeST(int keyCode, string conflictControl, string conflictName)
 		;if (CheckNewHotkey(conflictControl, conflictName))
@@ -5608,8 +6248,8 @@ EndState
 
 state ToggleOnActiveMagicEffects ;Added by Bane 02/07/2019
 	Event OnSelectST()
-		StorageUtil.SetIntValue(System.PlayerRef, "FWAbiltyOnMEApplyDisabled", (!StorageUtil.GetIntValue(System.PlayerRef, "FWAbiltyOnMEApplyDisabled") as Bool) as Int)
-		SetToggleOptionValueST(StorageUtil.GetIntValue(System.PlayerRef, "FWAbiltyOnMEApplyDisabled"))
+		StorageUtil.SetIntValue(PlayerRef, "FWAbiltyOnMEApplyDisabled", (!StorageUtil.GetIntValue(PlayerRef, "FWAbiltyOnMEApplyDisabled") as Bool) as Int)
+		SetToggleOptionValueST(StorageUtil.GetIntValue(PlayerRef, "FWAbiltyOnMEApplyDisabled"))
 		SendModEvent("FW_OMEAToggle")
 	EndEvent
 	

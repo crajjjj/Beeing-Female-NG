@@ -31,27 +31,33 @@ spell BabySupprised
 FormList ItemListHappy
 FormList ItemListFear
 FormList ItemListSupprised
-Keyword BabyKeyword
 
-
-sound property BBS auto
 
 float aPosX
 float aPosY
 float aPosZ
 float lastMoveTime
 
-Actor Property PlayerRef Auto Hidden;Tkc (Loverslab)
+Keyword Property BabyKeyword Auto
+Actor Property PlayerRef Auto
+Faction property PlayerMarriedFaction Auto
+FWSystemConfig property cfg Auto
+Keyword Property ActorTypeCreature Auto
+FWAddOnManager property Manager auto
+FWTextContents property Contents auto
+race[] property MountableRace auto
+FWController property Controller auto
+
+import PO3_SKSEFunctions
+import PO3_Events_Alias
 
 Event OnInit()
-	PlayerRef = System.PlayerRef; Tkc: just use PlayerRef from system will be little slower. also it will be using from FWAbilityBeeingFemale\FWAbilityBeeingMale scripts
 	bInit=true
-	BabyKeyword=Keyword.GetKeyword("_FWBabyItem")
 endEvent
 
 Event OnEffectStart(Actor target, Actor caster)
-	IsCreature = target.GetRace().HasKeywordString("ActorTypeCreature")
-	IsSpouse = target.IsInFaction(System.PlayerMarriedFaction)
+	IsCreature = target.GetRace().HasKeyword(ActorTypeCreature)
+	IsSpouse = target.IsInFaction(PlayerMarriedFaction)
 endEvent
 
 Event OnDeath(Actor akKiller)
@@ -62,7 +68,7 @@ Event OnDeath(Actor akKiller)
 EndEvent
 
 float lastTimeGaveExp=0.0
-Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
+Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
 	FWChildActor ca = akAggressor as FWChildActor
 	if ca;/!=none/;
 		float t = Utility.GetCurrentRealTime()
@@ -80,14 +86,14 @@ Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile,
 		endif
 	endif
 	
-	if IsPlayer;/==true/; && bIsWearingBaby;/==true/; && System.cfg.ChildrenMayCry;/==true/;
+	if IsPlayer;/==true/; && bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/;
 		PlayBabySound_OnHit()
 	endif
 EndEvent
 
 Event OnActivate(ObjectReference akActionRef)
 	equipChild()
-	if ActorRef && System.MountableRace.find(ActorRef.GetRace())>=0
+	if ActorRef && MountableRace.find(ActorRef.GetRace())>=0
 		int c = StorageUtil.FormListCount(none,"FW.Babys")
 		while c > 0
 			c-=1
@@ -111,14 +117,14 @@ bool bSexPartnerOnSleepCh = false
 ; Received when the player sleeps. Start and desired end time are in game time days (after registering)
 Event OnSleepStart(float afSleepStartTime, float afDesiredSleepEndTime)
 	PlayBabySound()
-	bSexPartnerOnSleepCh = Utility.RandomFloat(0,99) < System.cfg.ImpregnatePlayerChance
+	bSexPartnerOnSleepCh = Utility.RandomFloat(0,99) < cfg.ImpregnatePlayerChance
 	if IsPlayer ;Tkc (Loverslab): optimization
 	 if bSexPartnerOnSleepCh
-	  if System.cfg.RelevantPlayer
+	  if cfg.RelevantPlayer
 		bSexPartnerOnSleep = false
 		aSexPartnerOnSleep=none
 		int radius = 320 ;200
-		if System.cfg.ImpregnatePlayerAmbient
+		if cfg.ImpregnatePlayerAmbient
 			radius = 2300 ;1900
 		endif
 		;actor p = Game.GetPlayer() ;Tkc (Loverslab): optimization
@@ -131,7 +137,7 @@ Event OnSleepStart(float afSleepStartTime, float afDesiredSleepEndTime)
 		endif
 		
 		if PlayerRef.GetLeveledActorBase().GetSex()==1 || (aSexPartnerOnSleep && aSexPartnerOnSleep.GetLeveledActorBase().GetSex()==1)
-			aSexPartnerOnSleep = System.Manager.OnSleepSexStart(PlayerRef,aSexPartnerOnSleep)
+			aSexPartnerOnSleep = Manager.OnSleepSexStart(PlayerRef,aSexPartnerOnSleep)
 		endif
 	  endif
 	 endif
@@ -140,9 +146,9 @@ endEvent
 
 ; Received when the player stops sleeping - whether naturally or interrupted (after registering)
 Event OnSleepStop(bool abInterrupted)
-	if IsPlayer && bSexPartnerOnSleepCh && System.cfg.RelevantPlayer
+	if IsPlayer && bSexPartnerOnSleepCh && cfg.RelevantPlayer
 		int radius = 320 ;200
-		if System.cfg.ImpregnatePlayerAmbient
+		if cfg.ImpregnatePlayerAmbient
 			radius = 2400 ;1900
 		endif
 		;actor p = Game.GetPlayer() ;Tkc (Loverslab): optimization
@@ -161,31 +167,31 @@ Event OnSleepStop(bool abInterrupted)
 		endif
 		endif
 		
-		if bSexPartnerOnSleep && aSexPartnerOnSleep;/!=none/; && System.cfg.ImpregnatePlayerSleep
+		if bSexPartnerOnSleep && aSexPartnerOnSleep;/!=none/; && cfg.ImpregnatePlayerSleep
 			; Raise Event first
 			int psex = PlayerRef.GetLeveledActorBase().GetSex() ;Tkc (Loverslab): optimization
 			int asex = aSexPartnerOnSleep.GetLeveledActorBase().GetSex() ;Tkc (Loverslab): optimization
 			if psex==1 || asex==1
-				aSexPartnerOnSleep = System.Manager.OnSleepSexStop(PlayerRef,aSexPartnerOnSleep)
+				aSexPartnerOnSleep = Manager.OnSleepSexStop(PlayerRef,aSexPartnerOnSleep)
 			endif
 			
 			; Check aSexPartnerOnSleep again - it may has changed during the AddOn Manager
 			if aSexPartnerOnSleep;/!=none/;
 				; Check if Player is Female
 				if psex==1
-					System.Controller.AddSperm(PlayerRef, aSexPartnerOnSleep)
-					System.Message( FWUtility.StringReplace( System.Content.NPCCameInsideYou , "{0}",aSexPartnerOnSleep.GetLeveledActorBase().GetName()), System.MSG_Immersive)
+					Controller.AddSperm(PlayerRef, aSexPartnerOnSleep)
+					System.Message( FWUtility.StringReplace( Contents.NPCCameInsideYou , "{0}",aSexPartnerOnSleep.GetLeveledActorBase().GetName()), System.MSG_Immersive)
 				endif
 			
 				; Check if Target is female (no elseif!, so F/F pregnancy can be raised)
 				if asex==1
-					System.Controller.AddSperm(aSexPartnerOnSleep, PlayerRef)
-					System.Message( FWUtility.StringReplace( System.Content.YouCameInsideNPC , "{0}",aSexPartnerOnSleep.GetLeveledActorBase().GetName()), System.MSG_Immersive)
+					Controller.AddSperm(aSexPartnerOnSleep, PlayerRef)
+					System.Message( FWUtility.StringReplace( Contents.YouCameInsideNPC , "{0}",aSexPartnerOnSleep.GetLeveledActorBase().GetName()), System.MSG_Immersive)
 				endif
 			endif
 		endif
 	endif
-	if System.cfg.ChildrenMayCry && IsPlayer;/==true/;
+	if cfg.ChildrenMayCry && IsPlayer;/==true/;
 		PlayBabySound_SleepStop()
 	endif
 endEvent
@@ -202,7 +208,7 @@ event OnUpdate()
 			lastMoveTime=Utility.GetCurrentRealTime()
 		endif		
 	
-	if bIsWearingBaby;/==true/; && System.cfg.ChildrenMayCry;/==true/; ;/&& IsPlayer==true/; ;Tkc (Loverslab): optimization, baby actions moved inside overal IsPlayer here and identical condition commented
+	if bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/; ;/&& IsPlayer==true/; ;Tkc (Loverslab): optimization, baby actions moved inside overal IsPlayer here and identical condition commented
 		if cBabyHiccup>0
 			PlayBabySound_Hiccup()
 			cBabyHiccup-=1
@@ -228,18 +234,28 @@ event OnUpdate()
 		
 			if ;/IsPlayer &&/; Utility.GetCurrentRealTime() - lastMoveTime> 30
 				int rnd=Utility.RandomInt(0,20)
-				if rnd>17
-					PlayBabySound(BabyCry, true)
-				elseif rnd>14
-					PlayBabySound(BabyFear, true)
-				elseif rnd>12
-					cBabyHiccup=Utility.RandomInt(2,8)
-				elseif rnd>9
-					PlayBabySound(BabyHappy, true)
-				elseif rnd>7
-					PlayBabySound(BabyGiggle, true)
-				elseif rnd>4
-					PlayBabySound(BabyAmuse, true)
+				if rnd>4
+					if rnd>7
+						if rnd>9
+							if rnd>12
+								if rnd>14
+									if rnd>17
+										PlayBabySound(BabyCry, true)
+									else;if rnd>14
+										PlayBabySound(BabyFear, true)
+									endIf
+								else;if rnd>12
+									cBabyHiccup=Utility.RandomInt(2,8)
+								endIf
+							else;if rnd>9
+								PlayBabySound(BabyHappy, true)
+							endIf
+						else;if rnd>7
+							PlayBabySound(BabyGiggle, true)
+						endIf
+					else;if rnd>4
+						PlayBabySound(BabyAmuse, true)
+					endIf
 				else
 					PlayBabySound(BabyTalk, true)
 				endif
@@ -268,7 +284,7 @@ bool function CheckSexPartnerOnSleep(actor a,actor aPlayerRef=none)
 		return false
 	endif
 	if IsCreature
-		if System.cfg.CreatureSperm ;Tkc (Loverslab): optimization
+		if cfg.CreatureSperm ;Tkc (Loverslab): optimization
 		else;if System.cfg.CreatureSperm==false
 			return false
 		endif
@@ -328,18 +344,18 @@ endFunction
 bool function IsValidatePlayerSexPartner(actor a)
 	; Follower Check
 	if a.IsInFaction(System.FollowerFaction)
-		if System.cfg.ImpregnatePlayerFollower
+		if cfg.ImpregnatePlayerFollower
 			return true
 		endif
 	endif
 	; Husband Check
-	if a.IsInFaction(System.PlayerMarriedFaction)
-		if System.cfg.ImpregnatePlayerHusband
+	if a.IsInFaction(PlayerMarriedFaction)
+		if cfg.ImpregnatePlayerHusband
 			return true
 		endif
 	endif
 	; Husband Check
-	return System.cfg.ImpregnateLastPlayerNPCs
+	return cfg.ImpregnateLastPlayerNPCs
 endfunction
 
 function equipChild()
@@ -362,7 +378,8 @@ function equipChild()
 		if ca;/!=none/; || f.HasKeyword(BabyKeyword) || f.GetName()=="Baby"
 			; Check, give to other parent
 			bool bGaveAway = false
-			if(ca;/!=none/; && bGaveAway==false && Utility.RandomInt(0,100)>85)
+;			if(ca;/!=none/; && bGaveAway==false && Utility.RandomInt(0,100)>85)
+			if(ca && (bGaveAway == false) && (Utility.RandomInt(1, 100) > 85))
 				actor a1 = ca.Mother
 				actor a2 = ca.Father
 				if a1;/!=none/; && a2;/!=none/;
@@ -426,32 +443,47 @@ endFunction
 
 function PlayBabySound_SleepStop()
 	if bIsWearingBaby && IsPlayer;/==true/;
-		int rnd=Utility.RandomInt(0,100)
-		if rnd>93
-			PlayBabySound(BabyCry, true)
-		elseif rnd>88
-			PlayBabySound(BabyFear, true)
-		elseif rnd>85
-			PlayBabySound(BabyTalk, true)
-		elseif rnd>79
-			PlayBabySound(BabyHappy, true)
-		elseif rnd>72
-			PlayBabySound(BabyAmuse, true)
-		elseif rnd>68
-			PlayBabySound(BabyGiggle, true)
-		elseif rnd>58
-			cBabyHiccup=Utility.RandomInt(1,15)
-		endif
+;		int rnd=Utility.RandomInt(0,100)
+		int rnd = Utility.RandomInt(1, 100)
+		if rnd>58
+			if rnd>68
+				if rnd>72
+					if rnd>79
+						if rnd>85
+							if rnd>88
+								if rnd>93
+									PlayBabySound(BabyCry, true)
+								else;if rnd>88
+									PlayBabySound(BabyFear, true)
+								endIf
+							else;if rnd>85
+								PlayBabySound(BabyTalk, true)
+							endIf
+						else;if rnd>79
+							PlayBabySound(BabyHappy, true)
+						endIf
+					else;if rnd>72
+						PlayBabySound(BabyAmuse, true)
+					endIf
+				else;if rnd>68
+					PlayBabySound(BabyGiggle, true)
+				endIf
+			else;if rnd>58
+				cBabyHiccup=Utility.RandomInt(1,15)
+			endif
+		endIf
 	endif
 endFunction
 
 function PlayBabySound_OnHit()
 	int rnd=Utility.RandomInt(0,7)
-	if rnd==7
-		PlayBabySound(BabyCry, true)
-	elseif rnd==6
-		PlayBabySound(BabyFear, true)
-	endif
+	if rnd > 5
+		if rnd==7
+			PlayBabySound(BabyCry, true)
+		else;if rnd==6
+			PlayBabySound(BabyFear, true)
+		endif
+	endIf
 endFunction
 
 function PlayBabySound_Hiccup()
@@ -459,7 +491,7 @@ function PlayBabySound_Hiccup()
 endFunction
 
 function PlayBabySound(spell SoundSpell = none, bool MustBeEquiped = false)
-	if bIsWearingBaby;/==true/; && System.cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
+	if bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
 		if ActorRef; as actor;/!=none/;
 			; Play sound on User
 			if SoundSpell;/!=none/;
@@ -560,32 +592,44 @@ bool function CheckNoice_Weather()
 	int c = w.GetClassification()
 	int r = Utility.RandomInt(0,10)
 	if c == -1 ; No classification
-	elseif c==0 ; Pleasant
-		if r>=9
-			PlayBabySound(BabyHappy, true)
-			return true
-		elseif r==8
-			PlayBabySound(BabyAmuse, true)
-			return true
-		elseif r==7
-			PlayBabySound(BabyGiggle, true)
-			return true
-		elseif r==6
-			PlayBabySound(BabyTalk, true)
-			return true
-		endif
-	elseif c==1 ; Cloudy
-	elseif c==2 ; Rainy
-		if r>9
-			PlayBabySound(BabyCry, true)
-			return true
-		endif
-	elseif c==3 ; Snow
-		if r>6
-			PlayBabySound(BabyCry, true)
-			return true
-		endif
-	endif
+	elseif c >= 0
+		if c < 2
+			if c==0 ; Pleasant
+				if r > 5
+					if r > 7
+						if r>=9
+							PlayBabySound(BabyHappy, true)
+							return true
+						else;if r==8
+							PlayBabySound(BabyAmuse, true)
+							return true
+						endIf
+					else
+						if r==7
+							PlayBabySound(BabyGiggle, true)
+							return true
+						else;if r==6
+							PlayBabySound(BabyTalk, true)
+							return true
+						endif
+					endIf
+				endIf
+			else;if c==1 ; Cloudy
+			endIf
+		elseif c < 4
+			if c==2 ; Rainy
+				if r>9
+					PlayBabySound(BabyCry, true)
+					return true
+				endif
+			else;if c==3 ; Snow
+				if r>6
+					PlayBabySound(BabyCry, true)
+					return true
+				endif
+			endif
+		endIf
+	endIf
 	return false
 endFunction
 
@@ -638,7 +682,7 @@ Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRefere
 	else
 	OnItAddIsBusy = true
 	
-	if bIsWearingBaby;/==true/; && System.cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
+	if bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
 		if ItemListFear;/!=none/; && ItemListFear.Find(akBaseItem)
 			if Utility.RandomInt(1,20)>13
 				PlayBabySound(BabyFear, true)
@@ -662,21 +706,23 @@ endEvent
 
 ; Event received when a spell is cast by this object
 Event OnSpellCast(Form akSpell)
-	if bIsWearingBaby;/==true/; && System.cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
-		if ItemListFear;/!=none/; && ItemListFear.Find(akSpell)
-			if Utility.RandomInt(1,10)>7
-				PlayBabySound(BabyFear, true)
-			endif
-		elseif ItemListHappy;/!=none/; && ItemListHappy.Find(akSpell)
-			if Utility.RandomInt(1,10)>4
-				PlayBabySound(BabyHappy, true)
-			endif
-		elseif ItemListSupprised;/!=none/; && ItemListSupprised.Find(akSpell)
-			if Utility.RandomInt(1,10)>8
-				PlayBabySound(BabySupprised, true)
+	if(akSpell)
+		if bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/; && IsPlayer;/==true/;
+			if ItemListFear;/!=none/; && ItemListFear.Find(akSpell)
+				if Utility.RandomInt(1,10)>7
+					PlayBabySound(BabyFear, true)
+				endif
+			elseif ItemListHappy;/!=none/; && ItemListHappy.Find(akSpell)
+				if Utility.RandomInt(1,10)>4
+					PlayBabySound(BabyHappy, true)
+				endif
+			elseif ItemListSupprised;/!=none/; && ItemListSupprised.Find(akSpell)
+				if Utility.RandomInt(1,10)>8
+					PlayBabySound(BabySupprised, true)
+				endif
 			endif
 		endif
-	endif
+	endIf
 endEvent
 
 ; 07 jule 2019 Tkc (Loverslab) optimizations: Changes marked with "Tkc (Loverslab)" comment

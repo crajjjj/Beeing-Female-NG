@@ -110,18 +110,22 @@ string function ModFile(string ModName) global
 		endif
 	endWhile/;	
 	;;;;; ;Tkc (Loverslab): optimization. standart detection
-	if Game.GetModbyName(ModName) == 255
-		if Game.GetModbyName(ModName+".esp") == 255
-			if Game.GetModbyName(ModName+".esm") == 255
-			else;if Game.GetModbyName(ModName+".esm") != 255
+	if !(Game.IsPluginInstalled(ModName))
+		if !(Game.IsPluginInstalled(ModName+".esp"))
+			if !(Game.IsPluginInstalled(ModName+".esm"))
+				if !(Game.IsPluginInstalled(ModName + ".esl"))
+				else
+					return ModName + ".esl"
+				endIf
+			else;if Game.IsPluginInstalled(ModName+".esm")
 				;debug.trace("BF: Utility > ModFile > return =" + ModName+".esm")	
 				return ModName+".esm"
 			endif
-		else;if Game.GetModbyName(ModName+".esp") != 255
+		else;if Game.IsPluginInstalled(ModName+".esp")
 			;debug.trace("BF: Utility > ModFile > return =" + ModName+".esp")	
 			return ModName+".esp"
 		endif
-	else;if Game.GetModbyName(ModName) != 255
+	else;if Game.IsPluginInstalled(ModName)
 		;debug.trace("BF: Utility > ModFile > return =" + ModName)	
 		return ModName
 	endif
@@ -314,7 +318,22 @@ function setIniCInt(string Type, string File, string Categorie, string Variable,
 function setIniCFloat(string Type, string File, string Categorie, string Variable, float Value) global native
 
 
-form function GetFormFromString(string s) global native ; returns the Form of a string
+form function GetFormFromString(string s) global native ; returns the Form of a string. It is DEPRECATED in SE! Do NOT use this one, as it does not work!
+
+Form Function GetFormFromStringSE(string s) global	; Use this one INSTEAD of GetFormFromString in SE!
+	string[] myStringValue = StringUtil.Split(s, ":")
+	if(myStringValue.Length == 2)
+		string myStringMasterPlugin = FWUtility.ModFile(myStringValue[0])
+		int myStringFormID = PO3_SKSEFunctions.StringToInt("0x" + myStringValue[1])
+							
+		return Game.GetFormFromFile(myStringFormID, myStringMasterPlugin)
+	else
+		Debug.Trace("BeeingFemaleSE_Opt - FWUtility - GetFormFromStringSE : Failed to get form from the string " + s + ". Please check whether it is correctly separated by colon (:)...")
+		
+		return none
+	endIf
+endFunction
+
 string function GetModFromString(string s, bool bExtension = false) global native ; returns the Mod Name from a FormString (BeeingFemale_1234 => BeeingFemale)
 int function GetFormIDFromString(string s) global native ; returns the Hex ID + Numeric ID from a formString (Like: BeeingFemale_1234 => 0x04001234 => Result: 67113524)
 string function GetStringFromForm(form frm) global native ; returns the Form String from a form (like: "BeeingFemale_1234")
@@ -485,28 +504,48 @@ string Function GetPercentage(float percentage, int Decimal=0, bool bDecimalBase
 	If percentage < 0.0001
 		Return "< 1"
 	EndIf
-	if Decimal==0 && bDecimalBase
-		Return Math.Floor(percentage * 100) as string
-	elseif Decimal==1 && bDecimalBase
-		Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 1000) % 10) as string)
-	elseif Decimal==2 && bDecimalBase
-		Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 10000) % 100) as string)
-	elseif Decimal==3 && bDecimalBase
-		Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 100000) % 1000) as string)
 	
-	elseif Decimal==0 && !bDecimalBase
-		Return Math.Floor(percentage) as string
-	elseif Decimal==1 && !bDecimalBase
-		Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 10) % 10) as string)
-	elseif Decimal==2 && !bDecimalBase
-		Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 100) % 100) as string)
-	elseif Decimal==3 && !bDecimalBase
-		Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 1000) % 1000) as string)
-	elseif Decimal==4 && !bDecimalBase
-		Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 10000) % 10000) as string)
-	elseif Decimal==5 && !bDecimalBase
-		Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 100000) % 100000) as string)
-	endif
+	if bDecimalBase
+		if((Decimal >= 0) && (Decimal < 4))
+			if Decimal < 2
+				if Decimal==0 ;&& bDecimalBase
+					Return Math.Floor(percentage * 100) as string
+				else;if Decimal==1 ;&& bDecimalBase
+					Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 1000) % 10) as string)
+				endIf
+			else
+				if Decimal==2 ;&& bDecimalBase
+					Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 10000) % 100) as string)
+				else;if Decimal==3 ;&& bDecimalBase
+					Return (Math.Floor(percentage * 100) as string) + "." + ((Math.Floor(percentage * 100000) % 1000) as string)
+				endIf
+			endIf
+		endIf
+	else
+		if((Decimal >= 0) && (Decimal < 6))
+			if Decimal < 4
+				if Decimal < 2
+					if Decimal==0 ;&& !bDecimalBase
+						Return Math.Floor(percentage) as string
+					else;if Decimal==1 ;&& !bDecimalBase
+						Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 10) % 10) as string)
+					endIf
+				else
+					if Decimal==2 ;&& !bDecimalBase
+						Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 100) % 100) as string)
+					else;if Decimal==3 ;&& !bDecimalBase
+						Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 1000) % 1000) as string)
+					endIf
+				endIf
+			else
+				if Decimal==4 ;&& !bDecimalBase
+					Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 10000) % 10000) as string)
+				else;if Decimal==5 ;&& !bDecimalBase
+					Return (Math.Floor(percentage) as string) + "." + ((Math.Floor(percentage * 100000) % 100000) as string)
+				endif
+			endIf
+		endIf
+	endIf
 EndFunction
 
 ;string function StringReplace(string Text, string Find, string Replace) global
@@ -599,28 +638,48 @@ string function getIniValue(string iniContent, string Variable, string default="
 endfunction
 
 string function _getStateName_(int StateID) Global
-	if StateID==0
-		return "Follicular Phase"
-	elseif StateID==1
-		return "Ovulation"
-	elseif StateID==2
-		return "Luteal Phase"
-	elseif StateID==3
-		return "Menstruation"
-	elseif StateID==4
-		return "1st Pregnancy State"
-	elseif StateID==5
-		return "2nd Pregnancy State"
-	elseif StateID==6
-		return "3rd Pregnancy State"
-	elseif StateID==7
-		return "LaborPains"
-	elseif StateID==8
-		return "Recovery Phase"
-	elseif StateID==20
-		return "Pregnant"
-	elseif StateID==21
-		return "Pregnant by chaurus"
+	if StateId >= 0
+		if StateId < 9
+			if StateId < 8
+				if StateId < 4
+					if StateId < 2
+						if StateID==0
+							return "Follicular Phase"
+						else;if StateID==1
+							return "Ovulation"
+						endIf
+					else
+						if StateID==2
+							return "Luteal Phase"
+						else;if StateID==3
+							return "Menstruation"
+						endIf
+					endIf
+				else
+					if StateId < 6
+						if StateID==4
+							return "1st Pregnancy State"
+						else;if StateID==5
+							return "2nd Pregnancy State"
+						endIf
+					else
+						if StateID==6
+							return "3rd Pregnancy State"
+						else;if StateID==7
+							return "LaborPains"
+						endIf
+					endIf
+				endIf
+			else;if StateID==8
+				return "Recovery Phase"
+			endIf
+		else
+			if StateID==20
+				return "Pregnant"
+			elseif StateID==21
+				return "Pregnant by chaurus"
+			endIf
+		endIf
 	endIf
 endFunction
 

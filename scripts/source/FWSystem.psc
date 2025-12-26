@@ -53,9 +53,6 @@ potion property ContraceptionLow auto
 potion property ContraceptionMid auto
 Scroll property CallChildren1 auto
 Scroll property CallChildren2 auto
-ObjectReference[] property VendorAlchemy auto ;Bane -> Appears to be Unused
-ObjectReference[] property VendorMisc auto ;Bane -> Appears to be Unused
-ObjectReference[] property VendorSpells auto hidden ;Bane -> Appears to be Unused
 float lastStoreUpdate
 
 ImageSpaceModifier property DefaultBlur auto
@@ -73,7 +70,6 @@ Imagespacemodifier property iModPainLow auto
 Imagespacemodifier property iModPainMiddle auto
 Imagespacemodifier property iModPainHigh auto
 
-Faction property ForbiddenFaction auto
 Faction property FollowerFaction = none auto
 Faction property ChildFollowerFaction auto ; Reserved for Current Follower
 Faction property ChildFollowerFaction2 = none auto ; Reserved for Potential Follower
@@ -125,13 +121,12 @@ bool property EstrusActive = false Auto hidden
 Faction property zzEstrusChaurusBreederFaction = none auto hidden
 armor property DeviceBelt = none auto hidden
 bool property DeviceActive = false auto hidden
-bool property HearthFiresActive = false auto hidden
+bool property HearthFiresActive = true auto hidden ; Skyrim SE has HearthFires
 
 formlist property Pill_Items auto
 MagicEffect property Pill_Effect auto
 float property MaxContraception = 98.0 AutoReadOnly hidden
 float property MaxContraceptionTime = 2.0 AutoReadOnly hidden
-LeveledItem[] property PillStor_Types auto ;Bane -> Appears to be Unused
 
 formlist property WashOut_List auto
 MagicEffect property WashOut_Effect auto
@@ -174,6 +169,44 @@ int property UpdateState auto hidden
 Keyword Property zad_DeviousBelt Auto
 
 Actor Property PlayerRef Auto ;Tkc (Loverslab): added to make execution faster in some places. Script has no added property with this name
+
+Keyword Property IsBeastRace Auto
+GlobalVariable Property GameDaysPassed Auto
+Keyword Property ActorTypeCreature Auto
+Quest Property MQ101 Auto
+Keyword Property ActorTypeGhost Auto
+Faction Property BYOHRelationshipAdoptableFaction Auto
+Faction Property BYOHRelationshipAdoptionFaction Auto
+
+FormList property ForbiddenFactions auto
+FormList property ForbiddenKeywords auto
+FormList property ForbiddenRaces auto
+
+Spell Property _BF_DefaultCustomChildSpell Auto
+
+function ActorAddSpellOpt(actor a,Spell s, bool PlayerOnly = false, bool bIsCast = false, bool ShowMsg = true) ;Bane --> Edited to allow Spells to be cast in None Locations (Mostly Widerness)
+	;if s;/!=none/; && a;/!=none/;
+	if s ;Tkc (Loverslab): optimization
+	  if a
+		;if ( !PlayerOnly || Game.GetPlayer() == a ) && !a.HasSpell(s)
+		if ( !PlayerOnly || PlayerRef == a )
+		 if a.HasSpell(s) ;Tkc (Loverslab): optimization
+		 else;if !a.HasSpell(s)
+			if bIsCast
+				if a.Is3DLoaded() ;Tkc (Loverslab): just Is3DLoaded is not enough here
+					Cell acell = a.GetParentCell()
+					if acell && acell.IsAttached() ;Tkc (Loverslab): offered by dldrzz000. None error for IsAttached(). Possible here is will be enough of if a.Is3DLoaded() check
+						s.Cast(a,a)
+					endif
+				endif
+			else
+				a.addSpell(s, ShowMsg) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
+			endif
+		 endIf
+		endIf
+	  endif
+	endif
+endFunction
 
 ;--------------------------------------------------------------------------------
 ; Quest Functions
@@ -220,6 +253,60 @@ FWAbilityBeeingFemale function getBeeingFemaleSpell(actor woman)
 endfunction
 
 
+; Remove SPID-Added items
+function RemoveSPIDitems(actor woman)
+	int NumTypesPill = Pill_Items.GetSize()
+	int NumTypesWashOut = WashOut_List.GetSize()
+	
+	int index
+	Form ithItem
+	int ithItemNum
+	if(NumTypesPill)
+		index = 0
+		while(index < NumTypesPill)
+			ithItem = Pill_Items.GetAt(index)
+			ithItemNum = woman.GetItemCount(ithItem)
+			if(ithItemNum)
+				Debug.Trace("BeeingFemaleSE_Opt - FWSystem - RemoveSPIDitems : Actor " + woman + " has " + ithItemNum + " " + ithItem + ". Removing...")
+				woman.RemoveItem(ithItem, ithItemNum, true)
+			endIf
+			index += 1
+		endWhile
+	endIf
+	
+	if(NumTypesWashOut)
+		index = 0
+		while(index < NumTypesWashOut)
+			ithItem = WashOut_List.GetAt(index)
+			ithItemNum = woman.GetItemCount(ithItem)
+			if(ithItemNum)
+				Debug.Trace("BeeingFemaleSE_Opt - FWSystem - RemoveSPIDitems : Actor " + woman + " has " + ithItemNum + " " + ithItem + ". Removing...")
+				woman.RemoveItem(ithItem, ithItemNum, true)
+			endIf
+			index += 1
+		endWhile
+	endIf
+	
+	ithItemNum = woman.GetItemCount(Tampon_Normal)
+	if(ithItemNum)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - RemoveSPIDitems : Actor " + woman + " has " + ithItemNum + " tampons. Removing...")
+		woman.RemoveItem(Tampon_Normal, ithItemNum, true)
+	endIf
+
+	ithItemNum = woman.GetItemCount(Sanitary_Napkin_Normal)
+	if(ithItemNum)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - RemoveSPIDitems : Actor " + woman + " has " + ithItemNum + " panties. Removing...")
+		woman.RemoveItem(Sanitary_Napkin_Normal, ithItemNum, true)
+	endIf
+
+	ithItemNum = woman.GetItemCount(CallChildren2)
+	if(ithItemNum)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - RemoveSPIDitems : Actor " + woman + " has " + ithItemNum + " child scrolls. Removing...")
+		woman.RemoveItem(CallChildren2, ithItemNum, true)
+	endIf
+endFunction
+
+
 ; After registration, NPCs may use this potion
 function RegisterFluid(potion Fluid)
 	int c=Fluid.GetNumEffects()
@@ -252,11 +339,13 @@ float function IrregulationValue(actor woman, int state_number)
 	if max>1.5
 		max = 1.5
 	endif
-	if max<=0
-		return 1.0
-	elseif max<1
-		min = max
-		max = FWUtility.MaxFloat(0.3, 1 / max)
+	if max < 1
+		if max<=0
+			return 1.0
+		else;if max<1
+			min = max
+			max = FWUtility.MaxFloat(0.3, 1 / max)
+		endIf
 	else
 		min = FWUtility.MaxFloat(0.3, 1 / max)
 	endif
@@ -279,7 +368,7 @@ function CheckOtherMods()
 	;DeviceBelt = none
 	EstrusActive = false
 	DeviceActive = false
-	HearthFiresActive = false
+	;HearthFiresActive = true
 	bool SSL_installed = false
 	;/int idx = Game.GetModCount()
 	string modName = ""
@@ -311,11 +400,11 @@ function CheckOtherMods()
 			Message(Content.EstrusCharusFound,MSG_Debug)
 		endif
 	endif
-	if FWUtility.ModFile("HearthFires.esm")
+	;if FWUtility.ModFile("HearthFires.esm")
 		HearthFiresActive=true
-	endif
+	;endif
 	if FWUtility.ModFile("SexLab.esm")
-		ForbiddenFaction = Game.GetFormFromFile(0x00009068, "SexLab.esm") as Faction ;Bane --> Added to fix empty Faction
+		;ForbiddenFaction = Game.GetFormFromFile(0x00049068, "SexLab.esm") as Faction ;Bane --> Added to fix empty Faction ; No, you made a mistake Bane. It is 49068, NOT 09068
 		SSL_installed = true
 	endif
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -345,14 +434,6 @@ function SetImportantItems()
 	BabyItemList = Game.GetFormFromFile(0x1835, "BeeingFemale.esm") as FWBabyItemList
 	CoupleWidget = Game.GetFormFromFile(0x5E1AD, "BeeingFemale.esm") as FWCoupleWidget
 	; Reset the important items of the main components
-	cfg.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
-	cfg.Content = Game.GetFormFromFile(0x3E31, "BeeingFemale.esm") as FWTextContents
-	ChildSettings.Manager = Game.GetFormFromFile(0x1829, "BeeingFemale.esm") as FWAddOnManager
-	Controller.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
-	PantyWidget.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
-	StateWidget.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
-	BabyHealthWidget.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
-	ContraceptionWidget.System = Game.GetFormFromFile(0xD62, "BeeingFemale.esm") as FWSystem
 	; Reset less important items
 	AbortusFever = Game.GetFormFromFile(0x2312, "BeeingFemale.esm") as ImageSpaceModifier
 	AbortusImod = Game.GetFormFromFile(0x2311, "BeeingFemale.esm") as ImageSpaceModifier
@@ -581,7 +662,17 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 		else;if frm as FWChildActor == none
 			if frm as FWChildItem ;Tkc (Loverslab): optimization
 			else;if frm as FWChildItem == none
-				StorageUtil.FormListRemoveAt(none, "FW.Babys", childCount)
+				if frm as Actor
+					Actor myCustomChildActor = frm as Actor
+					bool myIsCustomChildActor = (StorageUtil.GetIntValue(myCustomChildActor, "FW.Child.IsCustomChildActor", 0) == 1)
+					if(myIsCustomChildActor)
+					else
+						Debug.Trace("BeeingFemaleSE_Opt - FWSystem: Adding IsCustomChildActor flag to the actor: " + myCustomChildActor)
+						StorageUtil.SetIntValue(myCustomChildActor, "FW.Child.IsCustomChildActor", 1)
+					endIf			
+				else
+					StorageUtil.FormListRemoveAt(none, "FW.Babys", childCount)
+				endIf
 			endif
 		endif
 	endwhile
@@ -738,9 +829,9 @@ function giveStartupSpells()
 	; Give spells
 	;/ original
 	if PlayerSex == 0 && PlayerRef.HasSpell(BeeingMaleSpell)==false && cfg.RelevantPlayer==true
-		FWUtility.ActorAddSpell(PlayerRef,BeeingMaleSpell)
+		ActorAddSpell(PlayerRef,BeeingMaleSpell)
 	elseif PlayerSex == 1 && PlayerRef.HasSpell(BeeingFemaleSpell)==false && cfg.RelevantPlayer==true
-		FWUtility.ActorAddSpell(PlayerRef,BeeingFemaleSpell)
+		ActorAddSpell(PlayerRef,BeeingFemaleSpell)
 	endIf
 	/;
 	;optimized\rewrited by Tkc (Loverslab)
@@ -748,12 +839,12 @@ function giveStartupSpells()
 		if PlayerSex;1-woman
 			if PlayerRef.HasSpell(BeeingFemaleSpell)
 			else
-				FWUtility.ActorAddSpell(PlayerRef,BeeingFemaleSpell, false, false, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
+				ActorAddSpellOpt(PlayerRef,BeeingFemaleSpell, false, false, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 			endIf
 		else;0-man
 			if PlayerRef.HasSpell(BeeingMaleSpell)
 			else
-				FWUtility.ActorAddSpell(PlayerRef,BeeingMaleSpell, false, false, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
+				ActorAddSpellOpt(PlayerRef,BeeingMaleSpell, false, false, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 			endIf			
 		endIf	
 	endIf
@@ -988,7 +1079,7 @@ bool function CheckIsLoreFriendlyMetting(actor w, actor m)
 endFunction
 
 bool function CheckIsLoreFriendlyRequired(actor a)
-	return a.GetRace().HasKeywordString("IsBeastRace")
+	return a.GetRace().HasKeyword(IsBeastRace)
 endFunction
 
 bool bCheckGiveSpermToNPCs = false
@@ -1000,10 +1091,10 @@ function CheckGiveSpermToNPCs()
 		return
 	endif
 	bCheckGiveSpermToNPCs= true
-	float cur = Utility.GetCurrentGameTime()
+	float cur = GameDaysPassed.GetValue()
 	if fLastUpdateGameTime<1
 		; Nothing will happen at the first day
-		fLastUpdateGameTime = Utility.GetCurrentGameTime()
+		fLastUpdateGameTime = GameDaysPassed.GetValue()
 		bCheckGiveSpermToNPCs = false
 		return
 	endif
@@ -1045,7 +1136,7 @@ function CheckGiveSpermToNPCs()
 				actor f = StorageUtil.FormListGet(none,"FW.SavedNPCs",rnd) as Actor
 				if f;/!=none/; ;Tkc (Loverslab): optimization
 					Message("["+(cfg.ImpregnateCount - i)+"/"+cfg.ImpregnateCount+"] "+FWUtility.StringReplace(Content.CheckGiveSperm,"{0}",f.GetLeveledActorBase()),MSG_Debug, MSG_Trace)
-					if CheckGiveSpermToNPC(f, (Utility.GetCurrentGameTime() - HoursSinceSex) + Utility.RandomFloat(-0.0318,0.0208))
+					if CheckGiveSpermToNPC(f, (GameDaysPassed.GetValue() - HoursSinceSex) + Utility.RandomFloat(-0.0318,0.0208))
 						success+=1
 					endif
 				endif
@@ -1054,7 +1145,7 @@ function CheckGiveSpermToNPCs()
 		if(success>0)
 			Message(FWUtility.StringReplace(Content.SpermAdded,"{0}",success),MSG_Debug)
 		endif
-		fLastUpdateGameTime = Utility.GetCurrentGameTime()
+		fLastUpdateGameTime = GameDaysPassed.GetValue()
 	endif
 	bCheckGiveSpermToNPCs= false
 endFunction
@@ -1068,7 +1159,7 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 		return false
 	endif
 	
-	bool IsCreatureF = f.GetRace().HasKeywordString("ActorTypeCreature")
+	bool IsCreatureF = f.GetRace().HasKeyword(ActorTypeCreature)
 	bool IsSpouseF = f.IsInFaction(PlayerMarriedFaction)
 	bool IsFollowerF = f.IsInFaction(FollowerFaction)
 	;if IsCreatureF && cfg.CreatureSperm==false
@@ -1158,7 +1249,7 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 								if Controller.GetDaysSinceLastSex(m)>0.3
 									if IsValidateMaleActor(m)>0 ; Check if's validate
 										if m.GetRelationshipRank(f)>=0 ; They shouldn't be enemys
-											bool IsCreatureM = m.GetRace().HasKeywordString("ActorTypeCreature")
+											bool IsCreatureM = m.GetRace().HasKeyword(ActorTypeCreature)
 											bool IsSpouseM = m.IsInFaction(PlayerMarriedFaction)
 											bool IsFollowerM = m.IsInFaction(FollowerFaction)
 											if IsCreatureM==false || cfg.CreatureSperm;/==true/; ;Tkc (Loverslab): optimization
@@ -1229,7 +1320,8 @@ Bool Function Message(string akMessage, int aiPriority = 1, int aiType = 0)
 	if bMessageEnabledAfterNewGameStarted ;Tkc (Loverslab): optimization
 	else;if bMessageEnabledAfterNewGameStarted==false
 		; Check if the Intro is playing - we don't want to spam the intro!
-		Quest q= Game.GetFormFromFile(0x3372B,"Skyrim.esm") as quest
+		;Quest q= Game.GetFormFromFile(0x3372B,"Skyrim.esm") as quest
+		Quest q = MQ101
 		if q.IsCompleted() || q.IsObjectiveCompleted(30) || q.GetCurrentStageID()>=300
 			bMessageEnabledAfterNewGameStarted=true
 		endif
@@ -1336,21 +1428,44 @@ int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
 	if ab.GetSex() == 0
 		return -3
 	endif
-	if ab.IsUnique() ;Tkc (Loverslab): optimization
-	else;if ab.IsUnique()==false
-		return -4
-	endif
+	;if ab.IsUnique() ;Tkc (Loverslab): optimization
+	;else;if ab.IsUnique()==false
+		;return -4
+	;endif
 	if a.IsDead()
 		return -2
 	endIf
-	if a.IsCommandedActor() ;Tkc (Loverslab): added to exclude summoned
-		return -1
+	if cfg.FemaleSummonedCanBecomePregnant
+	else
+		if a.IsCommandedActor() ;Tkc (Loverslab): added to exclude summoned
+			return -1
+		endIf
 	endIf
-	if a.HasKeywordString("ActorTypeGhost") ;Tkc (Loverslab): added to exclude ghosts
-		return -2
-	endif
-	if a.IsInFaction(ForbiddenFaction) || a.HasKeywordString("SexLabForbid")
-		return -1
+	if cfg.FemaleGhostCanBecomePregnant
+	else
+		if a.HasKeyword(ActorTypeGhost) ;Tkc (Loverslab): added to exclude ghosts
+			return -2
+		endif
+	endIf
+	if(ForbiddenFactions.GetAt(0))
+		int ForbiddenFactionsLength = ForbiddenFactions.GetSize()
+		int i = 0
+		while(i < ForbiddenFactionsLength)
+			if a.IsInFaction(ForbiddenFactions.GetAt(i) as Faction) ;|| a.HasKeywordString("SexLabForbid")
+				return -1
+			endIf
+			i += 1
+		endWhile
+	endIf
+	if(ForbiddenKeywords.GetAt(0))
+		int ForbiddenKeywordsLength = ForbiddenKeywords.GetSize()
+		int i = 0
+		while(i < ForbiddenKeywordsLength)
+			if a.HasKeyword(ForbiddenKeywords.GetAt(i) as Keyword) ;|| a.HasKeywordString("SexLabForbid")
+				return -1
+			endIf
+			i += 1
+		endWhile
 	endIf
 	;/
 	if PlayerRef == a && (cfg.RelevantPlayer==false && bIgnoreRelevance==false)
@@ -1393,7 +1508,7 @@ int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
 	;if ActorRace.HasKeywordString("ActorTypeCreature") && cfg.CreatureSperm == false
 	if cfg.CreatureSperm ;Tkc (Loverslab): optimization
 	else;cfg.CreatureSperm == false
-		if ActorRace.HasKeywordString("ActorTypeCreature") ;Tkc (Loverslab): optimization
+		if ActorRace.HasKeyword(ActorTypeCreature) ;Tkc (Loverslab): optimization
 			return -11
 		endif
 	endif
@@ -1406,37 +1521,51 @@ int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
 	if ActorRace.IsRaceFlagSet(0x00000004) ;Tkc (Loverslab): optimization: it is looking like messed up and bigger but in result compilled script became smaller and the code will work faster. but it is still quite heavy
 		return -8
 	else
-		if StringUtil.Find(RaceName, "Child") == -1
-			if StringUtil.Find(RaceName, "Little") == -1
-				if StringUtil.Find(RaceName, "117") == -1
-					if StringUtil.Find(RaceName, "Elin") == -1
+		if(ForbiddenRaces.GetAt(0))
+			int ForbiddenRacesLength = ForbiddenRaces.GetSize()
+			int i = 0
+			while(i < ForbiddenRacesLength)
+				if a.GetRace() == ForbiddenRaces.GetAt(i) as Race
+					return -8
+				endIf
+				i += 1
+			endWhile
+		else
+		;if StringUtil.Find(RaceName, "Child") == -1
+			;if StringUtil.Find(RaceName, "Little") == -1
+				;if StringUtil.Find(RaceName, "117") == -1
+					;if StringUtil.Find(RaceName, "Elin") == -1
 						if StringUtil.Find(RaceName, "Enfant") == -1
-							if StringUtil.Find(RaceName, "Monli") == -1
-							else;if (StringUtil.Find(RaceName, "Monli") != -1						
-								if a.GetScale() < 0.93
-									return -8
-								endIf
-							endIf
+							;if StringUtil.Find(RaceName, "Monli") == -1
+							;else;if (StringUtil.Find(RaceName, "Monli") != -1						
+								;if a.GetScale() < 0.93
+									;return -8
+								;endIf
+							;endIf
 						else;if StringUtil.Find(RaceName, "Enfant") != -1
 							return -8
 						endIf
-					else;if StringUtil.Find(RaceName, "Elin") != -1
-						return -8
-					endIf	
-				else;if StringUtil.Find(RaceName, "117") != -1
-					return -8
-				endIf
-			else;if StringUtil.Find(RaceName, "Little") != -1
-				return -8
-			endIf	
-		else;if StringUtil.Find(RaceName, "Child") != -1
-			return -8
+					;else;if StringUtil.Find(RaceName, "Elin") != -1
+						;return -8
+					;endIf	
+				;else;if StringUtil.Find(RaceName, "117") != -1
+					;return -8
+				;endIf
+			;else;if StringUtil.Find(RaceName, "Little") != -1
+				;return -8
+			;endIf	
+		;else;if StringUtil.Find(RaceName, "Child") != -1
+			;return -8
+		;endIf
 		endIf
 	endIf
 
-	if StringUtil.Find(RaceName, "Elder") == -1
-	else;if StringUtil.Find(RaceName, "Elder") != -1
-		return -9
+	if cfg.ElderFemaleCanBecomePregnant
+	else
+		if StringUtil.Find(RaceName, "Elder") == -1
+		else;if StringUtil.Find(RaceName, "Elder") != -1
+			return -9
+		endIf
 	endIf
 	
 	if PlayerRef == a
@@ -1464,14 +1593,37 @@ int function IsValidateMaleActor(actor a, bool bIgnoreRelevance = false)
 	if a.IsDead()
 		return -2
 	endIf
-	if a.IsCommandedActor() ;Tkc (Loverslab): added to exclude summoned
-		return -1
+	if cfg.MaleSummonedCanImpregnate
+	else
+		if a.IsCommandedActor() ;Tkc (Loverslab): added to exclude summoned
+			return -1
+		endIf
 	endIf
-	if a.HasKeywordString("ActorTypeGhost") ;Tkc (Loverslab): added to exclude ghosts
-		return -2
-	endif
-	if a.IsInFaction(ForbiddenFaction) || a.HasKeywordString("SexLabForbid")
-		return -1
+	if cfg.MaleGhostCanImpregnate
+	else
+		if a.HasKeyword(ActorTypeGhost) ;Tkc (Loverslab): added to exclude ghosts
+			return -2
+		endif
+	endIf
+	if(ForbiddenFactions.GetAt(0))
+		int ForbiddenFactionsLength = ForbiddenFactions.GetSize()
+		int i = 0
+		while(i < ForbiddenFactionsLength)
+			if a.IsInFaction(ForbiddenFactions.GetAt(i) as Faction) ;|| a.HasKeywordString("SexLabForbid")
+				return -1
+			endIf
+			i += 1
+		endWhile
+	endIf
+	if(ForbiddenKeywords.GetAt(0))
+		int ForbiddenKeywordsLength = ForbiddenKeywords.GetSize()
+		int i = 0
+		while(i < ForbiddenKeywordsLength)
+			if a.HasKeyword(ForbiddenKeywords.GetAt(i) as Keyword) ;|| a.HasKeywordString("SexLabForbid")
+				return -1
+			endIf
+			i += 1
+		endWhile
 	endIf
 	Race ActorRace = ab.GetRace()
 	
@@ -1479,7 +1631,7 @@ int function IsValidateMaleActor(actor a, bool bIgnoreRelevance = false)
 	;if ActorRace.HasKeywordString("ActorTypeCreature") && cfg.CreatureSperm == false
 	if cfg.CreatureSperm ;Tkc (Loverslab): optimization
 	else;cfg.CreatureSperm == false
-		if ActorRace.HasKeywordString("ActorTypeCreature") ;Tkc (Loverslab): optimization
+		if ActorRace.HasKeyword(ActorTypeCreature) ;Tkc (Loverslab): optimization
 			return -11
 		endif
 	endif
@@ -1492,31 +1644,42 @@ int function IsValidateMaleActor(actor a, bool bIgnoreRelevance = false)
 	if ActorRace.IsRaceFlagSet(0x00000004) ;Tkc (Loverslab): optimization: it is looking like messed up and bigger but in result compilled script became smaller and the code will work faster. but it is still quite heavy
 		return -8
 	else
-		if StringUtil.Find(RaceName, "Child") == -1
-			if StringUtil.Find(RaceName, "Little") == -1
-				if StringUtil.Find(RaceName, "117") == -1
-					if StringUtil.Find(RaceName, "Elin") == -1
+		if(ForbiddenRaces.GetAt(0))
+			int ForbiddenRacesLength = ForbiddenRaces.GetSize()
+			int i = 0
+			while(i < ForbiddenRacesLength)
+				if a.GetRace() == ForbiddenRaces.GetAt(i) as Race
+					return -8
+				endIf
+				i += 1
+			endWhile
+		else
+		;if StringUtil.Find(RaceName, "Child") == -1
+			;if StringUtil.Find(RaceName, "Little") == -1
+				;if StringUtil.Find(RaceName, "117") == -1
+					;if StringUtil.Find(RaceName, "Elin") == -1
 						if StringUtil.Find(RaceName, "Enfant") == -1
-							if StringUtil.Find(RaceName, "Monli") == -1
-							else;if (StringUtil.Find(RaceName, "Monli") != -1						
-								if a.GetScale() < 0.93
-									return -8
-								endIf
-							endIf
+							;if StringUtil.Find(RaceName, "Monli") == -1
+							;else;if (StringUtil.Find(RaceName, "Monli") != -1						
+								;if a.GetScale() < 0.93
+									;return -8
+								;endIf
+							;endIf
 						else;if StringUtil.Find(RaceName, "Enfant") != -1
 							return -8
 						endIf
-					else;if StringUtil.Find(RaceName, "Elin") != -1
-						return -8
-					endIf	
-				else;if StringUtil.Find(RaceName, "117") != -1
-					return -8
-				endIf
-			else;if StringUtil.Find(RaceName, "Little") != -1
-				return -8
-			endIf	
-		else;if StringUtil.Find(RaceName, "Child") != -1
-			return -8
+					;else;if StringUtil.Find(RaceName, "Elin") != -1
+						;return -8
+					;endIf	
+				;else;if StringUtil.Find(RaceName, "117") != -1
+					;return -8
+				;endIf
+			;else;if StringUtil.Find(RaceName, "Little") != -1
+				;return -8
+			;endIf	
+		;else;if StringUtil.Find(RaceName, "Child") != -1
+			;return -8
+		;endIf
 		endIf
 	endIf
 				
@@ -1679,13 +1842,52 @@ endFunction
 int function calculateNumChildren(actor Woman)
 	int result = 1
 	float counter = 1000000.0
-	float Chance = Utility.RandomFloat(0.0,counter)
+;	float Chance = Utility.RandomFloat(0.0,counter)
+	float Chance = Utility.RandomFloat(0.0, (counter - 0.1))			; Chance = Utility.RandomFloat(0.0,counter) includes counter!
 	int i = 0
-	float MaxBabys = cfg.MaxBabys * Manager.ActorMaxBabse(Woman)
+;	float MaxBabys = cfg.MaxBabys * Manager.ActorMaxBabse(Woman)
+;	Casting a float to int is much faster than using Math.Floor, according to https://ck.uesp.net/wiki/Floor_-_Math
+	int MaxBabys = (cfg.MaxBabys * Manager.ActorMaxBabse(Woman)) as int
 	float MaxBabyChance = Manager.ActorMaxChance(Woman)
 	if MaxBabys <1
 		MaxBabys=1
 	endIf
+
+	float myMaxBabyChance
+	float myOrigMaxBabyChance = (1.0 / (cfg.MultipleThreshold)) * MaxBabyChance
+	
+	float myMultipleBabySperm = Manager.ActorMultipleBabySperm(Woman)
+	if(myMultipleBabySperm > 0.0)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: MultipleBabySperm = " + myMultipleBabySperm + " for actor " + Woman)
+		float[] relevantSperm = Controller.GetRelevantSpermFloatTimed(Woman, GameDaysPassed.GetValue(), false, false)
+		float relevanceTotal = 0.0
+		int c = relevantSperm.length
+		if(c)
+			i = 0
+			while(i < c)
+				relevanceTotal += relevantSperm[i]
+				i += 1
+			endWhile
+		endIf
+			
+		float myMultipleBabySpermChance = Manager.ActorMultipleBabyChancePerSperm(Woman)
+		if(myMultipleBabySpermChance > 0.0)
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: MultipleBabyChancePerSperm = " + myMultipleBabySpermChance + " for actor " + Woman)
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: The amount of sperm in " + Woman + " is " + relevanceTotal)
+				
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: Original multiple baby chance for " + Woman + " was " + myOrigMaxBabyChance)
+			float myMaxBabyChanceMultiplier = relevanceTotal * myMultipleBabySpermChance / myMultipleBabySperm
+			MaxBabyChance *= myMaxBabyChanceMultiplier
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: Multiple baby chance for " + Woman + " will be multiplied by " + myMaxBabyChanceMultiplier)
+		endIf
+	endIf
+	myMaxBabyChance = (1.0 / (cfg.MultipleThreshold)) * MaxBabyChance
+	if(myMaxBabyChance > 1.0)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: Multiple baby chance cannot exceed 100 percent! Changing the probability for " + Woman + " to 100 percent")
+		myMaxBabyChance = 1.0
+	endIf
+	Debug.Trace("BeeingFemaleSE_Opt - FWSystem - calculateNumChildren: Current multiple baby chance for " + Woman + " is " + myMaxBabyChance)
+	
 	; on a realistic base of 1 / 85 (~1.2%) following results will be
 	; 1 Child    - 100.0000000000%
 	; 2 Children -   1.1764705882%
@@ -1693,15 +1895,19 @@ int function calculateNumChildren(actor Woman)
 	; 4 Children -   0.0001628332%
 	; 5 Children -   0.0000019156%
 	; 6 Children -   0.0000000225%
+	i = 0
 	while i < 6 ; a Max of 6 children!!!!
-		counter /= cfg.MultipleThreshold * MaxBabyChance ;ChanceMultipleBirth
+;		counter /= cfg.MultipleThreshold * MaxBabyChance ;ChanceMultipleBirth
+		counter *= myMaxBabyChance ; Default value of cfg.MultipleThreshold is 85, so the upper commented command is wrong!
 		if counter > Chance
 			result += 1
 		endIf
 		i += 1
 	endWhile
-	if result > Math.Floor(MaxBabys)
-		result = Math.Floor(MaxBabys)
+;	if result > Math.Floor(MaxBabys)
+;		result = Math.Floor(MaxBabys)
+	if result > MaxBabys
+		result = MaxBabys
 	endIf
 	if result > MaxBabyPregnantWith
 		result = MaxBabyPregnantWith
@@ -1748,24 +1954,44 @@ endFunction
 ; Labor-Pains around 5 - 24 hours
 ; Replanish As long the pregnacy takes
 float function getStateDuration(int Step, actor woman)
-	if Step == 0 ; Follicular phase
-		return cfg.FollicularDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 1 ; Ovulation
-		return cfg.OvulationDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 2 ; Luteal phase
-		return cfg.LutealDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 3 ; Menstruation
-		return cfg.MenstrualDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 4 ; 1. trimester 
-		return cfg.Trimster1Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 5 ; 2. trimester 
-		return cfg.Trimster2Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 6 ; 3. trimester 
-		return cfg.Trimster3Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
-	elseif Step == 7 ; labor pains
-		return 1 ; Fix
-	elseif Step == 8 ; replenish
-		return cfg.ReplanishDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+	if Step >= 0
+		if Step < 4
+			if Step < 2
+				if Step == 0 ; Follicular phase
+					return cfg.FollicularDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				else;if Step == 1 ; Ovulation
+					return cfg.OvulationDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				endIf
+			else
+				if Step == 2 ; Luteal phase
+					return cfg.LutealDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				else;if Step == 3 ; Menstruation
+					return cfg.MenstrualDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				endIf
+			endIf
+		else
+			if Step < 6
+				if Step == 4 ; 1. trimester 
+					return cfg.Trimster1Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				else;if Step == 5 ; 2. trimester 
+					return cfg.Trimster2Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+				endIf
+			else
+				if Step < 8
+					if Step == 6 ; 3. trimester 
+						return cfg.Trimster3Duration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+					else;if Step == 7 ; labor pains
+						return 1 ; Fix
+					endIf
+				else
+					if Step == 8 ; replenish
+						return cfg.ReplanishDuration * Manager.getActorDurationScale(Step,woman) * StorageUtil.GetFloatValue(woman,"FW.Irregulation",1.0);
+					else
+						return 0
+					endIf
+				endIf
+			endIf
+		endIf
 	else
 		return 0
 	endIf
@@ -1782,19 +2008,29 @@ float Function GetPhaseScale(int NodeSet, int PhaseID)
 	; NodeSet 0 = Belly
 	; NodeSet 1 = Breasts
 	
-	if cfg.VisualScalingKind==0 ; Realistic
-		return FWScalingSettings.Realistic(NodeSet, PhaseID)
-	elseif cfg.VisualScalingKind==1 ; Linear
-		return FWScalingSettings.Linear(NodeSet, PhaseID)
-	elseif cfg.VisualScalingKind==2 ; Immediately
-		return FWScalingSettings.Immediately(NodeSet, PhaseID)
-	elseif cfg.VisualScalingKind==3 ; Breasts
-		return FWScalingSettings.Breasts(NodeSet, PhaseID)
-	elseif cfg.VisualScalingKind==4 ; Belly
-		return FWScalingSettings.Belly(NodeSet, PhaseID)
-	elseif cfg.VisualScalingKind==5 ; Late
-		return FWScalingSettings.Late(NodeSet, PhaseID)
-	endif
+	if cfg.VisualScalingKind >= 0
+		if cfg.VisualScalingKind < 4
+			if cfg.VisualScalingKind < 2
+				if cfg.VisualScalingKind==0 ; Realistic
+					return FWScalingSettings.Realistic(NodeSet, PhaseID)
+				else;if cfg.VisualScalingKind==1 ; Linear
+					return FWScalingSettings.Linear(NodeSet, PhaseID)
+				endIf
+			else
+				if cfg.VisualScalingKind==2 ; Immediately
+					return FWScalingSettings.Immediately(NodeSet, PhaseID)
+				else;if cfg.VisualScalingKind==3 ; Breasts
+					return FWScalingSettings.Breasts(NodeSet, PhaseID)
+				endIf
+			endIf
+		elseif cfg.VisualScalingKind < 6
+			if cfg.VisualScalingKind==4 ; Belly
+				return FWScalingSettings.Belly(NodeSet, PhaseID)
+			else;if cfg.VisualScalingKind==5 ; Late
+				return FWScalingSettings.Late(NodeSet, PhaseID)
+			endif
+		endIf
+	endIf
 	Return 0.0
 EndFunction
 
@@ -1820,7 +2056,8 @@ endFunction
 
 bool function canBecomePMS(actor woman)
 	float chance = cfg.PMSChance * Manager.PMSChanceActorScale(woman)
-	if Utility.RandomFloat(0.0,100.0) < chance
+;	if Utility.RandomFloat(0.0,100.0) < chance
+	if(Utility.RandomFloat(0.0, 99.9) < chance)
 		return true
 	else
 		return false
@@ -1828,18 +2065,35 @@ bool function canBecomePMS(actor woman)
 endFunction
 
 bool function canBecomePregnant(actor woman)
-	float chance = cfg.ConceiveChanceNPC
-	if PlayerRef == woman
-		chance = cfg.ConceiveChance
-	elseif woman.IsInFaction(FollowerFaction)
-		chance = cfg.ConceiveChanceFollower
-	endif
-	chance*=Manager.PregnancyChanceActorScale(woman)
-	if Utility.RandomFloat(0.0,100.0) < chance
-		return true
-	else
-		return false
+	if(woman)
+		Actorbase ab = woman.GetActorBase()
+		if(ab)
+			if(ab.GetSex() == 1)
+				float chance
+;				if PlayerRef == woman
+				if(woman == PlayerRef)
+					chance = cfg.ConceiveChance
+				elseIf(woman.IsInFaction(FollowerFaction))
+					chance = cfg.ConceiveChanceFollower
+				else
+					chance = cfg.ConceiveChanceNPC
+				endif
+				chance *= Manager.PregnancyChanceActorScale(woman)
+
+				Debug.Trace("BeeingFemaleSE_Opt - FWSystem - canBecomePregnant: the actor " + woman + "'s pregnancy chance is " + chance)
+
+				if(Utility.RandomFloat(0.0, 99.9) < chance)
+					Debug.Trace("BeeingFemaleSE_Opt - FWSystem - canBecomePregnant: the actor " + woman + " can become pregnant")
+
+					return true
+				else
+					Debug.Trace("BeeingFemaleSE_Opt - FWSystem - canBecomePregnant: the actor " + woman + " cannot become pregnant yet")
+				endIf
+			endIf
+		endIf
 	endIf
+	
+	return false
 endFunction
 
 
@@ -1869,14 +2123,20 @@ Function doDamage(actor A, float Percentage, int DamageType, float OptionalArgum
 	bool IsPlayer = A == PlayerRef
 	
 	if IsPlayer
-		if cfg.Difficulty == 0 ; Painless
-			ScaleDamage = 0.4
-		elseif cfg.Difficulty == 1 ; Easy
-			ScaleDamage = 0.7
-		elseif cfg.Difficulty == 3 ; Advanced
-			ScaleDamage = 1.3
-		elseif cfg.Difficulty == 4 ; Heavy
-			ScaleDamage = 1.7
+		if cfg.Difficulty >= 0
+			if cfg.Difficulty < 2
+				if cfg.Difficulty == 0 ; Painless
+					ScaleDamage = 0
+				else;if cfg.Difficulty == 1 ; Easy
+					ScaleDamage = 0.7
+				endIf
+			else
+				if cfg.Difficulty == 3 ; Advanced
+					ScaleDamage = 1.3
+				elseif cfg.Difficulty == 4 ; Heavy
+					ScaleDamage = 1.7
+				endIf
+			endIf
 		endIf
 	ElseIf cfg.NPCFeelPain
 		ScaleDamage = 0.6 ; NPC got a reduced damage
@@ -1910,27 +2170,43 @@ Function doDamage(actor A, float Percentage, int DamageType, float OptionalArgum
 		int steps
 		float DamageLeft = efxDage
 		; In how many steps the Damage will be
-		if Percentage <10
-			steps = 1;
-		ElseIf Percentage <20
-			steps = 2;
-		ElseIf Percentage <30
-			steps = 3;
-		ElseIf Percentage <40
-			steps = 4;
-		ElseIf Percentage <50
-			steps = 5;
-		ElseIf Percentage <60
-			steps = 6;
-		ElseIf Percentage <70
-			steps = 7;
-		ElseIf Percentage <80
-			steps = 8;
-		ElseIf Percentage <90
-			steps = 9;
+		if Percentage < 80
+			if Percentage < 40
+				if Percentage < 20
+					if Percentage <10
+						steps = 1;
+					Else;If Percentage <20
+						steps = 2;
+					endIf
+				Else
+					If Percentage <30
+						steps = 3;
+					Else;If Percentage <40
+						steps = 4;
+					endIf
+				endIf
+			Else
+				if Percentage < 60
+					If Percentage <50
+						steps = 5;
+					Else;If Percentage <60
+						steps = 6;
+					endIf
+				Else
+					If Percentage <70
+						steps = 7;
+					Else;If Percentage <80
+						steps = 8;
+					endIf
+				endIf
+			endIf
 		Else
-			steps = 10;
-		EndIf
+			If Percentage <90
+				steps = 9;
+			Else
+				steps = 10;
+			EndIf
+		endIf
 		
 		while steps > 0
 			if(DamageLeft > 10)
@@ -1950,7 +2226,7 @@ Function doDamage(actor A, float Percentage, int DamageType, float OptionalArgum
 EndFunction
 
 float function LutealImpregnationTime(float CurrentStatePercent)
-	float res = 90 - (CurrentStatePercent * 1.66667)
+	float res = 120 - (CurrentStatePercent * 1.66667)
 	if res<0.0
 		return 0.0
 	else
@@ -2023,43 +2299,56 @@ function SpawnChild(Actor Mother, Actor Father)
 	
 	if Mother == PlayerRef || Father == PlayerRef
 		; Player Spawn
-		if cfg.BabySpawn == 0
-			return;
-		elseif cfg.BabySpawn == 1 ; && (Mother == PlayerRef || Father==PlayerRef) ; Only when the player is involved there will spawn actors
-			Baby = SpawnChildActor(Mother, Father)
-		elseif cfg.BabySpawn == 2
-			Baby = SpawnChildItem(Mother, Father)
-		elseif cfg.BabySpawn == 3 && BabyGem;/!=none/; ;Tkc (Loverslab): optimization
-			Mother.AddItem(BabyGem)
-		endif
+		if cfg.BabySpawn >= 0
+			if cfg.BabySpawn < 2
+				if cfg.BabySpawn == 0
+					return;
+				else;if cfg.BabySpawn == 1 ; && (Mother == PlayerRef || Father==PlayerRef) ; Only when the player is involved there will spawn actors
+					Baby = SpawnChildActor(Mother, Father)
+				endIf
+			else
+				if cfg.BabySpawn == 2
+					Baby = SpawnChildItem(Mother, Father)
+				elseif cfg.BabySpawn == 3 && BabyGem;/!=none/; ;Tkc (Loverslab): optimization
+					Mother.AddItem(BabyGem)
+				endif
+			endIf
+		endIf
 	else
 		; Npc Spawn
-		if cfg.BabySpawnNPC == 0
-			return;
-		elseif cfg.BabySpawnNPC == 1 ; && (Mother == PlayerRef || Father==PlayerRef) ; Only when the player is involved there will spawn actors
-			Baby = SpawnChildActor(Mother, Father)
-		elseif cfg.BabySpawnNPC == 2
-			Baby = SpawnChildItem(Mother, Father)
-		elseif cfg.BabySpawnNPC == 3 && BabyGem;/!=none/; ;Tkc (Loverslab): optimization
-			Mother.AddItem(BabyGem)
-		endif
+		if cfg.BabySpawnNPC >= 0
+			if cfg.BabySpawnNPC < 2
+				if cfg.BabySpawnNPC == 0
+					return;
+				else;if cfg.BabySpawnNPC == 1 ; && (Mother == PlayerRef || Father==PlayerRef) ; Only when the player is involved there will spawn actors
+					Baby = SpawnChildActor(Mother, Father)
+				endIf
+			else
+				if cfg.BabySpawnNPC == 2
+					Baby = SpawnChildItem(Mother, Father)
+				elseif cfg.BabySpawnNPC == 3 && BabyGem;/!=none/; ;Tkc (Loverslab): optimization
+					Mother.AddItem(BabyGem)
+				endif
+			endIf
+		endIf
 	endif
 	
 	if Baby;/!=none/; ;Tkc (Loverslab): optimization
 		; Here, all babys are stored
 		StorageUtil.FormListAdd(none,"FW.Babys", Baby)
 	endif
-	StorageUtil.SetFloatValue(Mother,"FW.LastBornChildTime", Utility.GetCurrentGameTime())
-	StorageUtil.SetFloatValue(Father,"FW.LastBornChildTime", Utility.GetCurrentGameTime())
+	StorageUtil.SetFloatValue(Mother,"FW.LastBornChildTime", GameDaysPassed.GetValue())
+	StorageUtil.SetFloatValue(Father,"FW.LastBornChildTime", GameDaysPassed.GetValue())
 	StorageUtil.FormListAdd(Mother,"FW.BornChildFather", Father)
-	StorageUtil.FloatListAdd(Mother,"FW.BornChildTime",Utility.GetCurrentGameTime())
+	StorageUtil.FloatListAdd(Mother,"FW.BornChildTime",GameDaysPassed.GetValue())
 	Controller.UpdateParentFaction(Mother)
 	Controller.UpdateParentFaction(Father)
 	Manager.OnBabySpawn(Mother, Father)
 endFunction
 
 Armor function SpawnChildItem(Actor Mother, Actor Father)
-	Int gender = Utility.RandomInt(0, 100)
+;	Int gender = Utility.RandomInt(0, 100)
+	Int gender = Utility.RandomInt(0, 99)
 	if gender < 53
 		gender=0
 	else
@@ -2156,15 +2445,25 @@ ObjectReference function ChildItemSetup(Form frm, int gender=-1, Actor Mother=no
 	endif
 endFunction
 
+; my custom edit for Skyrim SE
 actor function SpawnChildActor(Actor Mother, Actor Father)
 	bool bIsPlayerChild = false
 	if Mother==PlayerRef || Father==PlayerRef
 		bIsPlayerChild = true
 	endif
-	Int gender = Utility.RandomInt(0, 100)
-	if gender < 53
+;	Int gender = Utility.RandomInt(0, 99)
+;	if gender < 53
+	int gender = 0
+	
+	int myProbRandom = Utility.RandomInt(0, 99)
+	int myChildSexDetermMale = Manager.ActorChildSexDetermMale(Father)
+	Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: ChildSexDetermMale = " + myChildSexDetermMale)
+
+	if(myProbRandom < myChildSexDetermMale)
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: myProbRandom = " + myProbRandom + ", which is less than the ChildSexDetermMale. Child will be a boy.")
 		gender=0
 	else
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: myProbRandom = " + myProbRandom + ", which is not less than the ChildSexDetermMale. Child will be a girl.")
 		gender=1
 	endif
 	actorbase newChildBase = BabyItemList.getBabyActor(Mother, Father,gender)
@@ -2172,6 +2471,8 @@ actor function SpawnChildActor(Actor Mother, Actor Father)
 	else;if newChildBase==none
 		return none
 	endif
+	gender = newChildBase.GetSex()
+	
 	Actor newChild
 
 	if(Utility.RandomInt(1, 2) == 1 || !Mother) && Father;/!=none/; ;Tkc (Loverslab): optimization
@@ -2239,19 +2540,38 @@ actor function SpawnChildActor(Actor Mother, Actor Father)
 		endIf
 		
 		if bIsPlayerChild;/==true/; ;Tkc (Loverslab): optimization
-			if HearthFiresActive;/==true/; ;Tkc (Loverslab): optimization
-				faction f1 = Game.GetFormFromFile(0x4290, "HearthFires.esm") as Faction
-				faction f2 = Game.GetFormFromFile(0x42B0, "HearthFires.esm") as Faction
+			;if HearthFiresActive;/==true/; ;Tkc (Loverslab): optimization
+				faction f1 = BYOHRelationshipAdoptableFaction
+				faction f2 = BYOHRelationshipAdoptionFaction
 				newChild.SetFactionRank(f1,25)
 				newChild.SetFactionRank(f2,1)
-			endif
+			;endif
 		endIf
 		
 		newChild.EnableAI(true)
 		newChild.EvaluatePackage()
+		
+		Race newChildRace = BabyItemList.LastRace
+		
+		Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: LastRace of the child " + newChild + " is " + BabyItemList.LastRace)
+		Manager.RaceExcludeFromSLandBF(newChild, newChildRace)
+		
+		if(StorageUtil.GetIntValue(newChildRace, "FW.AddOn.AllowPCDialogue", 0) == 1)
+			newChild.AllowPCDialogue(true)
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: Child " + newChild + " can talk to player")
+		elseif(StorageUtil.GetIntValue(none, "FW.AddOn.Global_AllowPCDialogue", 0) == 1)
+			newChild.AllowPCDialogue(true)
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: Child " + newChild + " can talk to player, from global AddOn settings")
+		endIf
+		
 		FWChildActor fwchild = newChild as FWChildActor
 		if fwchild; != none ;Tkc (Loverslab): optimization
-			fwchild.ChildRace = BabyItemList.LastRace
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: Child " + newChild + " belongs to FWChildActor")
+			StorageUtil.SetIntValue(fwchild, "FW.AddOn.StartGrowing", 1)
+			
+;			fwchild.ChildRace = BabyItemList.LastRace
+			fwchild.ChildRace = newChildRace
+		
 			; First thing for any FWChildren - set ActorValues to Start-up values
 			if gender==0
 				; Male values
@@ -2303,7 +2623,7 @@ actor function SpawnChildActor(Actor Mother, Actor Father)
 			fwchild.Sex = gender
 			fwchild.IsVampire = false
 			fwchild.SetLevel(1)
-			fwchild.DayOfBirth = Utility.GetCurrentGameTime()
+			fwchild.DayOfBirth = GameDaysPassed.GetValue()
 			fwchild.Order_WaitAndPlay()
 			if Father;/!=none/; ;Tkc (Loverslab): optimization
 				if Father.GetLeveledActorBase().IsUnique()
@@ -2320,13 +2640,139 @@ actor function SpawnChildActor(Actor Mother, Actor Father)
 			endif
 			fwchild.InitChild()
 		else
+			Debug.Trace("BeeingFemaleSE_Opt - FWSystem - SpawnChildActor: Child " + newChild + " does not belong to FWChildActor")
+			newChild.StopCombat()
+			if Mother
+				newChild.SetRelationshipRank(Mother, ChildSettings.ParentRelationShipLevel)
+				Mother.SetRelationshipRank(newChild, ChildSettings.ParentRelationShipLevel)
+				
+				if Mother == PlayerRef
+					ChildSettings.AddPlayerChild(newChild)
+				endif
+			endif
+			if Father
+				newChild.SetRelationshipRank(Father, ChildSettings.ParentRelationShipLevel)
+				Father.SetRelationshipRank(newChild, ChildSettings.ParentRelationShipLevel)
+				
+				if Father == PlayerRef
+					ChildSettings.AddPlayerChild(newChild)
+				endif
+			endif
+			newChild.StopCombat()
+			
+			if gender==0
+				; Male values
+				newChild.SetActorValue("Destruction", 10)
+				newChild.SetActorValue("Illusion", 10)
+				newChild.SetActorValue("Conjuration", 10)
+				newChild.SetActorValue("Restoration", 10)
+				newChild.SetActorValue("Alteration", 10)
+				newChild.SetActorValue("Block", 10)
+				newChild.SetActorValue("OneHanded", 10)
+				newChild.SetActorValue("TwoHanded", 10)
+				newChild.SetActorValue("Marksman", 5)
+				newChild.SetActorValue("Sneak", 10)
+				newChild.SetActorValue("Magicka", 15)
+				newChild.SetActorValue("CarryWeight", 35)
+				newChild.SetActorValue("Health", 80)
+				
+				newChild.SetActorValue("SpeedMult", 100)
+				newChild.SetActorValue("HealRate", 0.6)
+				newChild.SetActorValue("MagickaRate", 1.4)
+				newChild.SetActorValue("StaminaRate", 2.8)
+			else
+				; Female values
+				newChild.SetActorValue("Destruction", 10)
+				newChild.SetActorValue("Illusion", 10)
+				newChild.SetActorValue("Conjuration", 10)
+				newChild.SetActorValue("Restoration", 10)
+				newChild.SetActorValue("Alteration", 10)
+				newChild.SetActorValue("Block", 10)
+				newChild.SetActorValue("OneHanded", 5)
+				newChild.SetActorValue("TwoHanded", 5)
+				newChild.SetActorValue("Marksman", 10)
+				newChild.SetActorValue("Sneak", 10)
+				newChild.SetActorValue("Magicka", 35)
+				newChild.SetActorValue("CarryWeight", 15)
+				newChild.SetActorValue("Health", 80)
+				
+				newChild.SetActorValue("SpeedMult", 95)
+				newChild.SetActorValue("HealRate", 0.5)
+				newChild.SetActorValue("MagickaRate", 1.6)
+				newChild.SetActorValue("StaminaRate", 2.8)
+			endif
+			
+			StorageUtil.SetFormValue(newChild, "FW.Child.Mother", Mother)
+			StorageUtil.SetFormValue(newChild, "FW.Child.Father", Father)
+			
+			bool newChildUseFathersLastName = false
+
+			if Father
+				if Father.GetLeveledActorBase().IsUnique()
+					if(Mother.HasFamilyRelationship(Father) || ((Mother.GetRelationshipRank(Father) == 4) && (Utility.RandomInt(0, 10) > 7)))
+						newChildUseFathersLastName = true
+					endif
+				endIf
+			endif
+			
+			newChild.AddSpell(_BF_DefaultCustomChildSpell)
+			
 			; It's not an fwchild
-			newChild.setDisplayName(childName)
-			newChild.setName(childName)
+;			newChild.setDisplayName(childName)
+;			newChild.setName(childName)
+			
+			string LastName = myGetLastName(Mother, Father, newChildUseFathersLastName)
+			newChild.SetName(childName)
+			newChild.SetDisplayName(childName + LastName, true)
+			StorageUtil.SetStringValue(newChild, "FW.Child.Name", childName)
+
+			newChild.EvaluatePackage()
 		endif
 	endif
 	showBornMessage(Mother, Father, newChild.GetLeveledActorBase().GetSex())
 	return newChild
+endFunction
+
+; Copied from FWChildActor
+string Function myGetLastName(Actor Mother, Actor Father, bool newChildUseFathersLastName)
+	string LastName = ""
+
+	if((Mother == PlayerRef) || (Father == PlayerRef))
+		return " Dovahkiir"
+	endif
+	
+	if(newChildUseFathersLastName)
+		LastName = myGetActorsLastName(Father)
+	endif
+	
+	if LastName==""
+		LastName = myGetActorsLastName(Mother)
+	endif
+	return LastName
+endFunction
+
+
+; Copied from FWChildActor
+string function myGetActorsLastName(actor a)
+	if a == none
+		return ""
+	endif
+	string Name1 = a.GetName()
+	string Name2 = a.GetDisplayName()
+	ActorBase ab = a.GetLeveledActorBase()
+	if(ab != none)
+		if(StringUtil.GetLength(ab.GetName()) > StringUtil.GetLength(Name1))
+			Name1 = ab.GetName()
+		endif
+	endif
+	int lName1 = StringUtil.GetLength(Name1)
+	int lName2 = StringUtil.GetLength(Name2)
+	if(lName1 > lName2)
+		return StringUtil.Substring(Name1, lName2)
+	elseif(lName1 < lName2)
+		return StringUtil.Substring(Name2, lName1)
+	endif
+	return ""
 endFunction
 
 
@@ -2347,39 +2793,43 @@ function CreateChildEnchantment(ObjectReference fwchild, actor Mother, actor Fat
 	endif
 	;int num = Utility.RandomInt(0,100)
 	int num = Utility.RandomInt(0,((ParentEnchLvl+ParentLvl)/1.5) as int) ;Tkc (Loverslab): balancing: for (Player Enchantment lvl 100 + Player lvl 50 ) /1.5 it will be 100. On lvl 50 already dragonbone and daedric armors
-	if num>95;90 ;Tkc (Loverslab): balancing
-		effects = new MagicEffect[4]
-		magnitudes = new float[4]
-		areas = new int[4]
-		durations = new int[4]
-		areas[0]=0
-		areas[1]=0
-		areas[2]=0
-		areas[3]=0
-		durations[0]=0
-		durations[1]=0
-		durations[2]=0
-		durations[3]=0
-	elseif num>79;90 ;Tkc (Loverslab): balancing
-		effects = new MagicEffect[3]
-		magnitudes = new float[3]
-		areas = new int[3]
-		durations = new int[3]
-		areas[0]=0
-		areas[1]=0
-		areas[2]=0
-		durations[0]=0
-		durations[1]=0
-		durations[2]=0
-	elseif num>49;40 ;Tkc (Loverslab): balancing
-		effects = new MagicEffect[2]
-		magnitudes = new float[2]
-		areas = new int[2]
-		durations = new int[2]
-		areas[0]=0
-		areas[1]=0
-		durations[0]=0
-		durations[1]=0
+	if num>49
+		if num>79
+			if num>95;90 ;Tkc (Loverslab): balancing
+				effects = new MagicEffect[4]
+				magnitudes = new float[4]
+				areas = new int[4]
+				durations = new int[4]
+				areas[0]=0
+				areas[1]=0
+				areas[2]=0
+				areas[3]=0
+				durations[0]=0
+				durations[1]=0
+				durations[2]=0
+				durations[3]=0
+			else;if num>79;90 ;Tkc (Loverslab): balancing
+				effects = new MagicEffect[3]
+				magnitudes = new float[3]
+				areas = new int[3]
+				durations = new int[3]
+				areas[0]=0
+				areas[1]=0
+				areas[2]=0
+				durations[0]=0
+				durations[1]=0
+				durations[2]=0
+			endIf
+		else;if num>49;40 ;Tkc (Loverslab): balancing
+			effects = new MagicEffect[2]
+			magnitudes = new float[2]
+			areas = new int[2]
+			durations = new int[2]
+			areas[0]=0
+			areas[1]=0
+			durations[0]=0
+			durations[1]=0
+		endIf
 	else
 		effects = new MagicEffect[1]
 		magnitudes = new float[1]
@@ -2632,29 +3082,49 @@ Event OnKeyDown(int keyCode)
 									msg=tmpState+" is not a validate state"
 								endif
 							endif
-							if fstate==0
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID0)
-							elseif fstate==1
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID1)
-							elseif fstate==2
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID2)
-							elseif fstate==3
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID3)
-							elseif fstate==4
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID4)
-							elseif fstate==5
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID5)
-							elseif fstate==6
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID6)
-							elseif fstate==7
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID7)
-							elseif fstate==8
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID8)
-							elseif fstate==20
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID20)
-							elseif fstate==21
-								msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID21)
-							endif
+							if fstate >= 0
+								if fstate < 9
+									if fstate < 8
+										if fstate < 4
+											if fstate < 2
+												if fstate==0
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID0)
+												else;if fstate==1
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID1)
+												endIf
+											else
+												if fstate==2
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID2)
+												else;if fstate==3
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID3)
+												endIf
+											endIf
+										else
+											if fstate < 6
+												if fstate==4
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID4)
+												else;if fstate==5
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID5)
+												endIf
+											else
+												if fstate==6
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID6)
+												else;if fstate==7
+													msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID7)
+												endIf
+											endIf
+										endIf
+									else;if fstate==8
+										msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID8)
+									endIf
+								elseif((fstate==20) || (fstate==21))
+									if fstate==20
+										msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID20)
+									else;if fstate==21
+										msg=FWUtility.MultiStringReplace(Content.SwitchState,a.GetDisplayname(),Content.StateID21)
+									endif
+								endIf
+							endIf
 						else
 							msg=getValidateMessage(validate)
 						endif
@@ -2890,10 +3360,10 @@ Event OnKeyDown(int keyCode)
 						msg+=console_PrintRace(bLog,r, "Pain_Phase_PregnantPains")
 						msg+=console_PrintRace(bLog,r, "Pain_PMS")
 						msg+=console_PrintRace(bLog,r, "PMS_ChanceScale")
-						msg+=console_PrintRace(bLog,r, "Size_Belly_Max")
-						msg+=console_PrintRace(bLog,r, "Size_Belly_Max_Multiple")
-						msg+=console_PrintRace(bLog,r, "Size_Breasts_Max")
-						msg+=console_PrintRace(bLog,r, "Size_Breasts_Max_Multiple")
+						msg+=console_PrintRace(bLog,r, "Sizes_Belly_Max")
+						msg+=console_PrintRace(bLog,r, "Sizes_Belly_Max_Multiple")
+						msg+=console_PrintRace(bLog,r, "Sizes_Breasts_Max")
+						msg+=console_PrintRace(bLog,r, "Sizes_Breasts_Max_Multiple")
 						msg+=console_PrintRace(bLog,r, "Sperm_Amount_Scale")
 						msg+=console_PrintRace(bLog,r, "Baby_Healing_Scale")
 						msg+=console_PrintRace(bLog,r, "Baby_Damage_Scale")
@@ -3059,29 +3529,49 @@ Event OnKeyDown(int keyCode)
 endEvent
 
 string function getValidateMessage(int id)
-	if id==-1
-		return Content.ForbiddenReason1
-	elseif id==-2
-		return Content.ForbiddenReason2
-	elseif id==-3
-		return Content.ForbiddenReason3
-	elseif id==-4
-		return Content.ForbiddenReason4
-	elseif id==-5
-		return Content.ForbiddenReason5
-	elseif id==-6
-		return Content.ForbiddenReason6
-	elseif id==-7
-		return Content.ForbiddenReason7
-	elseif id==-8
-		return Content.ForbiddenReason8
-	elseif id==-9
-		return Content.ForbiddenReason9
-	elseif id==-10
-		return Content.ForbiddenReason10
-	elseif id==-11
-		return Content.ForbiddenReason11
-	endif
+	if id < 0
+		if id > -9
+			if id > -5
+				if id > -3
+					if id==-1
+						return Content.ForbiddenReason1
+					else;if id==-2
+						return Content.ForbiddenReason2
+					endIf
+				else
+					if id==-3
+						return Content.ForbiddenReason3
+					else;if id==-4
+						return Content.ForbiddenReason4
+					endIf
+				endIf
+			else
+				if id > -7
+					if id==-5
+						return Content.ForbiddenReason5
+					else;if id==-6
+						return Content.ForbiddenReason6
+					endIf
+				else
+					if id==-7
+						return Content.ForbiddenReason7
+					else;if id==-8
+						return Content.ForbiddenReason8
+					endIf
+				endIf
+			endIf
+		else
+			if id > -11
+				if id==-9
+					return Content.ForbiddenReason9
+				else;if id==-10
+					return Content.ForbiddenReason10
+				endIf
+			elseif id==-11
+				return Content.ForbiddenReason11
+			endif
+		endIf
+	endIf
 endFunction
 
 

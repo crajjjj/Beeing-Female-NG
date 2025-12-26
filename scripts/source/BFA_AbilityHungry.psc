@@ -11,19 +11,22 @@ bool NeedToCheck = true
 bool bIsPlayer = false
 faction _SNHungryFaction = none
 
+Actor Property PlayerRefActor Auto
+GlobalVariable Property GameDaysPassed Auto
+
 ; Event received when this effect is first started (OnInit may not have been run yet!)
 Event OnEffectStart(Actor akTarget, Actor akCaster)
 	PlayerRef = akTarget
-	bIsPlayer = PlayerRef==Game.GetPlayer()
+	bIsPlayer = PlayerRef==PlayerRefActor
 	RegisterForSingleUpdate(10)
 	RegisterForModEvent("_SN_PlayerConsumes","OnPlayerEaten")
 EndEvent
 
 Event OnPlayerEaten(string hookName, string argString, float argNum, form sender)
-	;if PlayerRef==Game.GetPlayer()
-	if bIsPlayer ;Tkc (Loverslab): optimization. check for bool IsPlayer wich is already set on the effect start is much faster than execute PlayerRef==Game.GetPlayer() on each eaten food
+	;if PlayerRef==PlayerRefActor
+	if bIsPlayer ;Tkc (Loverslab): optimization. check for bool IsPlayer wich is already set on the effect start is much faster than execute PlayerRef==PlayerRefActor on each eaten food
 		lastEatenTime = Utility.GetCurrentRealTime()
-		lastEatenGTime = Utility.GetCurrentGameTime()
+		lastEatenGTime = GameDaysPassed.GetValue()
 	endif
 endEvent
 
@@ -36,7 +39,7 @@ EndEvent
 
 Event OnUpdate()
 	float t = Utility.GetCurrentRealTime()
-	float g = Utility.GetCurrentGameTime()
+	float g = GameDaysPassed.GetValue()
 	float w = 90
 	
 	if t >= lastEatenTime + w || g > lastEatenGTime + 2.0
@@ -52,13 +55,15 @@ Event OnUpdate()
 endEvent
 
 Event OnSpellCast(Form akSpell)
-	if (akSpell as potion);/!=none/;
-		if FoodList.Find(akSpell) || ((akSpell as potion).IsFood() && (akSpell as potion).IsPoison()==false)
-			; Actor just ate something
-			lastEatenTime = Utility.GetCurrentRealTime()
-			lastEatenGTime = Utility.GetCurrentGameTime()
+	if(akSpell)
+		if (akSpell as potion);/!=none/;
+			if FoodList.Find(akSpell) || ((akSpell as potion).IsFood() && (akSpell as potion).IsPoison()==false)
+				; Actor just ate something
+				lastEatenTime = Utility.GetCurrentRealTime()
+				lastEatenGTime = GameDaysPassed.GetValue()
+			endif
 		endif
-	endif
+	endIf
 EndEvent
 
 bool function CheckinventoryForFood()
@@ -118,7 +123,7 @@ bool function Eat(Form itm)
 				if FoodList.Find(p)>=0
 					if PlayerRef.GetItemCount(p)>0
 						lastEatenTime = Utility.GetCurrentRealTime()
-						lastEatenGTime = Utility.GetCurrentGameTime()
+						lastEatenGTime = GameDaysPassed.GetValue()
 						
 						;CastEffects(p)
 						

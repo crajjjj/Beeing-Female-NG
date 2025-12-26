@@ -4,36 +4,17 @@ string function OrderAV()
 	return "JumpingBonus"
 endFunction
 
-FormList property ShildSpells auto
-FormList property AttackSpells auto
-FormList property SummonSpells auto
-FormList property HealSpells auto
-
-Faction property Faction_Job auto
-Faction property Faction_OtherParent auto
-Faction property Faction_MaySleep auto
-Faction property Faction_WantsToPlay auto ; 0 = No, 1 = Hide and seek, 2 = run away
-
-FormList property Factions_To_Transfer auto
-
-;int property ChildMaxLevel = 150 autoReadonly
-int property MaxLevelsPerCombat = 10 autoReadOnly
-int property SkillpointsPerLevel = 5 autoReadOnly
-
-idle property IdleRead auto
-idle property IdleStuddy auto
-idle property IdleMagic auto
-
 Imagespacemodifier property MenuImageSpace auto
+
+int property SkillpointsPerLevel = 5 autoReadOnly
 
 Quest property ChildDialogueQuest auto
 
 int property ParentRelationShipLevel = 3 auto
 
 
-spell property LevelUpFX auto
-
-FWChildActor[] PlayerChildren
+;FWChildActor[] PlayerChildren
+Actor[] PlayerChildren
 
 int[] property ChildPerkX auto hidden
 int[] property ChildPerkY auto hidden
@@ -44,11 +25,17 @@ string[] property ChildPerkFile auto hidden
 ;LeveledSpell[] property ChildPerk auto hidden
 
 FWAddOnManager property Manager auto
-Faction property PlayerFaction auto
 
 Static property MeetPointForm auto
 
 int property LoadingState auto hidden
+
+Quest Property RelationshipMarriageFIN Auto
+Quest Property BYOHRelationshipAdoption Auto
+GlobalVariable Property GameDaysPassed Auto
+Actor Property PlayerRef Auto
+Static Property ImperialTentLarge Auto
+FWSystemConfig property cfg auto
 
 int function ChildMaxLevel() Global
 	return 150
@@ -57,7 +44,8 @@ endFunction
 function initArray()
 	LoadingState=2
 	if PlayerChildren.length<128
-		PlayerChildren = new FWChildActor[128]
+;		PlayerChildren = new FWChildActor[128]
+		PlayerChildren = new Actor[128]
 	endif
 	LoadingState=3
 	if ChildPerkX.length<128
@@ -123,7 +111,7 @@ function SetOtherParentAlias(ObjectReference NewOtherParent = none, bool bOnlyIf
 			(OtherParent).ForceRefTo(NewOtherParent)
 		endif
 	else
-		Quest q = Game.GetFormFromFile(0x21382, "skyrim.esm") as quest
+		Quest q = RelationshipMarriageFIN;Game.GetFormFromFile(0x21382, "skyrim.esm") as quest
 		if q;/!=none/;
 		  ObjectReference LoveInterest = (q.GetAliasByName("LoveInterest") as Referencealias).GetReference() ;Tkc (Loverslab) optimization
 		  if LoveInterest;added because was error when LoveInterest was none
@@ -139,12 +127,12 @@ endFunction
 
 function SetHouseAlias()
 	int i=Game.GetModCount()
-	Quest q = Game.GetFormFromFile(0x21382, "skyrim.esm") as quest
+	Quest q = RelationshipMarriageFIN;Game.GetFormFromFile(0x21382, "skyrim.esm") as quest
 	while i>0
 		i-=1
 		if(Game.GetModName(i)=="HearthFires.esm")
 			i=0
-			Quest qHF = Game.GetFormFromFile(0x42B4, "HearthFires.esm") as quest
+			Quest qHF = BYOHRelationshipAdoption;Game.GetFormFromFile(0x42B4, "HearthFires.esm") as quest
 			if qHF;/!=none/;
 				if qHF.IsActive()
 					LocationAlias LocAlias = (qHF.GetAliasByName("CurrentHomeHouse") as LocationAlias)
@@ -200,7 +188,8 @@ function RegisterChildPerk()
 	LoadingState=24
 endFunction
 
-function AddPlayerChild(FWChildActor NewChild)
+;function AddPlayerChild(FWChildActor NewChild)
+function AddPlayerChild(Actor NewChild)
 	int i=128
 	int nextInsertID=-1
 	if PlayerChildren.length<128
@@ -221,7 +210,8 @@ function AddPlayerChild(FWChildActor NewChild)
 	RegisterForUpdateGameTime(1)
 endFunction
 
-function RemovePlayerChild(FWChildActor ChildToRemove)
+;function RemovePlayerChild(FWChildActor ChildToRemove)
+function RemovePlayerChild(Actor ChildToRemove)
 	if PlayerChildren.length<128
 		return
 	endif
@@ -243,13 +233,16 @@ event OnUpdateGameTime()
 	int i=128
 	while i>0
 		i-=1
-		if PlayerChildren[i];/!=none/;
-			if PlayerChildren[i].PlayerLastSeen >0
-				if (PlayerChildren[i].GetActorValue(OrderAV()) < 10 && Utility.GetCurrentGameTime() - PlayerChildren[i].PlayerLastSeen > 1) || (PlayerChildren[i].GetActorValue(OrderAV()) == 12 && Utility.GetCurrentGameTime() - PlayerChildren[i].PlayerLastSeen > 2)
-				   	Debug.Notification(PlayerChildren[i].GetDisplayName() + " is going home")
-					PlayerChildren[i].Order_GoHome()
+		if(PlayerChildren[i] && !PlayerChildren[i].IsDead());/!=none/;
+			FWChildActor FWPlayerChildren = PlayerChildren[i] as FWChildActor
+			if(FWPlayerChildren)
+				if FWPlayerChildren.PlayerLastSeen >0
+					if (FWPlayerChildren.GetActorValue(OrderAV()) < 10 && GameDaysPassed.GetValue() - FWPlayerChildren.PlayerLastSeen > 1) || (FWPlayerChildren.GetActorValue(OrderAV()) == 12 && GameDaysPassed.GetValue() - FWPlayerChildren.PlayerLastSeen > 2)
+						Debug.Notification(FWPlayerChildren.GetDisplayName() + " is going home")
+						FWPlayerChildren.Order_GoHome()
+					endif
 				endif
-			endif
+			endIf
 		endif
 	endWhile
 endEvent
@@ -257,7 +250,7 @@ endEvent
 function SetMeetPoint(ObjectReference or = none)
 	If MeetPointForm ;Tkc (Loverslab) optimization
 	else;If (MeetPointForm==none)
-		MeetPointForm = Game.GetFormFromFile(0x800D9, "Skyrim.esm") as Static
+		MeetPointForm = ImperialTentLarge;Game.GetFormFromFile(0x800D9, "Skyrim.esm") as Static
 	endIf
 	ReferenceAlias ra = (ChildDialogueQuest.GetAliasByName("MeetPoint") as referencealias)
 	ObjectReference xor = none
@@ -265,11 +258,11 @@ function SetMeetPoint(ObjectReference or = none)
 		xor = ra.GetReference()
 	else;if(ra==none)
 		;Debug.Trace("BeeingFemale::FWChildSettings->SetMeetPoint - ra ")
-		xor = Game.GetPlayer().PlaceAtMe(MeetPointForm)
+		xor = PlayerRef.PlaceAtMe(MeetPointForm)
 	endif
 	if xor;/!=none/;
 		if or
-			xor.MoveTo(Game.GetPlayer())
+			xor.MoveTo(PlayerRef)
 		else;if or == none
 			xor.MoveTo(or)
 		endif
@@ -391,6 +384,13 @@ endFunction
 event ChildLoadPerkData(string hookName, string argString, float argNum, form Sender)
 	; Send Perk-List / Requerst next perk
 	;Debug.Trace("AddChildPerk()")
+
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - ChildLoadPerkData : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
+	
 	int i = lastInitPerk
 	while(i<128)
 		;if(ChildPerkFile[i]!="" && ChildPerkEnabled[i];/==true/;)
@@ -494,6 +494,12 @@ endEvent
 
 ; Raised when leveling a perk
 event ChildActorPerk(string hookName, string argString, float argNum, form Sender)
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - ChildActorPerk : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
+	
 	if(Sender == menuChild)
 		;int i=ChildPerk.length
 		;while(i>0)
@@ -540,6 +546,12 @@ event ChildActorPerk(string hookName, string argString, float argNum, form Sende
 endEvent
 
 event ChildActorSkilled(string hookName, string argString, float argNum, form Sender)
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - ChildActorSkilled : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
+	
 	if(Sender == menuChild)
 		if(argString=="Regeneration")
 			
@@ -557,6 +569,13 @@ event ChildSkillMenuClosed(string hookName, string argString, float argNum, form
 	UnregisterForModEvent("ChildActorSkilled")
 	UnregisterForModEvent("ChildSkillMenuClosed")
 	UnregisterForModEvent("ChildLoadPerkData")
+
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - ChildSkillMenuClosed : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
+	
 	if(menuChild.IsLearning) ;Tkc (Loverslab) optimization
 	else;if(!menuChild.IsLearning)
 		menuChild.CheckInventory()
@@ -568,12 +587,21 @@ endEvent
 event GetBeeingFemaleChildData(string hookName, string argString, float argNum, form sender)
 	UnregisterForModEvent("GetBeeingFemaleChildData")
 	UI.InvokeNumber("CustomMenu", "_root.childSkillDial.setPlatform", (Game.UsingGamepad() as Int))
+
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - GetBeeingFemaleChildData : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
+	
 	; Info Tab
+	float dob = StorageUtil.GetFloatValue(menuChild, "FW.Child.DOB", 0)
+	
 	string[] strA = new string[15]
 	strA[0]=menuChild.Name
 	strA[1]=menuChild.GetLastName()
-	strA[2]=""
-	strA[3]=""
+	strA[2] = Math.Floor(GameDaysPassed.GetValue() - dob)
+	strA[3] = Utility.GameTimeToString(dob)
 	actorbase cmb = menuChild.Mother.GetLeveledActorBase() ;Tkc (Loverslab) optimization
 	if menuChild.Mother;/!=none/; && cmb ;Tkc (Loverslab) optimization
 		strA[4]=cmb.GetName()
@@ -638,7 +666,7 @@ event GetBeeingFemaleChildData(string hookName, string argString, float argNum, 
 	
 	UI.InvokeInt("CustomMenu", "_root.childSkillDial.setChild", menuChild.GetFormID())
 	
-	FWSystemConfig cfg = Game.GetFormFromFile(0x1828, FWUtility.ModFile("BeeingFemale")) as FWSystemConfig
+	;FWSystemConfig cfg = Game.GetFormFromFile(0x1828, FWUtility.ModFile("BeeingFemale")) as FWSystemConfig
 	bool debugMode = false
 	if cfg;/!=none/;
 		debugMode = cfg.Messages<=0
@@ -656,28 +684,39 @@ endEvent
 event GetBeeingFemaleChildStats(string hookName, string argString, float argNum, form sender)
 	UnregisterForModEvent("GetBeeingFemaleChildStats")	
 	float[] intA = new float[21]
-	intA[0] = menuChild.GetLevel()
-	intA[1] = menuChild.getExp()
-	intA[2] = getExperience(menuChild.GetLevel())
-	intA[3] = menuChild.calculateSkillPoints()
-	intA[4] = menuChild.calculatePerkPoints()
+
+	if(menuChild)
+	else
+		menuChild = sender as FWChildActor
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - GetBeeingFemaleChildStats : menuChild was not assigned. Assigning menuChild = " + menuChild)
+	endIf
 	
-	intA[5] = menuChild.GetActorValue("Comprehension")
-	intA[6] = menuChild.GetActorValue("Destruction")
-	intA[7] = menuChild.GetActorValue("Illusion")
-	intA[8] = menuChild.GetActorValue("Conjuration")
-	intA[9] = menuChild.GetActorValue("Magicka")
-	
-	intA[10] = menuChild.GetActorValue("Restoration")
-	intA[11] = menuChild.GetActorValue("Alteration")
-	intA[12] = menuChild.GetActorValue("Block")
-	intA[13] = menuChild.GetActorValue("CarryWeight")
-	
-	intA[14] = menuChild.GetActorValue("OneHanded")
-	intA[15] = menuChild.GetActorValue("TwoHanded")
-	intA[16] = menuChild.GetActorValue("Marksman")
-	intA[17] = menuChild.GetActorValue("Sneak")
-	intA[18] = menuChild.GetActorValue("Health")
+	if(menuChild)
+		intA[0] = menuChild.GetLevel()
+		intA[1] = menuChild.getExp()
+		intA[2] = getExperience(menuChild.GetLevel())
+		intA[3] = menuChild.calculateSkillPoints()
+		intA[4] = menuChild.calculatePerkPoints()
+		
+		intA[5] = menuChild.GetActorValue("Comprehension")
+		intA[6] = menuChild.GetActorValue("Destruction")
+		intA[7] = menuChild.GetActorValue("Illusion")
+		intA[8] = menuChild.GetActorValue("Conjuration")
+		intA[9] = menuChild.GetActorValue("Magicka")
+		
+		intA[10] = menuChild.GetActorValue("Restoration")
+		intA[11] = menuChild.GetActorValue("Alteration")
+		intA[12] = menuChild.GetActorValue("Block")
+		intA[13] = menuChild.GetActorValue("CarryWeight")
+		
+		intA[14] = menuChild.GetActorValue("OneHanded")
+		intA[15] = menuChild.GetActorValue("TwoHanded")
+		intA[16] = menuChild.GetActorValue("Marksman")
+		intA[17] = menuChild.GetActorValue("Sneak")
+		intA[18] = menuChild.GetActorValue("Health")
+	else
+		Debug.Trace("BeeingFemaleSE_Opt - FWChildSettings - GetBeeingFemaleChildStats : menuChild is none!")
+	endIf
 	
 	int numPerks=0
 	int numPerkE=0

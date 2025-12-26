@@ -5,6 +5,15 @@ int property Magnetude = 100 auto
 actor ActorRef;=none
 bool bInit;=false
 
+Actor Property PlayerRef Auto
+FWSystem property System auto
+Spell Property BeeingFemaleSpell Auto
+Spell Property BeeingMaleSpell Auto
+MagicEffect Property BeingMaleEffect Auto
+MagicEffect Property BeeingFemaleEffect Auto
+FWSystemConfig property cfg auto
+GlobalVariable Property GameDaysPassed Auto
+
 Event OnEffectStart(Actor akTarget, Actor akCaster)
 	 ;Tkc (Loverslab): commented checks because for aimed Show stats spell the script even will not be executed and for added Show Player info spell target will be Player
 	;if akTarget;/!=none/; ;Tkc (Loverslab) , checks swapped
@@ -39,35 +48,35 @@ function execute()
 		return
 	endif
 	
-	if ActorRef == Controller.PlayerRef ;Tkc (Loverslab) : skip spell checking when player because it is reseting player
+	if ActorRef == PlayerRef ;Tkc (Loverslab) : skip spell checking when player because it is reseting player
 	else
 	;;;;
-	spell BFspell = Controller.System.BeeingFemaleSpell ;Tkc (Loverslab): optimization
+	spell BFspell = BeeingFemaleSpell ;Tkc (Loverslab): optimization
 	If ActorRef.HasSpell(BFspell)
-		if ActorRef.HasMagicEffect(BFspell.GetNthEffectMagicEffect(0)) ;Tkc (Loverslab) optimization
+		if ActorRef.HasMagicEffect(BeeingFemaleEffect) ;Tkc (Loverslab) optimization
 		else;if !ActorRef.HasMagicEffect(Controller.System.BeeingFemaleSpell.GetNthEffectMagicEffect(0))
 			ActorRef.RemoveSpell(BFspell)
 		endif
 	endif
-	spell BMspell = Controller.System.BeeingMaleSpell ;Tkc (Loverslab): optimization
+	spell BMspell = BeeingMaleSpell ;Tkc (Loverslab): optimization
 	if ActorRef.HasSpell(BMspell)
-		if ActorRef.HasMagicEffect(BMspell.GetNthEffectMagicEffect(0)) ;Tkc (Loverslab) optimization
+		if ActorRef.HasMagicEffect(BeingMaleEffect) ;Tkc (Loverslab) optimization
 		else;if !ActorRef.HasMagicEffect(Controller.System.BeeingMaleSpell.GetNthEffectMagicEffect(0))
 			ActorRef.RemoveSpell(BMspell)
 		endif
 	endif
 	
-	If !ActorRef.HasSpell(BFspell) && Controller.System.IsValidateFemaleActor(ActorRef) ;Tkc (Loverslab) optimization. changed IsValidateActor to IsValidateFemaleActor to make check faster
-		FWUtility.ActorAddSpell(ActorRef, BFspell, false, false, false)
+	If !ActorRef.HasSpell(BFspell) && System.IsValidateFemaleActor(ActorRef) ;Tkc (Loverslab) optimization. changed IsValidateActor to IsValidateFemaleActor to make check faster
+		System.ActorAddSpellOpt(ActorRef, BFspell, false, false, false)
 	else;if !ActorRef.HasSpell(Controller.System.BeeingMaleSpell) && Controller.System.IsValidateMaleActor(ActorRef)
 		if ActorRef.HasSpell(BMspell) ;Tkc (Loverslab) optimization
 		else;if !ActorRef.HasSpell(Controller.System.BeeingMaleSpell)
-			if Controller.System.IsValidateMaleActor(ActorRef)
-				if ActorRef.HasMagicEffect(BMspell.GetNthEffectMagicEffect(0)) ;Tkc (Loverslab) optimization
+			if System.IsValidateMaleActor(ActorRef)
+				if ActorRef.HasMagicEffect(BeingMaleEffect) ;Tkc (Loverslab) optimization
 				else;if !ActorRef.HasMagicEffect(Controller.System.BeeingMaleSpell.GetNthEffectMagicEffect(0))
 					ActorRef.RemoveSpell(BMspell)
 				endif
-				FWUtility.ActorAddSpell(ActorRef, BMspell, false, false, false) ;Tkc (Loverslab) fixed incorrect execution order after optimizations. Also fixed error about incorrect number of arguments
+				System.ActorAddSpellOpt(ActorRef, BMspell, false, false, false) ;Tkc (Loverslab) fixed incorrect execution order after optimizations. Also fixed error about incorrect number of arguments
 			endif
 		endif
 	endif
@@ -82,7 +91,7 @@ function execute()
 	;		return
 	;	endif
 	;endif
-	if Controller.System.cfg.Messages==0
+	if cfg.Messages==0
 		if ActorRef as FWChildActor ;/!=none/;
 			printChildInformations()
 		else
@@ -201,13 +210,13 @@ function printFemaleInformations()
 	else
 		Debug.Trace("BeeingFemale Saved Data for: #"+ActorRef.GetName());
 	endif
-	Debug.Trace("Current Game Time: "+ Utility.GetCurrentGameTime())
+	Debug.Trace("Current Game Time: "+ GameDaysPassed.GetValue())
 	Debug.Trace("-----------------------------------------------------------------")
 	Debug.Trace(" FW.LastUpdate :  "+StorageUtil.GetFloatValue(ActorRef,"FW.LastUpdate"))
-	Debug.Trace(" FW.StateEnterTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.StateEnterTime")+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(ActorRef,"FW.StateEnterTime")) +"]")
+	Debug.Trace(" FW.StateEnterTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.StateEnterTime")+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(ActorRef,"FW.StateEnterTime")) +"]")
 	Debug.Trace(" FW.CurrentState :  "+StorageUtil.GetIntValue(ActorRef,"FW.CurrentState"))
 	Debug.Trace(" FW.Abortus :  "+StorageUtil.GetIntValue(ActorRef,"FW.Abortus"))
-	Debug.Trace(" FW.AbortusTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.AbortusTime")+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(ActorRef,"FW.AbortusTime")) +"]")
+	Debug.Trace(" FW.AbortusTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.AbortusTime")+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(ActorRef,"FW.AbortusTime")) +"]")
 	Debug.Trace(" FW.UnbornHealth :  "+StorageUtil.GetFloatValue(ActorRef,"FW.UnbornHealth"))
 	Debug.Trace(" FW.NumChilds :  "+StorageUtil.GetIntValue(ActorRef,"FW.NumChilds"))
 	i=0
@@ -224,7 +233,7 @@ function printFemaleInformations()
 	endwhile
 	i=0
 	while i<cSpermTime
-		Debug.Trace(" FW.SpermTime["+i+"] :  "+StorageUtil.FloatListGet(ActorRef,"FW.SpermTime",i)+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.FloatListGet(ActorRef,"FW.SpermTime",i)) +"]")
+		Debug.Trace(" FW.SpermTime["+i+"] :  "+StorageUtil.FloatListGet(ActorRef,"FW.SpermTime",i)+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.FloatListGet(ActorRef,"FW.SpermTime",i)) +"]")
 		i+=1
 	endwhile
 	i=0
@@ -247,11 +256,11 @@ function printFemaleInformations()
 	Debug.Trace(" FW.Flags :  "+StorageUtil.GetIntValue(ActorRef,"FW.Flags"))
 	Debug.Trace(" FW.PainLevel :  "+StorageUtil.GetFloatValue(ActorRef,"FW.PainLevel"))
 	Debug.Trace(" FW.Contraception :  "+StorageUtil.GetFloatValue(ActorRef,"FW.Contraception"))
-	Debug.Trace(" FW.ContraceptionTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.ContraceptionTime")+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(ActorRef,"FW.ContraceptionTime")) +"]")
+	Debug.Trace(" FW.ContraceptionTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.ContraceptionTime")+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(ActorRef,"FW.ContraceptionTime")) +"]")
 	Debug.Trace(" FW.NumBirth :  "+StorageUtil.GetIntValue(ActorRef,"FW.NumBirth"))
 	Debug.Trace(" FW.NumBabys :  "+StorageUtil.GetIntValue(ActorRef,"FW.NumBabys"))
-	Debug.Trace(" FW.PauseTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.PauseTime")+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(ActorRef,"FW.PauseTime")) +"]")
-	Debug.Trace(" FW.LastBornChildTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.LastBornChildTime")+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(ActorRef,"FW.LastBornChildTime")) +"]")
+	Debug.Trace(" FW.PauseTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.PauseTime")+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(ActorRef,"FW.PauseTime")) +"]")
+	Debug.Trace(" FW.LastBornChildTime :  "+StorageUtil.GetFloatValue(ActorRef,"FW.LastBornChildTime")+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(ActorRef,"FW.LastBornChildTime")) +"]")
 	i=0
 	while i<cBornChildFather
 		actor a = StorageUtil.FormListGet(ActorRef,"FW.BornChildFather",i) as Actor
@@ -266,7 +275,7 @@ function printFemaleInformations()
 	endwhile
 	i=0
 	while i<cBornChildTime
-		Debug.Trace(" FW.BornChildTime["+i+"] :  "+StorageUtil.FloatListGet(ActorRef,"FW.BornChildTime",i)+" ["+ FWUtility.GetTimeString(Utility.GetCurrentGameTime() - StorageUtil.FloatListGet(ActorRef,"FW.BornChildTime",i)) +"]")
+		Debug.Trace(" FW.BornChildTime["+i+"] :  "+StorageUtil.FloatListGet(ActorRef,"FW.BornChildTime",i)+" ["+ FWUtility.GetTimeString(GameDaysPassed.GetValue() - StorageUtil.FloatListGet(ActorRef,"FW.BornChildTime",i)) +"]")
 		i+=1
 	endwhile
 	

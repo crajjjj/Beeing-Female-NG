@@ -204,6 +204,22 @@ Actor property PlayerRef auto ; Tkc (Loverslab) : added to replace much slower G
 
 /;
 
+GlobalVariable Property GameDaysPassed Auto
+Globalvariable property ModEnabled auto
+Globalvariable property CloakingSpellEnabled auto
+FWSystemConfig property cfg auto
+FWAddOnManager property Manager auto
+Activator Property MaraShrineObject Auto ; God of love and marriage
+Activator Property ArkayShrineObject Auto ; God of birth and death
+spell property Effect_VaginalBloodLow auto
+spell property Effect_VaginalBloodBig auto
+potion property ContraceptionLow auto
+potion property ContraceptionMid auto
+FWBabyHealthWidget property BabyHealthWidget auto
+FWStateWidget property StateWidget auto
+FWContraceptionWidget property ContraceptionWidget auto
+FWSaveLoad property Data auto
+FWTextContents property Content auto
 
 ; This Function will return the count of the stored woman
 int function GetStoredFemaleCount()
@@ -224,11 +240,11 @@ endFunction
 bool function CreateFemaleActor(actor woman, bool force_new=false)
 	System.Trace("FWController.CreateFemaleActor",woman)
 	;if System.CloakingSpellEnabled.GetValueInt()!=1 || System.ModEnabled.GetValueInt()!=1
-	if System.ModEnabled.GetValueInt() ;Tkc (Loverslab) optimization
+	if ModEnabled.GetValue() As int ;Tkc (Loverslab) optimization
 	else;if System.ModEnabled.GetValueInt()!=1
 		return false
 	endif
-	if System.CloakingSpellEnabled.GetValueInt()
+	if CloakingSpellEnabled.GetValue() As int
 	else;if System.CloakingSpellEnabled.GetValueInt()!=1
 		return false
 	endif
@@ -250,7 +266,7 @@ bool function CreateFemaleActor(actor woman, bool force_new=false)
 	System.Message("Creating new woman stats for: "+woman.GetLeveledActorBase().GetName(), System.MSG_All)
 	
 	int stateID=Utility.RandomInt(0,3)
-	Float currentTime = Utility.GetCurrentGameTime()
+	Float currentTime = GameDaysPassed.GetValue()
 	float stateDuration = System.GetStateDuration(stateID,woman)
 	Float stateEnterTime = currentTime - Utility.RandomFloat(0, stateDuration - 0.5)
 	
@@ -285,7 +301,7 @@ function Impregnate(actor Mother, actor Father, int NumChilds=1)
 	System.Trace("FWController.Impregnate",Mother)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			return
 		endif
@@ -312,7 +328,7 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 	System.Trace("FWController.ImpregnateA",Mother)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			return
 		endif
@@ -333,14 +349,14 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 	EndWhile
 	StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 	StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
-	System.Manager.OnImpregnate(Mother, NumChilds,Fathers)
+	Manager.OnImpregnate(Mother, NumChilds,Fathers)
 	ChangeState(Mother,4)
 endFunction
 
 ; Check for the normal impregnation, using the sperm, the value if she can become pregnant in this cycle, and so on.
 bool function ActiveSpermImpregnation(actor Mother, bool bIgnoreContraception = false)
 	System.Trace("FWController.ActiveSpermImpregnation",Mother)
-	return ActiveSpermImpregnationTimed(Mother, Utility.GetCurrentGameTime(), bIgnoreContraception)
+	return ActiveSpermImpregnationTimed(Mother, GameDaysPassed.GetValue(), bIgnoreContraception)
 endFunction
 
 ; Check for the normal impregnation at the given time, using the sperm, the value if she can become pregnant in this cycle, and so on.
@@ -349,7 +365,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 	;Debug.Trace("ActiveSpermImpregnationTimed 01 - "+Time)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			return false
 		endif
@@ -364,9 +380,9 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 		ContraceptionSpermKillTimed(Mother,Time)
 	endIf
 	;Debug.Trace("ActiveSpermImpregnationTimed 02")
-	if System.Controller.HasRelevantSpermTimed(Mother,Time,false)
+	if HasRelevantSpermTimed(Mother,Time,false)
 		;Debug.Trace("ActiveSpermImpregnationTimed 03 - Has relevant sperm")
-		if System.Manager.ActorCanBecomePregnant(Mother);/==true/;
+		if Manager.ActorCanBecomePregnant(Mother);/==true/;
 			;Debug.Trace("ActiveSpermImpregnationTimed 04 - can become pregnant")
 			; Impregnate by active sperm
 			int numChild=System.calculateNumChildren(Mother)
@@ -375,7 +391,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 				return false
 			endIf
 			;Debug.Trace("ActiveSpermImpregnationTimed 05 - "+numChild)
-			actor[] a=System.Controller.GetRelevantSpermActorsTimed(Mother,Time,false,false)
+			actor[] a=GetRelevantSpermActorsTimed(Mother,Time,false,false)
 			float[] relevantSperm=GetRelevantSpermFloatTimed(Mother,Time, false, false)
 			;if relevantSperm.length==0 ;Tkc (Loverslab) optimization: commented, next condition is checking same thing
 			;	return false
@@ -411,7 +427,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			endWhile
 			StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 			StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
-			System.Manager.OnImpregnate(Mother, Fathers.length,Fathers)
+			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
 			ChangeStateTimed(Mother,Time,4)
 			return true
 		else
@@ -426,7 +442,7 @@ endFunction
 ; A Speed-Up variant for ActiveSpermImpregnation - without calculating the contraception-value
 bool function ActiveSpermImpregnationContraception(actor Mother, float contraception)
 	System.Trace("FWController.ActiveSpermImpregnationContraception",Mother)
-	return ActiveSpermImpregnationNoContraceptionTimed(Mother, Utility.GetCurrentGameTime(), contraception)
+	return ActiveSpermImpregnationNoContraceptionTimed(Mother, GameDaysPassed.GetValue(), contraception)
 endFunction
 
 ; A Speed-Up variant for ActiveSpermImpregnationTimed - without calculating the contraception-value
@@ -435,7 +451,7 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 	;if Mother!=PlayerRef && System.cfg.NPCCanBecomePregnant==false
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			return false
 		endif
@@ -453,30 +469,35 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 		if amo>0.3
 			int rnd1= Utility.RandomInt(0,3)
 			float rnd2
-			if rnd1==0
-				rnd2 = Utility.RandomFloat(1,95.0)
-			elseif rnd1==1
-				rnd2 = Utility.RandomFloat(10.0,100.0)
-			elseif rnd1==2
-				rnd2 = Utility.RandomFloat(20.0,100.0)
-			elseif rnd1==3
-				rnd2 = Utility.RandomFloat(40.0,100.0)
+			if rnd1 < 2
+				if rnd1==0
+					rnd2 = Utility.RandomFloat(1,95.0)
+				else
+					rnd2 = Utility.RandomFloat(10.0,100.0)
+				endIf
+			else
+				if rnd1==2
+					rnd2 = Utility.RandomFloat(20.0,100.0)
+				else
+					rnd2 = Utility.RandomFloat(40.0,100.0)
+				endIf
 			endIf
-			if contraception>rnd2
+;			if contraception>rnd2
+			if(contraception >= rnd2)
 				StorageUtil.FloatListSet(Mother, "FW.SpermAmount", sa, 0.1)
 			endif
 		endif
 	endWhile
 	
 	if ;/System.Controller./;HasRelevantSpermTimed(Mother,Time,false) ;Tkc (Loverslab) optimization: it is Controller
-		if System.Manager.ActorCanBecomePregnant(Mother);/==true/;
+		if Manager.ActorCanBecomePregnant(Mother);/==true/;
 			; Impregnate by active sperm
 			int numChild=System.calculateNumChildren(Mother)
 			if numChild ;Tkc (Loverslab) optimization
 			else;if numChild==0
 				return false
 			endIf
-			actor[] a= System.Controller.GetRelevantSpermActorsTimed(Mother,Time,false,false)
+			actor[] a= GetRelevantSpermActorsTimed(Mother,Time,false,false)
 			float[] relevantSperm= GetRelevantSpermFloatTimed(Mother,Time, false, false)
 			;if relevantSperm.length==0 ;Tkc (Loverslab) optimization: commented, made same in next condition
 			;	return false
@@ -508,7 +529,7 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 				Fathers[numChild]=a[j]
 			endWhile
 			StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
-			System.Manager.OnImpregnate(Mother, Fathers.length,Fathers)
+			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
 			ChangeStateTimed(Mother,Time,4)
 			return true
 		endIf
@@ -541,7 +562,7 @@ bool function setNumBabys(actor Mother,int num)
 				i+=1
 			endWhile
 			return true
-		elseif cur>num
+		else;if cur>num
 			Debug.Trace("- Drop from "+cur+" to "+num+" Babys")
 			
 			; remove fathers
@@ -573,29 +594,34 @@ function WashOutSperm(actor woman, int WashOutType = 1, float Strength=1.0)
 	if Strength<=0
 		return
 	endif
-	if WashOutType==0
-		chance = System.cfg.WashOutChance
-	elseif WashOutType==1
-		chance = System.cfg.WashOutWaterChance
-	elseif WashOutType==2
-		chance = System.cfg.WashOutFluidChance
-	endif
+	if WashOutType >= 0
+		if WashOutType < 2
+			if WashOutType==0
+				chance = cfg.WashOutChance
+			else;if WashOutType==1
+				chance = cfg.WashOutWaterChance
+			endIf
+		elseif WashOutType==2
+			chance = cfg.WashOutFluidChance
+		endif
+	endIf
 	if chance>0
 		int c = StorageUtil.FormListCount(woman, "FW.SpermName");StorageUtil.FloatListCount(woman, "FW.SpermTime")
 		int j = 0
 		float rnd
-		float Time = Utility.GetCurrentGameTime()
+		float Time = GameDaysPassed.GetValue()
 		while c>0
 			c-=1
 			rnd = Utility.RandomFloat(0.00001,1.0)
 			float STime = StorageUtil.FloatListGet(woman, "FW.SpermTime", c)
-			if STime + System.Data.SpermDeleteTime > Time || STime+System.cfg.WashOutHourDelay >= Time
+			if STime + Data.SpermDeleteTime > Time || STime+cfg.WashOutHourDelay >= Time
 				if (chance * Strength)>=rnd
 					; Sperm was to old - remove
 					StorageUtil.FloatListRemoveAt(woman, "FW.SpermTime", c)
 					StorageUtil.FormListRemoveAt(woman, "FW.SpermName", c)
 					StorageUtil.FloatListRemoveAt(woman, "FW.SpermAmount", c)
-				elseif Utility.RandomInt(0,100)>34
+;				elseif Utility.RandomInt(0,100)>34
+				elseif(Utility.RandomInt(1, 100) > 34)
 					float amount=StorageUtil.FloatListGet(woman, "FW.SpermAmount", c)
 					amount-=Utility.RandomFloat(0.0,0.15 * Strength)
 					if amount < Sperm_Min_Amount_For_Impregnation
@@ -614,7 +640,7 @@ endfunction
 
 function ContraceptionSpermKill(actor Woman)
 	System.Trace("FWController.ContraceptionSpermKill",Woman)
-	ContraceptionSpermKillTimed(Woman, Utility.GetCurrentGameTime())
+	ContraceptionSpermKillTimed(Woman, GameDaysPassed.GetValue())
 endFunction
 
 function ContraceptionSpermKillTimed(actor Woman, float Time)
@@ -627,17 +653,22 @@ function ContraceptionSpermKillTimed(actor Woman, float Time)
 		if amo>Sperm_Min_Amount_For_Impregnation
 			int rnd1= Utility.RandomInt(0,3)
 			float rnd2
-			if rnd1==0
-				rnd2 = Utility.RandomFloat(1,95.0)
-			elseif rnd1==1
-				rnd2 = Utility.RandomFloat(10.0,100.0)
-			elseif rnd1==2
-				rnd2 = Utility.RandomFloat(20.0,100.0)
-			elseif rnd1==3
-				rnd2 = Utility.RandomFloat(40.0,100.0)
+			if rnd1 < 2
+				if rnd1==0
+					rnd2 = Utility.RandomFloat(1,95.0)
+				else
+					rnd2 = Utility.RandomFloat(10.0,100.0)
+				endIf
+			else
+				if rnd1==2
+					rnd2 = Utility.RandomFloat(20.0,100.0)
+				else
+					rnd2 = Utility.RandomFloat(40.0,100.0)
+				endIf
 			endIf
 			
-			if contraception>rnd2
+;			if contraception>rnd2
+			if(contraception >= rnd2)
 				StorageUtil.FloatListSet(Woman, "FW.SpermAmount", c, Sperm_Min_Amount_For_Impregnation)
 			elseif contraception > 20
 				StorageUtil.FloatListSet(Woman, "FW.SpermAmount", c, amo - (contraception * 0.002))
@@ -674,7 +705,7 @@ function UnimpregnateState(actor Mother, int Menstrual_Cycle_State)
 		System.Player.changeState(xMenstrual_Cycle_State)
 		System.Player.SetBelly()
 	else
-		StorageUtil.SetFloatValue(Mother,"FW.StateEnterTime", Utility.GetCurrentGameTime());
+		StorageUtil.SetFloatValue(Mother,"FW.StateEnterTime", GameDaysPassed.GetValue());
 		StorageUtil.SetIntValue(Mother,"FW.CurrentState", xMenstrual_Cycle_State)
 		int flag=0
 		if System.canBecomePregnant(Mother)
@@ -707,7 +738,7 @@ function GiveBirth(actor Mother)
 	
 	StorageUtil.FormListAdd(none,"FW.GivingBirth", Mother) ;Tkc (Loverslab): Mother added to the GivingBirth list to detect her when is giving birth by papyrus condition or from esp
 	
-	System.Manager.OnGiveBirthStart(Mother)
+	Manager.OnGiveBirthStart(Mother)
 	Mother.EvaluatePackage()
 	float UnbornHealth=StorageUtil.GetFloatValue(Mother,"FW.UnbornHealth",100.0)
 	Actor[] ChildFather = FWUtility.ActorArray(NumChilds)
@@ -716,8 +747,8 @@ function GiveBirth(actor Mother)
 		k-=1
 		ChildFather[k]=StorageUtil.FormListGet(Mother,"FW.ChildFather",k) as actor
 	endWhile
-	float IntervalBabyScale = System.Manager.getActorDuration_BabySpawn(Mother)
-	float IntervalLaborScale = System.Manager.getActorDuration_BetweenLaborPains(Mother)
+	float IntervalBabyScale = Manager.getActorDuration_BabySpawn(Mother)
+	float IntervalLaborScale = Manager.getActorDuration_BetweenLaborPains(Mother)
 	float BirthPainDamageScale=System.getDamageScale(4,Mother)
 	float DamageScale = 1.0 * BirthPainDamageScale
 	if Mother.IsOnMount();/==true/;
@@ -727,13 +758,13 @@ function GiveBirth(actor Mother)
 	endIf
 	if Mother==PlayerRef
 		FWUtility.LockPlayer()
-		System.Manager.StartCamera()
+		Manager.StartCamera()
 	else
 		Mother.SetDontMove(true)
 	endIf
 	
 	Form[] dropedItems
-	if(System.cfg.PlayAnimations)
+	if(cfg.PlayAnimations)
 		dropedItems = System.StripActor(Mother)
 	
 		bool useBed = System.LayDown(Mother)
@@ -742,16 +773,16 @@ function GiveBirth(actor Mother)
 		endIf
 	endif
 	
-	ObjectReference MaraShrine = Game.FindClosestReferenceOfTypeFromRef(System.MaraShrineObject, Mother, 300);
+	ObjectReference MaraShrine = Game.FindClosestReferenceOfTypeFromRef(MaraShrineObject, Mother, 300);
 	if MaraShrine;/!=none/;
 		DamageScale -= 0.1 ; Mara loves us all
 	endIf
-	ObjectReference ArkayShrine = Game.FindClosestReferenceOfTypeFromRef(System.ArkayShrineObject, Mother, 300);
+	ObjectReference ArkayShrine = Game.FindClosestReferenceOfTypeFromRef(ArkayShrineObject, Mother, 300);
 	if ArkayShrine;/!=none/;
 		DamageScale -= 0.3 ; Arkay is helping with birth
 	endIf
 	
-	if(System.cfg.PlayAnimations)
+	if(cfg.PlayAnimations)
 		Utility.Wait(3*IntervalLaborScale)
 		Debug.SendAnimationEvent(Mother, "Birth_S1")
 		
@@ -771,14 +802,14 @@ function GiveBirth(actor Mother)
 	NumBabys+=NumChilds
 	StorageUtil.SetIntValue(Mother,"FW.NumBirth",NumBirth)
 	StorageUtil.SetIntValue(Mother,"FW.NumBabys",NumBabys)
-	FWUtility.ActorAddSpell(Mother,System.Effect_VaginalBloodLow,false,true)
+	System.ActorAddSpellOpt(Mother,Effect_VaginalBloodLow,false,true)
 	while NumChilds > 0
 		NumChilds -= 1
 		Utility.Wait(4*IntervalBabyScale)
 		
 		System.Mimik(Mother, "Pained", 30)
 		
-		if(System.cfg.PlayAnimations)
+		if(cfg.PlayAnimations)
 			Debug.SendAnimationEvent(Mother, "Birth_S2");
 			Utility.Wait(1)
 			int j = 8
@@ -807,16 +838,16 @@ function GiveBirth(actor Mother)
 		System.PlayPainSound(Mother,60)
 		System.DoDamage(Mother,18 * DamageScale,9)
 		float HealthRnd = Utility.RandomFloat(0.0,35.0)
-		if UnbornHealth > HealthRnd || System.cfg.abortus==false
+		if UnbornHealth > HealthRnd || cfg.abortus==false
 			;System.raiseModEvent("FWSpawnChild",self)
-			FWUtility.ActorAddSpell(Mother,System.Effect_VaginalBloodBig,false,true)
+			System.ActorAddSpellOpt(Mother,Effect_VaginalBloodBig,false,true)
 			System.SpawnChild(Mother,ChildFather[NumChilds])
 		else
 			System.Message("You've born a dead child...", System.MSG_ALWAYS)
 			; Child is death >.<
 		endIf
 		
-		if(System.cfg.PlayAnimations)
+		if(cfg.PlayAnimations)
 			Utility.Wait(1)
 			Debug.SendAnimationEvent(Mother, "Birth_S1")
 		endif
@@ -838,26 +869,30 @@ function GiveBirth(actor Mother)
 	Utility.Wait(2)
 	; Clear expressions
 	
-	if(System.cfg.PlayAnimations)
+	if(cfg.PlayAnimations)
 		System.GetUp(Mother)
 		System.UnstripActor(Mother,dropedItems)
 	endif
-	System.Manager.OnGiveBirthEnd(Mother)
+	Manager.OnGiveBirthEnd(Mother)
 	Mother.EvaluatePackage()
 	
 	if Mother==PlayerRef
 		FWUtility.UnlockPlayer()
-		System.Manager.StopCamera()
+		Manager.StopCamera()
 	else
 		Mother.SetDontMove(false)
-		Mother.AddItem(System.ContraceptionMid,3)
-		Mother.AddItem(System.ContraceptionLow,12)
+		
+		if(cfg.NPCHaveItems)
+			Debug.Trace("BeeingFemaleSE_Opt - FWController : NPCHaveItems option is turned on, and thus adding contraception to " + Mother + " whose name is " + Mother.GetDisplayName())
+			Mother.AddItem(ContraceptionMid,3)
+			Mother.AddItem(ContraceptionLow,12)
+		endIf
 	endIf
 	
 	System.Mimik(Mother)
 	;changeState(Mother,8)
 	StorageUtil.SetIntValue(Mother,"FW.CurrentState",8)
-	StorageUtil.SetFloatValue(Mother,"FW.StateEnterTime", Utility.GetCurrentGameTime())
+	StorageUtil.SetFloatValue(Mother,"FW.StateEnterTime", GameDaysPassed.GetValue())
 	
 	SendModEvent("BeeingFemale","Update", Mother.GetFormID())
 	
@@ -894,34 +929,43 @@ function DamageBaby(actor Mother,float Damage)
 	float hp = StorageUtil.GetFloatValue(Mother, "FW.UnbornHealth",100.0)
 	
 	if Damage>0
-		Damage*=System.Manager.ActorBabyDamageScale(Mother)
+		Damage*=Manager.ActorBabyDamageScale(Mother)
 	else
-		Damage*=System.Manager.ActorBabyHealingScale(Mother)
+		Damage*=Manager.ActorBabyHealingScale(Mother)
 	endif
 	
-	if Damage>0
-		if System.cfg.Difficulty == 0 ; Painless
-			Damage *= 0.4
-		elseif System.cfg.Difficulty == 1 ; Easy
-			Damage *= 0.7
-		elseif System.cfg.Difficulty == 3 ; Advanced
-			Damage *= 1.3
-		elseif System.cfg.Difficulty == 4 ; Heavy
-			Damage *= 1.7
+	if cfg.Difficulty == 0
+		Damage = 0
+		hp = 100
+	else
+		if Damage>0
+			if cfg.Difficulty > 0
+				if cfg.Difficulty < 3
+					if cfg.Difficulty == 1 ; Easy
+						Damage *= 0.7
+					endIf
+				else
+					if cfg.Difficulty == 3 ; Advanced
+						Damage *= 1.3
+					elseif cfg.Difficulty == 4 ; Heavy
+						Damage *= 1.7
+					endIf
+				endIf
+			endIf
+		endif
+		
+		if hp - Damage<0.0
+			hp=0
+		elseif hp - Damage >100.0
+			hp=100
+		else
+			hp-=Damage
 		endIf
-	endif
-	
-	if hp - Damage<0.0
-		hp=0
-	elseif hp - Damage >100.0
-		hp=100
-	else
-		hp-=Damage
 	endIf
 	StorageUtil.SetFloatValue(Mother, "FW.UnbornHealth",hp)
 	if PlayerRef == Mother
 		System.Player.checkAbortus()
-		System.BabyHealthWidget.showTimed(Mother)
+		BabyHealthWidget.showTimed(Mother)
 	else
 		SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 	endIf
@@ -950,7 +994,7 @@ function SetBabyHealth(actor Mother,float value)
 	StorageUtil.SetFloatValue(Mother, "FW.UnbornHealth",value)
 	if PlayerRef == Mother
 		System.Player.checkAbortus()
-		System.BabyHealthWidget.showTimed(Mother)
+		BabyHealthWidget.showTimed(Mother)
 	else
 		SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 	endIf
@@ -975,9 +1019,9 @@ function HealBaby(actor Mother,float Healing)
 	endif
 	float hp = StorageUtil.GetFloatValue(Mother, "FW.UnbornHealth",100.0)
 	if Healing>0
-		Healing*=System.Manager.ActorBabyHealingScale(Mother)
+		Healing*=Manager.ActorBabyHealingScale(Mother)
 	else
-		Healing*=System.Manager.ActorBabyDamageScale(Mother)
+		Healing*=Manager.ActorBabyDamageScale(Mother)
 	endif
 	if hp + Healing < 0.0
 		hp=0.0
@@ -1010,7 +1054,7 @@ function AbortusBaby(actor Mother)
 	if StorageUtil.GetIntValue(Mother, "FW.NumChilds",0)>0
 		StorageUtil.SetFloatValue(Mother, "FW.UnbornHealth",0.0)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",2)
-		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", Utility.GetCurrentGameTime())
+		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", GameDaysPassed.GetValue())
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -1056,7 +1100,7 @@ function AbortusState(actor Mother, int Abortus_State)
 	if StorageUtil.GetIntValue(Mother, "FW.NumChilds",0)>0
 		StorageUtil.SetFloatValue(Mother, "FW.UnbornHealth",0.0)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",Abortus_State)
-		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", Utility.GetCurrentGameTime())
+		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", GameDaysPassed.GetValue())
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -1096,22 +1140,22 @@ function AddSperm(actor Woman, actor PotentialFather, float amount = 1.0)
 		CreateFemaleActor(Woman)
 	EndIf
 	; Set last Sex-Time
-	StorageUtil.SetFloatValue(Woman, "FW.LastSexTime", Utility.GetCurrentGameTime())
-	StorageUtil.SetFloatValue(PotentialFather, "FW.LastSexTime", Utility.GetCurrentGameTime())
+	StorageUtil.SetFloatValue(Woman, "FW.LastSexTime", GameDaysPassed.GetValue())
+	StorageUtil.SetFloatValue(PotentialFather, "FW.LastSexTime", GameDaysPassed.GetValue())
 	
 	; Add sperm to woman
-	float tmp_amount=amount * System.Manager.ActorSpermAmountScale(PotentialFather)
+	float tmp_amount=amount * Manager.ActorSpermAmountScale(PotentialFather)
 	if System.CheckIsLoreFriendlyMetting(Woman, PotentialFather) ;Tkc (Loverslab) optimization
 	else;if !System.CheckIsLoreFriendlyMetting(Woman, PotentialFather)
 		tmp_amount=Sperm_Amount_For_Delete ; Not lore friendly - sperm can't impregnate
 	endif
-	StorageUtil.FloatListAdd(Woman,"FW.SpermTime", Utility.GetCurrentGameTime())
+	StorageUtil.FloatListAdd(Woman,"FW.SpermTime", GameDaysPassed.GetValue())
 	StorageUtil.FormListAdd(Woman,"FW.SpermName", PotentialFather)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
 	
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef
-		System.StateWidget.showTimed(PotentialFather)
+		StateWidget.showTimed(PotentialFather)
 	endif
 endFunction
 
@@ -1124,7 +1168,7 @@ float function GetDaysSinceLastSex(actor a)
 	else
 		LastSexTime = L2
 	endif
-	return Utility.GetCurrentGameTime() - LastSexTime
+	return GameDaysPassed.GetValue() - LastSexTime
 endFunction
 
 float function GetLastSexTime(actor a)
@@ -1144,11 +1188,11 @@ function AddSpermTimed(actor Woman, float Time, actor PotentialFather, float amo
 		CreateFemaleActor(Woman)
 	EndIf
 	; Set last Sex-Time
-	StorageUtil.SetFloatValue(Woman, "FW.LastSexTime", Utility.GetCurrentGameTime())
-	StorageUtil.SetFloatValue(PotentialFather, "FW.LastSexTime", Utility.GetCurrentGameTime())
+	StorageUtil.SetFloatValue(Woman, "FW.LastSexTime", GameDaysPassed.GetValue())
+	StorageUtil.SetFloatValue(PotentialFather, "FW.LastSexTime", GameDaysPassed.GetValue())
 	
 	; Add sperm to woman
-	float tmp_amount=amount * System.Manager.ActorSpermAmountScale(PotentialFather)
+	float tmp_amount=amount * Manager.ActorSpermAmountScale(PotentialFather)
 	if System.CheckIsLoreFriendlyMetting(Woman, PotentialFather) ;Tkc (Loverslab) optimization
 	else;if !System.CheckIsLoreFriendlyMetting(Woman, PotentialFather)
 		tmp_amount=Sperm_Amount_For_Delete ; Not lore friendly - sperm can't impregnate
@@ -1159,7 +1203,7 @@ function AddSpermTimed(actor Woman, float Time, actor PotentialFather, float amo
 	
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef
-		System.StateWidget.showTimed(PotentialFather)
+		StateWidget.showTimed(PotentialFather)
 	endif
 endFunction
 
@@ -1206,7 +1250,7 @@ function ChangeState(actor female, int state_number)
 	;if female!=PlayerRef && System.cfg.NPCCanBecomePregnant==false && state_number>=4 && state_number <10
 	if female==PlayerRef ;Tkc (Loverslab) optimization
 	else;if female!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			if state_number>=4
 				if state_number <10
@@ -1224,14 +1268,14 @@ function ChangeState(actor female, int state_number)
 	endif
 	
 	StorageUtil.SetIntValue(female,"FW.CurrentState",state_number)
-	StorageUtil.SetFloatValue(female,"FW.StateEnterTime", Utility.GetCurrentGameTime())
+	StorageUtil.SetFloatValue(female,"FW.StateEnterTime", GameDaysPassed.GetValue())
 	
 	setIrregulation(female, state_number)
 	
 	if PlayerRef == female
-		System.StateWidget.showTimed(true)
+		StateWidget.showTimed(true)
 		System.Player.currentState = state_number
-		System.Player.stateEnterTime = Utility.GetCurrentGameTime()
+		System.Player.stateEnterTime = GameDaysPassed.GetValue()
 	else
 		SendModEvent("BeeingFemale","Update", female.GetFormID())
 	endIf
@@ -1256,7 +1300,7 @@ function ChangeStateTimed(actor female, float Time, int state_number)
 	;if female!=PlayerRef && System.cfg.NPCCanBecomePregnant==false && state_number>=4 && state_number <10
 	if female==PlayerRef ;Tkc (Loverslab) optimization
 	else;if female!=PlayerRef
-		if System.cfg.NPCCanBecomePregnant
+		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
 			if state_number>=4
 				if state_number <10
@@ -1284,7 +1328,7 @@ int function GetNextState(actor female)
 	int cs = GetFemaleState(female)
 	if(cs==0 || cs==1 || cs==2) ; folikel phase
 		return cs+1
-	elseif(System.cfg.NPCCanBecomePregnant;/==true/; || PlayerRef == female) && cs < 7 && cs > 3
+	elseif(cfg.NPCCanBecomePregnant;/==true/; || PlayerRef == female) && cs < 7 && cs > 3
 		return cs+1
 	else ; Replanish, Menstruating and disabled NPC Pregnancy
 		return 0
@@ -1303,15 +1347,15 @@ endfunction
 function Pause(actor Woman, bool bPaused)
 	System.Trace("FWController.Pause", Woman)
 	if bPaused;/==true/;
-		StorageUtil.SetFloatValue(Woman, "FW.PauseTime", Utility.GetCurrentGameTime())
+		StorageUtil.SetFloatValue(Woman, "FW.PauseTime", GameDaysPassed.GetValue())
 		if Woman == PlayerRef
-			System.Player.PauseStartTime=Utility.GetCurrentGameTime()
+			System.Player.PauseStartTime=GameDaysPassed.GetValue()
 		endIf
 	else
 		float start = StorageUtil.GetFloatValue(Woman, "FW.StateEnterTime",0)
 		float pause = StorageUtil.GetFloatValue(Woman, "FW.PauseTime",0)
 		StorageUtil.UnsetFloatValue(Woman, "FW.PauseTime")
-		float cur = start + (Utility.GetCurrentGameTime() - pause)
+		float cur = start + (GameDaysPassed.GetValue() - pause)
 		StorageUtil.SetFloatValue(Woman, "FW.StateEnterTime", cur)
 		if PlayerRef == Woman
 			System.Player.stateEnterTime = cur
@@ -1326,28 +1370,28 @@ endfunction
 ; Check if the woman got relevant sperm for impregnation inside
 bool function HasRelevantSperm(actor Woman, bool bShowTravelingSperm = false)
 	System.Trace("FWController.HasRelevantSperm", Woman)
-	return HasRelevantSpermTimed(Woman, Utility.GetCurrentGameTime(),bShowTravelingSperm)
+	return HasRelevantSpermTimed(Woman, GameDaysPassed.GetValue(),bShowTravelingSperm)
 endFunction
 
 
 ; Returns the number of relevant actors that have sperm inside
 int function RelevantSpermCount(actor Woman, bool bShowTravelingSperm = false)
 	System.Trace("FWController.RelevantSpermCount", Woman)
-	return RelevantSpermCountTimed(Woman, Utility.GetCurrentGameTime(), bShowTravelingSperm)
+	return RelevantSpermCountTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endFunction
 
 
 ; Get a list of actors that are most relevant
 actor[] function GetRelevantSpermActors(actor Woman, bool bShowTravelingSperm = false, bool bSort=true)
 	System.Trace("FWController.GetRelevantSpermActors", Woman)
-	return GetRelevantSpermActorsTimed(Woman, Utility.GetCurrentGameTime(), bShowTravelingSperm, bSort)
+	return GetRelevantSpermActorsTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm, bSort)
 endfunction
 
 
 ;
 float[] function GetRelevantSpermFloat(actor Woman, bool bShowTravelingSperm = false, bool bSort=true)
 	System.Trace("FWController.GetRelevantSpermFloat", Woman)
-	return GetRelevantSpermFloatTimed(Woman, Utility.GetCurrentGameTime(), bShowTravelingSperm, bSort)
+	return GetRelevantSpermFloatTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm, bSort)
 endFunction
 
 
@@ -1372,7 +1416,7 @@ bool function HasRelevantSpermTimed(actor woman,float Time, bool bShowTravelingS
 		
 		;if STime + System.getMaleSpermDuration(SName) > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 		if STime + System.getMaleSpermDuration(SName) > Time ;Tkc (Loverslab) optimization
-			if (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm)
+			if (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm)
 				if SAmou>=Sperm_Min_Amount_For_Impregnation
 					if System.CheckIsLoreFriendlyMetting(woman, SName)
 						return true
@@ -1398,7 +1442,7 @@ int function RelevantSpermCountTimed(actor woman,float Time, bool bShowTraveling
 		float STime = StorageUtil.FloatListGet(woman, "FW.SpermTime", c)
 		actor SName = (StorageUtil.FormListGet(woman, "FW.SpermName", c) As Actor)
 		float SAmou = StorageUtil.FloatListGet(woman, "FW.SpermAmount", c)
-		if STime + System.getMaleSpermDuration(SName) > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
+		if STime + System.getMaleSpermDuration(SName) > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 			j+=1
 		endIf
 	endWhile
@@ -1432,7 +1476,7 @@ actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowT
 			;Debug.Trace((STime + maxSDuration)+" > "+Time+" && ("+(STime+System.cfg.WashOutHourDelay)+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > 0.01")
 			;Debug.Trace((STime + maxSDuration > Time)+" && ("+(STime+System.cfg.WashOutHourDelay < Time)+" || "+bShowTravelingSperm+") && "+(SAmou>0.01))
 			
-			if STime + maxSDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
+			if STime + maxSDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 				;FWUtility.ActorArrayAppend(actors, SName)
 				if bFirst;/==true/;
 					actors=new Actor[1]
@@ -1458,7 +1502,7 @@ actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowT
 			;Debug.Trace((STime + maxSDuration)+" > "+Time+" && ("+(STime+System.cfg.WashOutHourDelay)+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > 0.01")
 			;Debug.Trace((STime + maxSDuration > Time)+" && ("+(STime+System.cfg.WashOutHourDelay < Time)+" || "+bShowTravelingSperm+") && "+(SAmou>0.01))
 		
-			if STime + maxSDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
+			if STime + maxSDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 				float SpermDurationPercent = (Time - STime) / maxSDuration
 				float xScale = 1.0
 				if SpermDurationPercent>0.65
@@ -1613,7 +1657,7 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 		;Debug.Trace((STime + maxSDuration)+" > "+Time+" && ("+(STime+System.cfg.WashOutHourDelay)+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > 0.01")
 		;Debug.Trace((STime + maxSDuration > Time)+" && ("+(STime+System.cfg.WashOutHourDelay < Time)+" || "+bShowTravelingSperm+") && "+(SAmou>0.01))
 		
-		if STime + maxSDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
+		if STime + maxSDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 			float SpermDurationPercent = (Time - STime) / maxSDuration
 			float xScale = 1.0
 			if SpermDurationPercent>0.65
@@ -1714,7 +1758,7 @@ endfunction
 ; If female is none - all saved females will be checked
 bool function HasSpermInWoman(actor male, actor female=none, bool bShowTravelingSperm = true)
 	System.Trace("FWController.HasSpermInWoman", male)
-	return HasSpermInWomanTimed(male,female, Utility.GetCurrentGameTime(), bShowTravelingSperm)
+	return HasSpermInWomanTimed(male,female, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endFunction
 
 
@@ -1735,7 +1779,7 @@ bool function HasSpermInWomanTimed(actor male, actor female=none, float Time, bo
 				if StorageUtil.FormListGet(female,"FW.SpermName",j)==male
 					; Found sperm from the male - now check if the time is relevant
 					float STime=StorageUtil.FloatListGet(female,"FW.SpermTime",j)
-					if STime+SpermDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm)
+					if STime+SpermDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm)
 						return true
 					endIf
 				endIf
@@ -1754,7 +1798,7 @@ bool function HasSpermInWomanTimed(actor male, actor female=none, float Time, bo
 					if StorageUtil.FormListGet(tmpFemale,"FW.SpermName",j)==male
 						; Found sperm from the male - now check if the time is relevant
 						float STime=StorageUtil.FloatListGet(tmpFemale,"FW.SpermTime",j)
-						if STime+SpermDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm)
+						if STime+SpermDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm)
 							return true
 						endIf
 					endIf
@@ -1769,7 +1813,7 @@ endFunction
 ; When "bShowTravelingSperm" is false, only the sperms that can impregnate the woman will be shown
 actor[] function getWomansWithSperm(actor Male, bool bShowTravelingSperm = true)
 	System.Trace("FWController.getWomansWithSperm",Male)
-	return getWomansWithSpermTimed(Male, Utility.GetCurrentGameTime(), bShowTravelingSperm)
+	return getWomansWithSpermTimed(Male, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endfunction
 
 ; Returns all actors the woman came has sperm inside at the given time
@@ -1790,7 +1834,7 @@ Actor[] function getWomansWithSpermTimed(actor Male, float Time, bool bShowTrave
 				j-=1
 				if StorageUtil.FormListGet(woman,"FW.SpermName",j)==male
 					float STime=StorageUtil.FloatListGet(woman,"FW.SpermTime",j)
-					if STime+SpermDuration > Time && (STime+System.cfg.WashOutHourDelay < Time || bShowTravelingSperm)
+					if STime+SpermDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm)
 						tmp[c]=woman
 						c+=1
 						j=0
@@ -1819,7 +1863,7 @@ Float Function GetStatePercentage(Actor woman)
 	int stateID = StorageUtil.GetIntValue(woman, "FW.CurrentState",0)
 	Float duration = System.GetStateDuration(stateID, woman)
 	If duration > 0.0
-		Return (Utility.GetCurrentGameTime() - GetStateEnterTime(woman)) / duration
+		Return (GameDaysPassed.GetValue() - GetStateEnterTime(woman)) / duration
 	EndIf
 	
 	Return 0.0
@@ -1977,7 +2021,7 @@ endFunction
 ; (result is 0.0 to 98 .... or 0.0 to System.MaxContraception)
 float function getContraception(actor Woman)
 	;System.Trace("FWController.getContraception", Woman)
-	return getContraceptionTimed(Woman, Utility.GetCurrentGameTime())
+	return getContraceptionTimed(Woman, GameDaysPassed.GetValue())
 endFunction
 
 ; Get the amount of contraception the woman has got at the given time
@@ -2009,7 +2053,7 @@ endFunction
 ; Add an amount of contraception (pill effect)
 float function AddContraception(actor Woman, float Value)
 	;System.Trace("FWController.AddContraception", Woman)
-	return AddContraceptionTimed(Woman, Utility.GetCurrentGameTime(), Value)
+	return AddContraceptionTimed(Woman, GameDaysPassed.GetValue(), Value)
 endFunction
 
 ; Adds an amount of contraception in the past, at the given time
@@ -2045,17 +2089,17 @@ float function AddContraceptionTimed(actor Woman, float Time, float Value)
 	StorageUtil.SetFloatValue(Woman,"FW.Contraception",new_contraception)
 	
 	if(Woman==PlayerRef)
-		System.ContraceptionWidget.showTimed(true)
+		ContraceptionWidget.showTimed(true)
 	endif
 	
-	System.Manager.OnContraception(Woman, addValue, contraception, new_contraception, Time - cTime)
+	Manager.OnContraception(Woman, addValue, contraception, new_contraception, Time - cTime)
 	return new_contraception
 endFunction
 
 ; Add an amount of contraception (pill effect)
 float function SetContraception(actor Woman, float Value)
 	;System.Trace("FWController.AddContraception", Woman)
-	return SetContraceptionTimed(Woman, Utility.GetCurrentGameTime(), Value)
+	return SetContraceptionTimed(Woman, GameDaysPassed.GetValue(), Value)
 endFunction
 
 ; Adds an amount of contraception in the past, at the given time
@@ -2068,7 +2112,7 @@ float function SetContraceptionTimed(actor Woman, float Time, float Value)
 	StorageUtil.SetFloatValue(Woman,"FW.Contraception",Value)
 	
 	if(Woman==PlayerRef)
-		System.ContraceptionWidget.showTimed(true)
+		ContraceptionWidget.showTimed(true)
 	endif
 	return Value
 endFunction
@@ -2076,7 +2120,7 @@ endFunction
 ; Time till next pill is needed (0 = now)
 float function GetContraceptionDuration(actor Woman)
 	System.Trace("FWController.GetContraceptionDuration", Woman)
-	return GetContraceptionDurationTimed(Woman, Utility.GetCurrentGameTime())
+	return GetContraceptionDurationTimed(Woman, GameDaysPassed.GetValue())
 endFunction
 
 ; Time till next pill is needed depending on the given time
@@ -2113,7 +2157,7 @@ function UpdateParentFaction(actor ParentActor)
 	;	return
 	;endif
 	;:float xtime=StorageUtil.GetFloatValue(ParentActor,"FW.LastBornChildTime",0)
-	;float GT = Utility.GetCurrentGameTime()
+	;float GT = GameDaysPassed.GetValue()
 	;if GT - xtime <=0 || xtime==0 ; No parent
 	;	ParentActor.SetFactionRank(System.ParentFaction, 0)
 	;elseif GT - xtime <=1 ; Parent since less 1 day
@@ -2131,7 +2175,7 @@ endFunction
 ; depending on all stats and settings
 ; (return value is from 0.01 to 0.99)
 float function getRelativePregnancyChance(actor woman, actor man = none)
-	return getRelativePregnancyChanceTimed(woman, Utility.GetCurrentGameTime(), man)
+	return getRelativePregnancyChanceTimed(woman, GameDaysPassed.GetValue(), man)
 endfunction
 
 ; Returns the calculated chance to become pregnant when the given womand had sex at the given time
@@ -2151,7 +2195,7 @@ float function getRelativePregnancyChanceTimed(actor woman, float Time, actor ma
 		float DurT = Dur0+Dur1+Dur2+Dur3                        ; 14
 		float EggTravel = System.getEggTravelingDuration(woman) ;  1
 		float SpermLifeTime = System.getMaleSpermDuration(man)  ;  3
-		float SpermTravel = System.cfg.WashOutHourDelay
+		float SpermTravel = cfg.WashOutHourDelay
 		
 		float curTime = 0
 		bool bCanBecomePregnant = canBecomePregnant(woman)
@@ -2227,7 +2271,7 @@ float function getRelativePregnancyChanceTimed(actor woman, float Time, actor ma
 				if stateTime > Dur3
 					stateTime-=Dur3
 					WomanState=0
-					canBecomePregnantBonus = System.cfg.ConceiveChance / 105
+					canBecomePregnantBonus = cfg.ConceiveChance / 105
 				endif
 			endif
 			float contraception = getContraceptionTimed(woman, Time+curTime)
@@ -2249,7 +2293,7 @@ Actor[] function getFemalesWithSpermFrom(actor Male, int max=128)
 	Actor[] res = FWUtility.ActorArray(max)
 	int curRes=0
 	float SpermDuration = System.getMaleSpermDuration(Male) ; The duration sperm can survive
-	float CurTime= Utility.GetCurrentGameTime() ; The current Game Time
+	float CurTime= GameDaysPassed.GetValue() ; The current Game Time
 	int c = FWUtility.MinInt(StorageUtil.FormListCount(none,"FW.SavedNPCs"),max)
 	while c>0
 		c-=1
@@ -2291,7 +2335,7 @@ Actor[] function getFemalesImpregnatedFrom(actor Male, int max=128)
 		; Check if it's neccessary to check all sperms
 		if StorageUtil.FormListFind(female, "FW.SpermName", Male)>=0 || StorageUtil.FormListFind(female, "FW.ChildFather", Male)>=0
 			; Found sperm / Father - Update now
-			System.Data.Update(female)
+			Data.Update(female)
 			int female_state= StorageUtil.GetIntValue(female,"FW.CurrentState",0)
 			if female_state>3 && female_state<8
 				if StorageUtil.FormListFind(female, "FW.ChildFather", Male)
@@ -2310,7 +2354,7 @@ endFunction
 ; returns the virility of the given man
 float function GetVirility(actor Male)
 	float virility=0
-	If System.cfg.MaleVirilityRecovery > 0.0
+	If cfg.MaleVirilityRecovery > 0.0
 		float L1 = StorageUtil.FloatListGet(Male, "SexLabSkills", 17)
 		float L2 = StorageUtil.GetFloatValue(Male, "FW.LastSexTime",0.0)
 		float LastSexTime = 0.0
@@ -2322,7 +2366,7 @@ float function GetVirility(actor Male)
 		if LastSexTime<=0.0
 			virility = 1.0
 		else
-			virility = FWUtility.ClampFloat(Utility.GetCurrentGameTime() - LastSexTime / (System.cfg.MaleVirilityRecovery * System.Manager.ActorMaleRecoveryScale(Male)), 0.02, 1.0)
+			virility = FWUtility.ClampFloat(GameDaysPassed.GetValue() - LastSexTime / (cfg.MaleVirilityRecovery * Manager.ActorMaleRecoveryScale(Male)), 0.02, 1.0)
 		endif
 	else
 		virility = 1.0
@@ -2358,7 +2402,7 @@ Actor[] function getMalesInWoman(actor female, int max = 128)
 	if(max>128)
 		max=128
 	endif
-	float curTime = Utility.GetCurrentGameTime()
+	float curTime = GameDaysPassed.GetValue()
 	actor[] res = FWUtility.ActorArray(max)
 	int c = StorageUtil.FormListCount(female, "FW.SpermNames")
 	int i=0
@@ -2392,77 +2436,131 @@ function showRankedInfoBox(Actor target, int Rank)
 	UI.OpenCustomMenu("BeeingFemale/BeeingFemaleInfo")
 	string[] ent
 	int iValidate = System.IsValidateActor(target)
-	if (target as FWChildActor);/!=none/;
+;	if (target as FWChildActor);/!=none/;
 		FWChildActor child = target as FWChildActor
-		Child.InitChild()
-		ent = new string[9]
-		ent[0]=3
-		ent[1]=child.Name+" "+child.GetLastName()
-		if child.Mother == none && child.Father == none
-			ent[2]="$FW_INFOWINDOW_UnknownParents"
-		elseif child.Father==none
-			ent[2]="$FW_INFOWINDOW_ChildMotherIs{"+child.Mother.GetDisplayName()+"}"
-		elseif child.Mother==none
-			ent[2]="$FW_INFOWINDOW_ChildFatherIs{"+child.Father.GetDisplayName()+"}"
-		else
-			ent[2]="$FW_INFOWINDOW_ChildParents{"+child.Mother.GetDisplayName()+"}{"+child.Father.GetDisplayName()+"}"
-		endif
-		if child.GetLeveledActorBase().GetSex() == 0
-			ent[3]="m"
-		else
-			ent[3]="f"
-		endif
-		ent[4]=Math.Floor(child.Age)
-		ent[5]=child.Order
-		ent[6]=child.GetLevel()
-		ent[7]=(child.GetActorValuePercentage("Experience") * 100) as int
-		location loc = child.GetCurrentLocation()
-		if loc;/!=none/;
-			ent[8]=loc.GetName()
-		else
-			ent[8]="$FW_INFOWINDOW_UnknownLocation"
-		endif
-	elseif(iValidate<0 || target.GetLeveledActorBase()==none)
-		ent = new string[3]
-		ent[0] = 4
-		ent[1] = target.GetLeveledActorBase().GetName()
-		ent[2] = iValidate * -1
-	else
-		if target.GetLeveledActorBase().GetSex()==0
-			ent = new string[5]
-			ent[0]=2
-			ent[1]=target.GetLeveledActorBase().GetName()
-			ent[2]=Math.Floor(GetVirility(target)*100)
-			ent[3]= FWUtility.getActorListNames(getFemalesWithSpermFrom(target, 20) , false)
-			ent[4]= FWUtility.getActorListNames(getFemalesImpregnatedFrom(target, 5) , false)
-		else
-			System.Data.Update(target)
-			if IsPregnant(target)==false
-				Actor[] a = GetRelevantSpermActors(target, true);getMalesInWoman(target)
-				ent = new string[9]
-				ent[0]=0
-				ent[1]=target.GetLeveledActorBase().GetName()
-				ent[2]=GetFemaleState(target)
-				ent[3]=Utility.GetCurrentGameTime() - GetStateEnterTime(target)
-				ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
-				ent[5]=getContraception(target) as int
-				ent[6]=GetContraceptionDuration(target)
-				ent[7]=getRelativePregnancyChance(target)
-				ent[8]=FWUtility.getActorListNames(a,false)
+		bool IsCustomChildActor = (StorageUtil.GetIntValue(target, "FW.Child.IsCustomChildActor", 0) == 1)
+		
+		if(child)
+			Child.InitChild()
+			ent = new string[9]
+			ent[0]=3
+			ent[1]=child.Name+" "+child.GetLastName()
+			if child.Mother == none && child.Father == none
+				ent[2]="$FW_INFOWINDOW_UnknownParents"
+			elseif child.Father==none
+				ent[2]="$FW_INFOWINDOW_ChildMotherIs{"+child.Mother.GetDisplayName()+"}"
+			elseif child.Mother==none
+				ent[2]="$FW_INFOWINDOW_ChildFatherIs{"+child.Father.GetDisplayName()+"}"
 			else
-				ent = new string[8]
-				ent[0]=1
+				ent[2]="$FW_INFOWINDOW_ChildParents{"+child.Mother.GetDisplayName()+"}{"+child.Father.GetDisplayName()+"}"
+			endif
+			if child.GetLeveledActorBase().GetSex() == 0
+				ent[3]="m"
+			else
+				ent[3]="f"
+			endif
+			
+			if(!child.IsDead())
+				ent[4]=Math.Floor(child.Age)
+			else
+				float myChildDOB = StorageUtil.GetFloatValue(child, "FW.Child.DOB", 0)
+				float myChildDOD = StorageUtil.GetFloatValue(child, "FW.Child.DOD", 0)
+				
+				ent[4] = Math.Floor(myChildDOD - myChildDOB)
+			endIf
+			
+			ent[5]=child.Order
+			ent[6]=child.GetLevel()
+			ent[7]=(child.GetActorValuePercentage("Experience") * 100) as int
+			location loc = child.GetCurrentLocation()
+			if loc;/!=none/;
+				ent[8]=loc.GetName()
+			else
+				ent[8]="$FW_INFOWINDOW_UnknownLocation"
+			endif
+		elseif(IsCustomChildActor)
+			ent = new string[9]
+			ent[0] = 3
+			ent[1] = target.GetDisplayName()
+			
+			Actor CustomChildMother = StorageUtil.GetFormValue(target, "FW.Child.Mother", none) as Actor
+			Actor CustomChildFather = StorageUtil.GetFormValue(target, "FW.Child.Father", none) as Actor	
+			if((CustomChildMother == none) && (CustomChildFather == none))
+				ent[2] = "$FW_INFOWINDOW_UnknownParents"
+			elseif(CustomChildFather == none)
+				ent[2] = "$FW_INFOWINDOW_ChildMotherIs{" + CustomChildMother.GetDisplayName() + "}"
+			elseif(CustomChildMother == none)
+				ent[2] = "$FW_INFOWINDOW_ChildFatherIs{" + CustomChildFather.GetDisplayName() + "}"
+			else
+				ent[2]="$FW_INFOWINDOW_ChildParents{" + CustomChildMother.GetDisplayName() + "}{" + CustomChildFather.GetDisplayName() + "}"
+			endif
+			
+			if(target.GetLeveledActorBase().GetSex() == 0)
+				ent[3] = "m"
+			else
+				ent[3] = "f"
+			endif
+			
+			float CustomChildDOB = StorageUtil.GetFloatValue(target, "FW.Child.DOB", 0)
+			
+			if(!target.IsDead())
+				ent[4] = Math.Floor(GameDaysPassed.GetValue() - CustomChildDOB)
+			else
+				float CustomChildDOD = StorageUtil.GetFloatValue(target, "FW.Child.DOD", 0)
+				ent[4] = Math.Floor(CustomChildDOD - CustomChildDOB)
+			endIf
+			
+			ent[5] = 0
+			ent[6] = target.GetLevel()
+			ent[7] = 0
+
+			location loc = target.GetCurrentLocation()
+			if loc;/!=none/;
+				ent[8] = loc.GetName()
+			else
+				ent[8] = "$FW_INFOWINDOW_UnknownLocation"
+			endif			
+		elseif(iValidate<0 || target.GetLeveledActorBase()==none)
+			ent = new string[3]
+			ent[0] = 4
+			ent[1] = target.GetLeveledActorBase().GetName()
+			ent[2] = iValidate * -1
+		else
+			if target.GetLeveledActorBase().GetSex()==0
+				ent = new string[5]
+				ent[0]=2
 				ent[1]=target.GetLeveledActorBase().GetName()
-				ent[2]=GetFemaleState(target)
-				ent[3]=Utility.GetCurrentGameTime() - GetStateEnterTime(target)
-				ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
-				ent[5]=GetNumBabys(target)
-				ent[6]=GetBabyHealth(target) as int
-				ent[7]=FWUtility.getActorListNames(getFathers(target, 8), true)
+				ent[2]=Math.Floor(GetVirility(target)*100)
+				ent[3]= FWUtility.getActorListNames(getFemalesWithSpermFrom(target, 20) , false)
+				ent[4]= FWUtility.getActorListNames(getFemalesImpregnatedFrom(target, 5) , false)
+			else
+				Data.Update(target)
+				if IsPregnant(target)==false
+					Actor[] a = GetRelevantSpermActors(target, true);getMalesInWoman(target)
+					ent = new string[9]
+					ent[0]=0
+					ent[1]=target.GetLeveledActorBase().GetName()
+					ent[2]=GetFemaleState(target)
+					ent[3]=GameDaysPassed.GetValue() - GetStateEnterTime(target)
+					ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
+					ent[5]=getContraception(target) as int
+					ent[6]=GetContraceptionDuration(target)
+					ent[7]=getRelativePregnancyChance(target)
+					ent[8]=FWUtility.getActorListNames(a,false)
+				else
+					ent = new string[8]
+					ent[0]=1
+					ent[1]=target.GetLeveledActorBase().GetName()
+					ent[2]=GetFemaleState(target)
+					ent[3]=GameDaysPassed.GetValue() - GetStateEnterTime(target)
+					ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
+					ent[5]=GetNumBabys(target)
+					ent[6]=GetBabyHealth(target) as int
+					ent[7]=FWUtility.getActorListNames(getFathers(target, 8), true)
+				endif
 			endif
 		endif
-	endif
-	UI.InvokeStringA("CustomMenu", "_root.FWInfoMenu.initData", ent)
+		UI.InvokeStringA("CustomMenu", "_root.FWInfoMenu.initData", ent)
 endFunction
 
 
@@ -2473,7 +2571,7 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 	;Debug.Trace("showRankedInfoBox "+target.GetLeveledActorBase().GetName()+" info")
 	
 	if target==PlayerRef
-		targetName=System.Content.InfoSpell_You
+		targetName=Content.InfoSpell_You
 	else
 		targetName=target.GetLeveledActorBase().GetName()
 	endif
@@ -2483,40 +2581,53 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 	if (target as FWChildActor);/!=none/;
 		FWChildActor child = target as FWChildActor
 		if child.Mother == none && child.Father == None
-			s+=System.Content.InfoSpell_UnknownParents+"\n"
+			s+=Content.InfoSpell_UnknownParents+"\n"
 		elseif Child.Mother==none && child.Father;/!=none/;
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildFatherIs,child.Father.GetLeveledActorBase().GetName())+"\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildFatherIs,child.Father.GetLeveledActorBase().GetName())+"\n"
 		elseif Child.Mother;/!=none/; && child.Father==None
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildMotherIs,child.Mother.GetLeveledActorBase().GetName())+"\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildMotherIs,child.Mother.GetLeveledActorBase().GetName())+"\n"
 		else
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildParents,child.Mother.GetLeveledActorBase().GetName(),child.Father.GetLeveledActorBase().GetName())+"\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildParents,child.Mother.GetLeveledActorBase().GetName(),child.Father.GetLeveledActorBase().GetName())+"\n"
 		EndIf
-		s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildWasBorn, System.cfg.GetTimeString(child.Age,false) )+"\n"
+		s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildWasBorn, cfg.GetTimeString(child.Age,false) )+"\n"
 		if child.IsVampire;/==true/;
 			if child.GetLeveledActorBase().GetSex()==0
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildVampire, System.Content.InfoSpell_He )+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildVampire, Content.InfoSpell_He )+"\n"
 			Else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildVampire, System.Content.InfoSpell_She )+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildVampire, Content.InfoSpell_She )+"\n"
 			endif
 		endIf
 		if child.Follow;/!=none/;
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildFollows, child.Follow.GetLeveledActorBase().GetName())+"\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildFollows, child.Follow.GetLeveledActorBase().GetName())+"\n"
 		endif
-		if child.Order == 0
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder00 )+"\n"
-		elseif child.Order == 1
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder01 )+"\n"
-		elseif child.Order == 2
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder02 )+"\n"
-		elseif child.Order == 3
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder03 )+"\n"
-		elseif child.Order == 4
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder04 )+"\n"
-		elseif child.Order == 5
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder05 )+"\n"
-		elseif child.Order == 6
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ChildGotOrder, System.Content.InfoSpell_ChildOrder06 )+"\n"
-		endif
+		
+		if child.Order >= 0
+			if child.Order < 4
+				if child.Order < 2
+					if child.Order == 0
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder00 )+"\n"
+					else;if child.Order == 1
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder01 )+"\n"
+					endIf
+				else
+					if child.Order == 2
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder02 )+"\n"
+					else;if child.Order == 3
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder03 )+"\n"
+					endIf
+				endIf
+			else
+				if child.Order < 6
+					if child.Order == 4
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder04 )+"\n"
+					else;if child.Order == 5
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder05 )+"\n"
+					endIf
+				elseif child.Order == 6
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_ChildGotOrder, Content.InfoSpell_ChildOrder06 )+"\n"
+				endif
+			endIf
+		endIf
 		
 		if child.Order != child.GetActorValue("Variable06")
 			s+="WARNING: Var6 and order are different (" + child.Order + " / " + child.GetActorValue("Variable06") + ")\n"
@@ -2542,38 +2653,54 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 	
 		int validateMale = System.IsValidateMaleActor(target)
 		if validateMale<=0
-			if validateMale == -1
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason1,targetName), System.MSG_Always, System.MSG_Box)
-			elseif validateMale == -2
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason2,targetName), System.MSG_High, System.MSG_Box)
-			elseif validateMale == -3
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason3,targetName,System.Content.InfoSpell_Female), System.MSG_Debug, System.MSG_Box)
-			elseif validateMale == -4
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason4,targetName), System.MSG_Debug, System.MSG_Box)
-			elseif validateMale == -5
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason5,targetName), System.MSG_High, System.MSG_Box)
-			elseif validateMale == -6
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason6,targetName), System.MSG_High, System.MSG_Box)
-			elseif validateMale == -7
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason7,targetName), System.MSG_High, System.MSG_Box)
-			elseif validateMale == -8
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason8,targetName), System.MSG_Low, System.MSG_Box)
-			elseif validateMale == -9
-				System.Message(FWUtility.MultiStringReplace(System.Content.ForbiddenReason9,targetName), System.MSG_High, System.MSG_Box)
-			endif
+			if validateMale < 0
+				if validateMale > -5
+					if validateMale > -3
+						if validateMale == -1
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason1,targetName), System.MSG_Always, System.MSG_Box)
+						else;if validateMale == -2
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason2,targetName), System.MSG_High, System.MSG_Box)
+						endIf
+					else
+						if validateMale == -3
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason3,targetName,Content.InfoSpell_Female), System.MSG_Debug, System.MSG_Box)
+						else;if validateMale == -4
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason4,targetName), System.MSG_Debug, System.MSG_Box)
+						endIf
+					endIf
+				else
+					if validateMale > -7
+						if validateMale == -5
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason5,targetName), System.MSG_High, System.MSG_Box)
+						else;if validateMale == -6
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason6,targetName), System.MSG_High, System.MSG_Box)
+						endIf
+					else
+						if validateMale > -9
+							if validateMale == -7
+								System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason7,targetName), System.MSG_High, System.MSG_Box)
+							else;if validateMale == -8
+								System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason8,targetName), System.MSG_Low, System.MSG_Box)
+							endIf
+						elseif validateMale == -9
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason9,targetName), System.MSG_High, System.MSG_Box)
+						endif
+					endIf
+				endIf
+			endIf
 			return
 		endIf
 		
 		; Infobox for male target
 		if Rank <=0
 			if HasSpermInWoman(target);/==true/;
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotSpermInWoman,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotSpermInWoman,targetName)+"\n"
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotNoSpermInWoman,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotNoSpermInWoman,targetName)+"\n"
 			endIf
 		else
 			float SpermDuration = System.getMaleSpermDuration(target) ; The duration sperm can survive
-			float CurTime= Utility.GetCurrentGameTime() ; The current Game Time
+			float CurTime= GameDaysPassed.GetValue() ; The current Game Time
 			string spermNames=""
 			string pregnantNames=""
 			int SpermCount=0
@@ -2598,7 +2725,7 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 								endIf
 								if female==PlayerRef
 									PlayerSperm=true
-									spermNames+=System.Content.InfoSpell_You
+									spermNames+=Content.InfoSpell_You
 								else
 									spermNames+=female.GetLeveledActorBase().GetName()
 								endif
@@ -2609,14 +2736,14 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 					
 					if Rank>=50
 						; also show the pregnant ones
-						System.Data.Update(female)
+						Data.Update(female)
 						int female_state= StorageUtil.GetIntValue(female,"FW.CurrentState",0)
 						if female_state>3 && female_state<8
 							if PregnantCount>0
 								pregnantNames+=", "
 							endIf
 							if female==PlayerRef
-								pregnantNames+=System.Content.InfoSpell_You
+								pregnantNames+=Content.InfoSpell_You
 								PlayerPregnant=true
 							else
 								pregnantNames+=female.GetLeveledActorBase().GetName()
@@ -2627,41 +2754,41 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 				endIf
 			endWhile
 			
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotNumSpermInWoman,targetName,SpermCount)+"\n\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotNumSpermInWoman,targetName,SpermCount)+"\n\n"
 			
-			string shortname=System.Content.InfoSpell_He
+			string shortname=Content.InfoSpell_He
 			if target == PlayerRef
-				shortname=System.Content.InfoSpell_You
+				shortname=Content.InfoSpell_You
 			endIf
 			
 			if SpermCount>0 && PlayerRef.GetLeveledActorBase().GetSex()==1
 				if PlayerSperm;/==true/;
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CameInsideYou,shortname, System.Content.InfoSpell_Yes)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_CameInsideYou,shortname, Content.InfoSpell_Yes)+"\n"
 				else
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CameInsideYou,shortname, System.Content.InfoSpell_No)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_CameInsideYou,shortname, Content.InfoSpell_No)+"\n"
 				endIf
 			endif
 			
 			if Rank >= 20 && SpermCount>0
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CameInsideNames,shortname,spermNames)+"\n\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CameInsideNames,shortname,spermNames)+"\n\n"
 			endif
 			
 			if Rank >= 50 && Rank <60
 				if PregnantCount>0
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ImpregnatedAnyWoman,shortname,spermNames)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_ImpregnatedAnyWoman,shortname,spermNames)+"\n"
 				endif
 			elseif Rank >= 60 && (Rank <80 || PregnantCount==0)
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ImpregnatedNumWoman,shortname,PregnantCount)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_ImpregnatedNumWoman,shortname,PregnantCount)+"\n"
 			endif
 			if Rank >=70 && PregnantCount>0
 				if PlayerPregnant;/==true/;
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ImpregnatedYou,shortname,System.Content.InfoSpell_Yes)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_ImpregnatedYou,shortname,Content.InfoSpell_Yes)+"\n"
 				else
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ImpregnatedYou,shortname,System.Content.InfoSpell_No)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_ImpregnatedYou,shortname,Content.InfoSpell_No)+"\n"
 				endIf
 			endif
 			if Rank>=80 && PregnantCount>0
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_ImpregnatedWoman,shortname, PregnantCount,pregnantNames)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_ImpregnatedWoman,shortname, PregnantCount,pregnantNames)+"\n"
 			endif
 			;endWhile
 		endif
@@ -2674,30 +2801,46 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 		
 		int Validate=System.IsValidateFemaleActor(target)
 		if Validate<=0
-			if Validate == -1
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason1,targetName) , System.MSG_Always, System.MSG_Box)
-			elseif Validate == -2
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason2,targetName) , System.MSG_High, System.MSG_Box)
-			elseif Validate == -3
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason3,targetName, System.Content.InfoSpell_Male), System.MSG_Debug, System.MSG_Box)
-			elseif Validate == -4
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason4,targetName) , System.MSG_Debug, System.MSG_Box)
-			elseif Validate == -5
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason5,targetName) , System.MSG_High, System.MSG_Box)
-			elseif Validate == -6
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason6,targetName) , System.MSG_High, System.MSG_Box)
-			elseif Validate == -7
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason7,targetName) , System.MSG_High, System.MSG_Box)
-			elseif Validate == -8
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason8,targetName) , System.MSG_Low, System.MSG_Box)
-			elseif Validate == -9
-				System.Message( FWUtility.MultiStringReplace(System.Content.ForbiddenReason9,targetName) , System.MSG_High, System.MSG_Box)
-			endif
+			if Validate < 0
+				if Validate > -5
+					if Validate > -3
+						if Validate == -1
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason1,targetName) , System.MSG_Always, System.MSG_Box)
+						else;if Validate == -2
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason2,targetName) , System.MSG_High, System.MSG_Box)
+						endIf
+					else
+						if Validate == -3
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason3,targetName, Content.InfoSpell_Male), System.MSG_Debug, System.MSG_Box)
+						else;if Validate == -4
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason4,targetName) , System.MSG_Debug, System.MSG_Box)
+						endIf
+					endIf
+				else
+					if Validate > -7
+						if Validate == -5
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason5,targetName) , System.MSG_High, System.MSG_Box)
+						else;if Validate == -6
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason6,targetName) , System.MSG_High, System.MSG_Box)
+						endIf
+					else
+						if Validate > -9
+							if Validate == -7
+								System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason7,targetName) , System.MSG_High, System.MSG_Box)
+							else;if Validate == -8
+								System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason8,targetName) , System.MSG_Low, System.MSG_Box)
+							endIf
+						elseif Validate == -9
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason9,targetName) , System.MSG_High, System.MSG_Box)
+						endif
+					endIf
+				endIf
+			endIf
 			return
 		endIf
 		
 		; First update the female NPC
-		System.Data.Update(target)
+		Data.Update(target)
 		
 		int stateID= StorageUtil.GetIntValue(target,"FW.CurrentState",0)
 		int flag= StorageUtil.GetIntValue(target,"FW.Flags",0)
@@ -2710,55 +2853,79 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 
 		if Rank <20
 			if HasRelevantSperm(target,true);/==true/;
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotSpermInside,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotSpermInside,targetName)+"\n"
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotNoSpermInside,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotNoSpermInside,targetName)+"\n"
 			endIf
 		else
 			if spermNames.Length==0
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotNoSpermInside,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotNoSpermInside,targetName)+"\n"
 			elseif spermNames.Length==1 && spermNames[0]==PlayerRef && Rank>20
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotYourSpermInside,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotYourSpermInside,targetName)+"\n"
 			elseif spermNames.Length==1
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotOneSpermInside,targetName)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotOneSpermInside,targetName)+"\n"
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_GotMoreSpermInside,targetName,spermNames.length)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_GotMoreSpermInside,targetName,spermNames.length)+"\n"
 			endif
 		endif
 		
 		if Rank>=35
-			if stateID==0
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID0)
-			elseif stateID==1
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID1)
-			elseif stateID==2
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID2)
-			elseif stateID==3
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID3)
-			elseif stateID==4
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID4)
-			elseif stateID==5
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID5)
-			elseif stateID==6
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID6)
-			elseif stateID==7
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID7)
-			elseif stateID==8
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID8)
-			elseif stateID==20
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID20)
-			elseif stateID==21
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateID21)
+			if stateID >= 0
+				if stateID < 9
+					if stateID < 4
+						if stateID < 2
+							if stateID==0
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID0)
+							else;if stateID==1
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID1)
+							endIf
+						else
+							if stateID==2
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID2)
+							else;if stateID==3
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID3)
+							endIf
+						endIf
+					else
+						if stateID < 6
+							if stateID==4
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID4)
+							else;if stateID==5
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID5)
+							endIf
+						else
+							if stateID < 8
+								if stateID==6
+									s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID6)
+								else;if stateID==7
+									s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID7)
+								endIf
+							else;if stateID==8
+								s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID8)
+							endIf
+						endIf
+					endIf
+				else
+					if((stateID==20) || (stateID==21))
+						if stateID==20
+							s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID20)
+						else;if stateID==21
+							s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateID21)
+						endIf
+					else
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateUnknown)
+					endIf
+				endIf
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CurrentState, System.Content.StateUnknown)
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CurrentState, Content.StateUnknown)
 			endIf
 			
 			if Rank>40 && IsPaused(target)==false
 				float stateDur=System.GetStateDuration(stateID,target)
-				float xStateDelay=Utility.GetCurrentGameTime() - StorageUtil.GetFloatValue(target,"FW.StateEnterTime",0.0)
-				s+=" "+FWUtility.MultiStringReplace(System.Content.InfoSpell_StateSince, FWUtility.GetTimeString(xStateDelay,true))+"\n"
+				float xStateDelay=GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(target,"FW.StateEnterTime",0.0)
+				s+=" "+FWUtility.MultiStringReplace(Content.InfoSpell_StateSince, FWUtility.GetTimeString(xStateDelay,true))+"\n"
 				if Rank>65
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_StateDuration, FWUtility.GetTimeString(stateDur,true))
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_StateDuration, FWUtility.GetTimeString(stateDur,true))
 					if Rank>95
 						s+=" ("+FWUtility.GetPercentage(GetStatePercentage(target),1)+"%)\n"
 					else
@@ -2772,34 +2939,34 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 		
 		if Rank>=5 && Rank <25
 			if stateID>4 && stateID<8
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_LooksPregnant, System.Content.InfoSpell_Yes)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_LooksPregnant, Content.InfoSpell_Yes)+"\n"
 			elseif stateID<=4 ; Event in the 1. Trimester
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_LooksPregnant, System.Content.InfoSpell_No)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_LooksPregnant, Content.InfoSpell_No)+"\n"
 			elseif stateID==8
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_LooksPregnant, System.Content.InfoSpell_NotAnymore)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_LooksPregnant, Content.InfoSpell_NotAnymore)+"\n"
 			endif
 		elseif Rank>=25
 			if stateID>=4 && stateID<8
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_IsPregnant, System.Content.InfoSpell_Yes)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_IsPregnant, Content.InfoSpell_Yes)+"\n"
 			elseif stateID<4
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_IsPregnant, System.Content.InfoSpell_No)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_IsPregnant, Content.InfoSpell_No)+"\n"
 			elseif stateID==8
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_IsPregnant, System.Content.InfoSpell_NotAnymore)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_IsPregnant, Content.InfoSpell_NotAnymore)+"\n"
 			endif
 		endIf
 		
 		
 		if Rank>=95 && stateID<4
 			if Math.LogicalOr(flag,1)==flag
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CanBecomePregnant, System.Content.InfoSpell_Yes)+" ("+ Math.Floor(getRelativePregnancyChance(target))+"%)\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+" ("+ Math.Floor(getRelativePregnancyChance(target))+"%)\n"
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CanBecomePregnant, System.Content.InfoSpell_No)+" ("+Math.Floor(getRelativePregnancyChance(target))+"%)\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+" ("+Math.Floor(getRelativePregnancyChance(target))+"%)\n"
 			endIf
 		elseif Rank>=80 && stateID<4
 			if Math.LogicalOr(flag,1)==flag
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CanBecomePregnant, System.Content.InfoSpell_Yes)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+"\n"
 			else
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_CanBecomePregnant, System.Content.InfoSpell_No)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+"\n"
 			endIf
 		endIf
 		
@@ -2807,12 +2974,12 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 			;Pregnancy informations
 			if Rank>60
 				int numChilds=StorageUtil.GetIntValue(target,"FW.NumChilds",0)
-				s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_PregnantWithNumOfBabys, numChilds)+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_PregnantWithNumOfBabys, numChilds)+"\n"
 				if Rank>95
 					if numChilds>1
-						s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_UnbornBabiesHealth, (StorageUtil.GetFloatValue(target,"FW.UnbornHealth") as int))+"\n"
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_UnbornBabiesHealth, (StorageUtil.GetFloatValue(target,"FW.UnbornHealth") as int))+"\n"
 					else
-						s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_UnbornBabyHealth, (StorageUtil.GetFloatValue(target,"FW.UnbornHealth") as int))+"\n"
+						s+=FWUtility.MultiStringReplace(Content.InfoSpell_UnbornBabyHealth, (StorageUtil.GetFloatValue(target,"FW.UnbornHealth") as int))+"\n"
 					endif
 				endif
 			endIf
@@ -2820,21 +2987,21 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 			; Cycle and replanish infos
 			if Rank>33 && Rank<55
 				if StorageUtil.GetFloatValue(target,"FW.Contraception") > 5.0
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_Contraception, System.Content.InfoSpell_Yes)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_Contraception, Content.InfoSpell_Yes)+"\n"
 				else
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_Contraception, System.Content.InfoSpell_No)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_Contraception, Content.InfoSpell_No)+"\n"
 				endIf
 			elseif Rank>=55
 				float concep = StorageUtil.GetFloatValue(target,"FW.Contraception")
 				if concep>0
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_Contraception, (concep as int)+"%")+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_Contraception, (concep as int)+"%")+"\n"
 				else
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_Contraception, System.Content.InfoSpell_No)+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_Contraception, Content.InfoSpell_No)+"\n"
 				endif
 				
 				float lastTimeConcep=StorageUtil.GetFloatValue(target,"FW.ContraceptionTime",0.0)
 				if Rank>75 && lastTimeConcep>0
-					s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_LastContraception, FWUtility.GetTimeString(Utility.GetCurrentGameTime() - lastTimeConcep,true))+"\n"
+					s+=FWUtility.MultiStringReplace(Content.InfoSpell_LastContraception, FWUtility.GetTimeString(GameDaysPassed.GetValue() - lastTimeConcep,true))+"\n"
 				endif
 			endIf
 			
@@ -2862,12 +3029,12 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 			endWhile
 			if bSpermFromPlayer;/==true/;
 				if bHasNames;/==true/;
-					xSpermNames+=" "+System.Content.InfoSpell_AndYou
+					xSpermNames+=" "+Content.InfoSpell_AndYou
 				else
-					xSpermNames+=System.Content.InfoSpell_You
+					xSpermNames+=Content.InfoSpell_You
 				endIf
 			endIf
-			s+=FWUtility.MultiStringReplace(System.Content.InfoSpell_SpermNames, xSpermNames)+"\n"
+			s+=FWUtility.MultiStringReplace(Content.InfoSpell_SpermNames, xSpermNames)+"\n"
 		endIf
 	endif
 	

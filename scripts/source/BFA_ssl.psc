@@ -7,6 +7,13 @@ FWSystem property System auto
 
 int TryRegisterCount=0
 
+FWSystemConfig property cfg auto
+Spell Property BeeingFemaleSpell Auto
+FWController property Controller auto
+FWAddOnManager property Manager auto
+FWTextContents property Content auto
+Actor Property PlayerRef Auto
+
 function OnGameLoad()
 	if System ;Tkc (Loverslab): optimization
 	else;if System==none
@@ -39,8 +46,7 @@ event OnUpdate()
 		endif
 	endwhile/;
 	;;;;; ;Tkc (Loverslab): standart detection
-	if Game.GetModbyName("SexLab.esm") == 255
-	else;if Game.GetModbyName("SexLab.esm") != 255
+	if Game.IsPluginInstalled("SexLab.esm")
 		SexLab = Game.GetFormFromFile(0x00000D62, "SexLab.esm") as SexLabFramework
 		Lib = Game.GetFormFromFile(0x00000D62, "SexLab.esm") as sslThreadLibrary
 		bSexLab = true
@@ -202,13 +208,13 @@ Function Orgasm(sslThreadController ssl_controller, sslBaseAnimation animation)
 	endif
 	if animation.HasTag("Anal")
 		;Trace("   Animation was anal")
-		if Utility.RandomInt(1,100)<=System.cfg.NoVaginalCumChance
+		if Utility.RandomInt(1,100)<=cfg.NoVaginalCumChance
 			;Trace("   Continue using anal sperm")
 			relevantAnimation=true
 		endif
 	endif
-	;If System.cfg.CreatureSperm && (! relevantAnimation)
-	If System.cfg.CreatureSperm ;Tkc (Loverslab): optimization
+	;If cfg.CreatureSperm && (! relevantAnimation)
+	If cfg.CreatureSperm ;Tkc (Loverslab): optimization
 	 if relevantAnimation ;Tkc (Loverslab): optimization
 	 else;if (! relevantAnimation)
 		;Trace("   Check for Tags")
@@ -358,24 +364,24 @@ Function Orgasm(sslThreadController ssl_controller, sslBaseAnimation animation)
 			;Trace("8. Add sperm")
 			
 			;Trace("   Raise AddOn Event 'OnCameInside'")
-			;System.Manager.OnCameInside(Female,Male)
+			;Manager.OnCameInside(Female,Male)
 			
-			;If Female.HasSpell(System.BeeingFemaleSpell)==false && System.IsValidateFemaleActor(Female)>0
-			If Female.HasSpell(System.BeeingFemaleSpell) ;Tkc (Loverslab): optimization
-			else;If Female.HasSpell(System.BeeingFemaleSpell)==false
+			;If Female.HasSpell(BeeingFemaleSpell)==false && System.IsValidateFemaleActor(Female)>0
+			If Female.HasSpell(BeeingFemaleSpell) ;Tkc (Loverslab): optimization
+			else;If Female.HasSpell(BeeingFemaleSpell)==false
 			 if System.IsValidateFemaleActor(Female)>0
 				;Trace("   Female doesn't had BF Spell - apply spell")
-				FWUtility.ActorAddSpell(Female,System.BeeingFemaleSpell)
+				System.ActorAddSpellOpt(Female,BeeingFemaleSpell)
 			 endif
 			endif
 			
-			float virility = System.Controller.GetVirility(Male)
+			float virility = Controller.GetVirility(Male)
 			amount = Utility.RandomFloat(virility * 0.75, virility*1.1)
 			if amount>1.0
 				amount=1.0
 			endif
-			;If System.cfg.MaleVirilityRecovery > 0.0
-			;	float virility = FWUtility.ClampFloat(System.Controller.GetDaysSinceLastSex(Male) / System.cfg.MaleVirilityRecovery, 0.02, 1.0)
+			;If cfg.MaleVirilityRecovery > 0.0
+			;	float virility = FWUtility.ClampFloat(Controller.GetDaysSinceLastSex(Male) / cfg.MaleVirilityRecovery, 0.02, 1.0)
 			;	amount = Utility.RandomFloat(virility * 0.75, virility*1.1)
 			;	if amount>1.0
 			;		amount=1.0
@@ -383,32 +389,32 @@ Function Orgasm(sslThreadController ssl_controller, sslBaseAnimation animation)
 			;	System.Trace("   Base Sperm-Amount is " + amount)
 			;EndIf
 			
-			amount = System.Manager.getSpermAmount(Female,Male,amount)
+			amount = Manager.getSpermAmount(Female,Male,amount)
 			;Trace("   Calculated Sperm-Amount is " + amount)
 			
-			if Female.HasSpell(System.BeeingFemaleSpell) ;Tkc (Loverslab): optimization
-			else;if Female.HasSpell(System.BeeingFemaleSpell)==false
+			if Female.HasSpell(BeeingFemaleSpell) ;Tkc (Loverslab): optimization
+			else;if Female.HasSpell(BeeingFemaleSpell)==false
 				;Trace("   Female still don't got the BF Spell - ignore and continue")
-				System.Message( FWUtility.StringReplace( System.Content.NoBeeingFemaleSpell , "{0}",Female.GetLeveledActorBase().GetName()), System.MSG_Immersive)
+				System.Message( FWUtility.StringReplace( Content.NoBeeingFemaleSpell , "{0}",Female.GetLeveledActorBase().GetName()), System.MSG_Immersive)
 			endif
-			actor p = Game.GetPlayer()
+			actor p = PlayerRef
 			If Male == p
 				;self.Message("You came inside " + Female.GetLeveledActorBase().GetName() + ".", self.MSG_Immersive)
-				System.Message( FWUtility.StringReplace( System.Content.YouCameInsideNPC , "{0}",Female.GetLeveledActorBase().GetName()), System.MSG_Immersive)
+				System.Message( FWUtility.StringReplace( Content.YouCameInsideNPC , "{0}",Female.GetLeveledActorBase().GetName()), System.MSG_Immersive)
 			ElseIf Female == p
 				;self.Message(Male.GetLeveledActorBase().GetName() + " came inside you.", self.MSG_Immersive)
-				System.Message( FWUtility.StringReplace( System.Content.NPCCameInsideYou , "{0}",Male.GetLeveledActorBase().GetName()), System.MSG_Immersive)
+				System.Message( FWUtility.StringReplace( Content.NPCCameInsideYou , "{0}",Male.GetLeveledActorBase().GetName()), System.MSG_Immersive)
 			Else
 				;self.Message(Male.GetLeveledActorBase().GetName() + " came inside " + Female.GetLeveledActorBase().GetName() + ".", self.Msg_High)
 				string[] astring = new string[2]
 				astring[0] = Male.GetLeveledActorBase().GetName()
 				astring[1] = Female.GetLeveledActorBase().GetName()
-				System.Message( FWUtility.ArrayReplace(System.Content.NPCCameInsideNPC,astring), System.Msg_High)
+				System.Message( FWUtility.ArrayReplace(Content.NPCCameInsideNPC,astring), System.Msg_High)
 			EndIf
 			
 			if amount>0.0
 				;Trace("   Finaly add " + amount + " sperm from "+Male.GetLeveledActorBase().GetName() + " to " +Female.GetLeveledActorBase().GetName())
-				System.Controller.AddSperm(Female,Male, amount)				
+				Controller.AddSperm(Female,Male, amount)				
 			endif
 		EndIf
 		EndIf

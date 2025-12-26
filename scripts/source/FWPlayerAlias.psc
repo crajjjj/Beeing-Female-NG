@@ -28,11 +28,21 @@ ReferenceAlias[] Property FoundFemales Auto ; Female aliases from scanquest
 ReferenceAlias[] Property FoundMales Auto ; Male aliases from scanquest
 
 
+FWPantyWidget property PantyWidget auto
+armor property Sanitary_Napkin_Normal auto
+armor property Tampon_Normal auto
+spell property Effect_VaginalBloodLow auto
+spell property Effect_VaginalBloodHigh auto
+Globalvariable property ModEnabled auto
+
 Event OnInit()
 	;RegisterForSingleUpdate(1)
 	
-	If self && GetActorReference()
-		oldSex = GetActorReference().GetActorBase().GetSex()
+	If self
+		Actor SelfActor = GetReference() as Actor
+		if(SelfActor)
+			oldSex = SelfActor.GetActorBase().GetSex()
+		endIf
 	EndIf
 	OnPlayerLoadGame()
 	;RegisterForMenu("RaceSex Menu")
@@ -72,18 +82,18 @@ Event OnLocationChange(Location akOldLoc, Location akNewLoc)
 EndEvent
 
 Event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
-	System.PantyWidget.UpdateContent()
+	PantyWidget.UpdateContent()
 	kArmorItem = akBaseObject as Armor
 	if kArmorItem
-	  	If (kArmorItem == System.Sanitary_Napkin_Normal || kArmorItem == System.Tampon_Normal)
-			PlayerRef.DispelSpell(System.Effect_VaginalBloodLow)				
-			PlayerRef.DispelSpell(System.Effect_VaginalBloodHigh)
+	  	If (kArmorItem == Sanitary_Napkin_Normal || kArmorItem == Tampon_Normal)
+			PlayerRef.DispelSpell(Effect_VaginalBloodLow)				
+			PlayerRef.DispelSpell(Effect_VaginalBloodHigh)
 		Endif
 	EndIf
 EndEvent
 
 Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
-	System.PantyWidget.UpdateContent()
+	PantyWidget.UpdateContent()
 EndEvent
 
 Function OnModReset() ;***Added by Bane
@@ -128,24 +138,25 @@ Event OnRaceSwitchComplete()
 	EndIf
 /; ;<original	
 	;Tkc (Loverslab): optimization
-	int newSex = GetActorReference().GetActorBase().GetSex() ;Tkc (Loverslab): optimization ; will be using three times after this
+	Actor SelfActor = GetReference() as Actor
+	int newSex = SelfActor.GetActorBase().GetSex() ;Tkc (Loverslab): optimization ; will be using three times after this
 	If oldSex == newSex
 	else;If oldSex != GetActorReference().GetActorBase().GetSex()
 		If newSex == 0;"if male"
-			If (GetActorReference().HasSpell(BeeingMaleSpell)) ;Tkc (Loverslab): optimization
+			If (SelfActor.HasSpell(BeeingMaleSpell)) ;Tkc (Loverslab): optimization
 			else;If (! GetActorReference().HasSpell(BeeingMaleSpell))
-				GetActorReference().AddSpell(BeeingMaleSpell)
+				SelfActor.AddSpell(BeeingMaleSpell)
 			EndIf
-			If (GetActorReference().HasSpell(BeeingFemaleSpell))
-				GetActorReference().RemoveSpell(BeeingFemaleSpell)
+			If (SelfActor.HasSpell(BeeingFemaleSpell))
+				SelfActor.RemoveSpell(BeeingFemaleSpell)
 			EndIf
 		Else;"if female"
-			If (GetActorReference().HasSpell(BeeingFemaleSpell)) ;Tkc (Loverslab): optimization
+			If (SelfActor.HasSpell(BeeingFemaleSpell)) ;Tkc (Loverslab): optimization
 			else;If (! GetActorReference().HasSpell(BeeingFemaleSpell))
-				GetActorReference().AddSpell(BeeingFemaleSpell)
+				SelfActor.AddSpell(BeeingFemaleSpell)
 			EndIf
-			If (GetActorReference().HasSpell(BeeingMaleSpell)) ;Tkc (Loverslab): fix here. Removed '!'
-				GetActorReference().RemoveSpell(BeeingMaleSpell)
+			If (SelfActor.HasSpell(BeeingMaleSpell)) ;Tkc (Loverslab): fix here. Removed '!'
+				SelfActor.RemoveSpell(BeeingMaleSpell)
 			EndIf
 		EndIf
 		oldSex = newSex
@@ -220,7 +231,7 @@ Function ProcessActor(Actor akTarget, bool IsFemale = true); Tkc (Loverslab): op
 		;Debug.Trace("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
 		;Debug.Notification("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
 		if IsFemale		
-			If (akTarget.GetLeveledActorBase().IsUnique())
+			;If (akTarget.GetLeveledActorBase().IsUnique())
 				if akTarget.HasSpell(BeeingFemaleSpell)
 					;Debug.Trace("BF: " + sName + " has Female Spell but not the Effect - removed")
 					akTarget.RemoveSpell(BeeingFemaleSpell)
@@ -229,15 +240,15 @@ Function ProcessActor(Actor akTarget, bool IsFemale = true); Tkc (Loverslab): op
 					;Debug.Trace("BF: " + sName + " is female unique - Add BeeingFemaleSpell")
 					akTarget.AddSpell(BeeingFemaleSpell)
 				endif
-			Else;If BeeingNUFemaleSpell
-				if akTarget.HasSpell(BeeingNUFemaleSpell)
-					akTarget.RemoveSpell(BeeingNUFemaleSpell)
-					Return
-				else;if akTarget.HasSpell(BeeingNUFemaleSpell)==false 
-					;Debug.Trace("BF: " + sName + " is female non-unique - Add BeeingNUFemaleSpell")
-					akTarget.AddSpell(BeeingNUFemaleSpell)
-				endif
-			Endif
+;			Else;If BeeingNUFemaleSpell
+;				if akTarget.HasSpell(BeeingNUFemaleSpell)
+;					akTarget.RemoveSpell(BeeingNUFemaleSpell)
+;					Return
+;				else;if akTarget.HasSpell(BeeingNUFemaleSpell)==false 
+;					;Debug.Trace("BF: " + sName + " is female non-unique - Add BeeingNUFemaleSpell")
+;					akTarget.AddSpell(BeeingNUFemaleSpell)
+;				endif
+;			Endif
 		else			
 			if akTarget.HasSpell(BeeingMaleSpell)
 				;Debug.Trace("BF: " + sName + " has Female Spell but not the Effect - removed")
@@ -274,8 +285,8 @@ State Processing
 	Event OnBeginState()
 		iStateUpdateInterval = Interval
 		;If CloakingSpellEnabled.GetValueInt();/==1/; && System.ModEnabled.GetValueInt();/==1/;  ;Tkc (Loverslab): optimization
-		If System.ModEnabled.GetValueInt() ;Tkc (Loverslab): optimization
-		If CloakingSpellEnabled.GetValueInt()
+		If ModEnabled.GetValue() As int ;Tkc (Loverslab): optimization
+		If CloakingSpellEnabled.GetValue() As int
 			;/Actor[] CellActors = MiscUtil.ScanCellNPCs(PlayerRef, 2048.0)
 			Int iActorIdx = CellActors.Length
 			;debug.trace("BF: Checking " + iActorIdx + " actors for BF spells")
@@ -305,9 +316,9 @@ State Processing
 			While iActorIdx
 				iActorIdx -=1
 					;debug.trace("BF: Checking #" + iActorIdx + " female actor alias ='" + FoundFemales[iActorIdx].GetActorReference() + "'.")
-				ProcessActor(FoundFemales[iActorIdx].GetActorReference())
+				ProcessActor(FoundFemales[iActorIdx].GetReference() as Actor)
 					;debug.trace("BF: Checking #" + iActorIdx + " male actor alias ='" + FoundMales[iActorIdx].GetActorReference() + "'.")
-				ProcessActor(FoundMales[iActorIdx].GetActorReference(), false)
+				ProcessActor(FoundMales[iActorIdx].GetReference() as Actor, false)
 			EndWhile
 			FindActors.Stop()
 			;;;;;;;;;;;;;;;;;

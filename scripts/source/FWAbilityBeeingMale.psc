@@ -1,11 +1,14 @@
 ﻿Scriptname FWAbilityBeeingMale extends FWAbilityBeeingBase
 
-MagicEffect BeingMaleEffect
-
 Bool IsSpouse
 
+GlobalVariable Property ModEnabled Auto
+Spell Property BeeingMaleSpell Auto
+Spell Property BeeingFemaleSpell Auto
+MagicEffect Property _BFAbilityEffectBeeingMale Auto
+
 Event OnEffectStart(Actor akTarget, Actor akCaster)
-	if System.ModEnabled.GetValueInt() ;Tkc (Loverslab): optimization
+	if ModEnabled.GetValue() As int ;Tkc (Loverslab): optimization
 	else;if System.ModEnabled.GetValueInt()!=1
 		Self.Dispel()
 		Return
@@ -13,7 +16,7 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 	;IsPlayer = (akTarget == Game.GetPlayer())
 	IsPlayer = (akTarget == PlayerRef) ;Tkc (Loverslab): optimization. PlayerRef added in FWAbilityBeeingBase
 	IsFollower = akTarget.IsInFaction(System.FollowerFaction)
-	IsSpouse = akTarget.IsInFaction(System.PlayerMarriedFaction)
+	IsSpouse = akTarget.IsInFaction(PlayerMarriedFaction)
 	parent.OnEffectStart(akTarget, akCaster)
 	ActorRef = akTarget
 	ActorRefBase = akTarget.GetLeveledActorBase() ;Tkc (Loverslab): optimization. was not used anywhere but added it below
@@ -22,9 +25,7 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 		System.Player = none
 	EndIf
 
-	BeingMaleEffect = System.BeeingMaleSpell.GetNthEffectMagicEffect(0)
-
-	if ActorRef.HasMagicEffect(BeingMaleEffect)
+	if ActorRef.HasMagicEffect(_BFAbilityEffectBeeingMale)
 		If IsPlayer || IsFollower || IsSpouse ;Bane 04/07/19: Stack Dump Prevention - For NPC's effect is reapplied on every location change, a 5 hourly update check on non-followers/spouses is unecessary
 			RegisterForSingleUpdateGameTime(5)
 		EndIf
@@ -43,7 +44,7 @@ function OnPlayerLoadGame()
 	if bInit;/==true/; && bInitSpell;/==true/; ;&& Self as String != "[FWAbilityBeeingMale <None>]"
 		Utility.WaitMenuMode(1)
 		;IsFollower = ActorRef.IsInFaction(System.FollowerFaction) && IsPlayer == false - Never true as only received by the player
-		System.Controller.UpdateParentFaction(ActorRef)
+		Controller.UpdateParentFaction(ActorRef)
 		equipChild()
 	endif
 endfunction
@@ -57,8 +58,8 @@ Event OnEffectFinish(Actor akTarget, Actor akCaster)
 	EndIf
 	;If ActorRef && ActorRef.HasSpell(System.BeeingMaleSpell)
 	If ActorRef ;Tkc (Loverslab): optimization
-		if ActorRef.HasSpell(System.BeeingMaleSpell)
-			ActorRef.RemoveSpell(System.BeeingMaleSpell)
+		if ActorRef.HasSpell(BeeingMaleSpell)
+			ActorRef.RemoveSpell(BeeingMaleSpell)
 		EndIf
 	EndIf
 EndEvent
@@ -73,17 +74,17 @@ Event OnUpdateGameTime()
 	else;if System==none
 		return
 	endif
-	if System.Controller ;Tkc (Loverslab): optimization
+	if Controller ;Tkc (Loverslab): optimization
 	else;if System.Controller == none
 		return
 	endif
-	System.Controller.UpdateParentFaction(ActorRef)
+	Controller.UpdateParentFaction(ActorRef)
 	if ActorRefBase.GetSex();!=0 ;Tkc (Loverslab): optimization
-		if ActorRef.HasSpell(System.BeeingFemaleSpell) ;Tkc (Loverslab): optimization
+		if ActorRef.HasSpell(BeeingFemaleSpell) ;Tkc (Loverslab): optimization
 		else;if ActorRef.HasSpell(System.BeeingFemaleSpell)==false
 			;if System.IsValidateActor(ActorRef)>0
 			if System.IsValidateFemaleActor(ActorRef)>0 ;Tkc (Loverslab): optimization, changed to validated female because here is only female actions and it will be faster
-				ActorRef.AddSpell(System.BeeingFemaleSpell)
+				ActorRef.AddSpell(BeeingFemaleSpell)
 			endif
 		endif
 		Self.Dispel()
@@ -96,7 +97,7 @@ Event OnUpdateGameTime()
 			System.Player=none
 		endif
 	endif
-	If ActorRef.HasMagicEffect(BeingMaleEffect)
+	If ActorRef.HasMagicEffect(_BFAbilityEffectBeeingMale)
 		if Self as String == "[FWAbilityBeeingMale <None>]"
 		else;if Self as String != "[FWAbilityBeeingMale <None>]"
 			RegisterForSingleUpdateGameTime(5)
