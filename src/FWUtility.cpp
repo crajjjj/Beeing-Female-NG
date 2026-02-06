@@ -1248,7 +1248,7 @@ namespace FWUtility {
 			name = name.substr(0, name.size() - 5);
 		}
 
-		const std::size_t idx = name.find('_');
+		const std::size_t idx = name.find_last_of('_');
 		if (idx == std::string::npos || idx == 0) {
 			return nullptr;
 		}
