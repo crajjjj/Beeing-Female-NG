@@ -68,6 +68,24 @@ dist/Core/skse/plugins
 
 ## For Modders
 
+### AutoCouples Import
+
+Beeing Female NG can auto-import sperm donors from JSON couple files and apply them to the matching female actor.
+
+How it works:
+- It scans `Data/BeeingFemale/Couples/*.json` (via `FWUtility.GetFileNames("Couples","json")`).
+- Each filename should be `ModName_FormHex.json`. The split uses the last `_`, so mod names may contain underscores.
+- The female actor is resolved from the filename as `ModName:FormHex`.
+- Donors are pulled from the JSON keys `husband` (single form), `partners` (form list), and `affairs` (form list).
+- One donor is chosen at random and applied via `SendModEvent("BeeingFemale", "AddSpermImpregnate", donorFormID)`.
+
+How to run it:
+- MCM: System/Cheats page, `AutoCouples Import`.
+
+Notes:
+- The `.json` extension check is case-insensitive.
+- Errors are logged with `FW_log.WriteLog` if the file name is invalid, the female cannot be resolved, or no donor is found.
+
 ## Add-on Framework
 
 Beeing Female NG ships an INI-driven add-on framework that lets external mods extend or override pregnancy/cycle behavior without editing core scripts. Add-ons are discovered from `dist/Core/BeeingFemale/AddOn/*.ini` and loaded at runtime. Example folders in `dist/Core/BeeingFemale/AddOn` have detailed explanation on parameters. Use them as templates.
