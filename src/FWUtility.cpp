@@ -1236,6 +1236,40 @@ namespace FWUtility {
 		return BSFixedString(name.c_str());
 	}
 
+	RE::Actor* FindFemaleFromJsonFileName(StaticFunctionTag* base, BSFixedString fileName) {
+		(void)base;
+		const char* raw = fileName.data();
+		if (!raw || raw[0] == '\0') {
+			return nullptr;
+		}
+
+		std::string name(raw);
+		if (name.size() >= 5 && name.substr(name.size() - 5) == ".json") {
+			name = name.substr(0, name.size() - 5);
+		}
+
+		const std::size_t idx = name.find('_');
+		if (idx == std::string::npos || idx == 0) {
+			return nullptr;
+		}
+
+		const std::string mod = name.substr(0, idx);
+		const std::string formHex = name.substr(idx + 1);
+		if (mod.empty() || formHex.empty()) {
+			return nullptr;
+		}
+
+		std::string spec = mod;
+		spec.push_back(':');
+		spec.append(formHex);
+		RE::TESForm* form = GetFormFromString(nullptr, BSFixedString(spec.c_str()));
+		if (!form) {
+			return nullptr;
+		}
+		return form->As<RE::Actor>();
+	}
+
+
 	std::string ws2s(std::wstring const& text) {
 		std::locale const loc("");
 		wchar_t const* from = text.c_str();
@@ -2462,6 +2496,7 @@ namespace FWUtility {
 		registry->RegisterFunction("ArrayReplace", "FWUtility", &FWUtility::ArrayReplace);
 		registry->RegisterFunction("floatModulo", "FWUtility", &FWUtility::FloatModulo);
 		registry->RegisterFunction("GetModFromID", "FWUtility", &FWUtility::GetModFromID);
+		registry->RegisterFunction("FindFemaleFromJsonFileName", "FWUtility", &FWUtility::FindFemaleFromJsonFileName);
 
 		return true;
 	}

@@ -1020,7 +1020,9 @@ Event onBeeingFemaleCommand(string hookName, string argString, float argNum, for
 					endif
 				endif
 				if targetWoman
-					Controller.Impregnate(targetWoman, a2, 1)
+					if !Controller.IsPregnant(targetWoman)
+						Controller.Impregnate(targetWoman, a2, 1)
+					endif
 				endif
 			endif
 		elseif argString=="WashOutSperm" && argNum>0 && validateF>0

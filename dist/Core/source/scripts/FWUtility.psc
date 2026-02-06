@@ -43,8 +43,37 @@ string function GetIniFileCombine(string Mod, string Hex) global
 	return Mod + "_" + Hex + ".ini"
 endFunction
 
+actor function GetRandomAutoCouplesDonor(string jsonFile) global
+	actor[] donors
+	actor h = JsonUtil.GetFormValue(jsonFile, "husband") as actor
+	if h
+		donors = FWUtility.ActorArrayAppend(donors, h)
+	endif
+	int c = JsonUtil.FormListCount(jsonFile, "partners")
+	while c>0
+		c-=1
+		actor a = JsonUtil.FormListGet(jsonFile, "partners", c) as actor
+		if a
+			donors = FWUtility.ActorArrayAppend(donors, a)
+		endif
+	endWhile
+	c = JsonUtil.FormListCount(jsonFile, "affairs")
+	while c>0
+		c-=1
+		actor a2 = JsonUtil.FormListGet(jsonFile, "affairs", c) as actor
+		if a2
+			donors = FWUtility.ActorArrayAppend(donors, a2)
+		endif
+	endWhile
+	if donors.length>0
+		return donors[Utility.RandomInt(0, donors.length - 1)]
+	endif
+	return none
+endFunction
+
 ; Returns the plugin name for the given form (optionally without extension, "unknown" when form has no file).
 string function GetModFromID(Form frm, bool bFileExtention = true) global native
+actor function FindFemaleFromJsonFileName(string fileName) global native
 
 
 string function GetDirectoryHash(string dir) native global

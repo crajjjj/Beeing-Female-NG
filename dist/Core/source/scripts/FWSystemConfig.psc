@@ -2303,6 +2303,7 @@ Event OnPageReset(string page)
 		endif
 		AddToggleOptionST("ToggleWidgetAlwaysActive", "$FW_MENU_SYSTEM_WidgetAlwaysActive", WidgetAlwaysActive)
 		AddToggleOptionST("ToggleCoupleWidget", "$FW_MENU_CHEAT_CoupleMaker", CoupleWidget.enabled)
+		AddTextOptionST("TextAutoCouplesImport", "$FW_MENU_CHEAT_AutoCouplesImport", "")
 		
 		; Right column
 		SetCursorPosition(1)
@@ -3716,6 +3717,39 @@ int function getCompatiblity_Skyrim()
 		return 1
 	endif
 	return 2
+endFunction
+
+function ImportCouples()
+	string[] files = FWUtility.GetFileNames("Couples","json")
+	int c = files.length
+	if c<=0
+		return
+	endif
+	int imported = 0
+	while c>0
+		c-=1
+		string f = files[c]
+		int len = StringUtil.GetLength(f)
+		if len < 5
+			f = f + ".json"
+		else
+			if StringUtil.SubString(f, len - 5, 5) != ".json"
+				f = f + ".json"
+			endif
+		endif
+		string jsonFile = "../../../BeeingFemale/Couples/" + f
+		actor woman = FWUtility.FindFemaleFromJsonFileName(f)
+		if woman && System.IsValidateFemaleActor(woman) > 0
+			actor donor = FWUtility.GetRandomAutoCouplesDonor(jsonFile)
+			if donor
+				woman.SendModEvent("BeeingFemale", "AddSpermImpregnate", donor.GetFormID())
+				imported+=1
+			endif
+		endif
+	endWhile
+	if imported>0
+		Debug.Notification("AutoCouples import: "+imported)
+	endif
 endFunction
 
 int function getCompatiblity_SKSE()
@@ -5396,6 +5430,15 @@ state TextRefreshAddOn
 		System.ChildSettings.ResetChildPerks()
 		System.OnGameLoad(true) ;***Added by Bane
 		/;
+	EndEvent
+endState
+
+state TextAutoCouplesImport
+	Event OnSelectST()
+		ImportCouples()
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHEAT_AutoCouplesImport")
 	EndEvent
 endState
 

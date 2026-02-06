@@ -52,6 +52,7 @@ namespace FWUtility {
 	BSFixedString ArrayReplace(StaticFunctionTag* base, BSFixedString text, std::vector<BSFixedString> replace);
 	float FloatModulo(StaticFunctionTag* base, float value, float modValue);
 	BSFixedString GetModFromID(StaticFunctionTag* base, RE::TESForm* form, bool fileExtension);
+	RE::Actor* FindFemaleFromJsonFileName(StaticFunctionTag* base, BSFixedString fileName);
 	BSFixedString GetVersionString(StaticFunctionTag* base, BSFixedString modDesc);
 
 	bool ScriptHasString(StaticFunctionTag* base, BSFixedString src, BSFixedString searchStr);
