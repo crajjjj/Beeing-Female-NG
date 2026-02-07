@@ -80,7 +80,7 @@ How it works:
 - One donor is chosen at random and applied via `SendModEvent("BeeingFemale", "AddSpermImpregnate", donorFormID)`.
 
 How to run it:
-- MCM: System/Cheats page, `AutoCouples Import`.
+- MCM: First page, `Couples Import`.
 
 Notes:
 - The `.json` extension check is case-insensitive.
