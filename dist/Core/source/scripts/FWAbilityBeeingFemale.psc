@@ -228,7 +228,9 @@ Event OnEffectFinish(Actor akTarget, Actor akCaster)
 		onExitState()
 	endif
 	; Defensive cleanup in case birth was interrupted.
-	StorageUtil.FormListRemove(none,"FW.GivingBirth", ActorRef)
+	if akTarget
+		StorageUtil.FormListRemove(none,"FW.GivingBirth", akTarget)
+	endif
 	If ActorRef && ActorRef.HasSpell(BeeingFemaleSpell)
 		ActorRef.RemoveSpell(BeeingFemaleSpell)
 	EndIf

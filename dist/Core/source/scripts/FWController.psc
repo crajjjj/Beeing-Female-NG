@@ -932,16 +932,18 @@ function GiveBirth(actor Mother)
 	EndIf
 
 	; Guard against re-entrancy / multiple triggers causing duplicate births.
+	int NumChilds = StorageUtil.GetIntValue(Mother,"FW.NumChilds",0)
+	if NumChilds ;Tkc (Loverslab) optimization
+	else;if NumChilds==0
+		if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
+			StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother)
+		endif
+		return;
+	EndIf
 	if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
 		FW_log.WriteLog("FWController.GiveBirth: already giving birth for " + Mother)
 		return
 	endif
-	
-	int NumChilds = StorageUtil.GetIntValue(Mother,"FW.NumChilds",0)
-	if NumChilds ;Tkc (Loverslab) optimization
-	else;if NumChilds==0
-		return;
-	EndIf
 
 	int laborEvent = ModEvent.Create("BeeingFemaleLabor")
 	if laborEvent
