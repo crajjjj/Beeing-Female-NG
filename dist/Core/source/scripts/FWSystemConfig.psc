@@ -3748,7 +3748,9 @@ function ImportCouples()
 			if status > 0
 				actor donor = FWUtility.GetRandomAutoCouplesDonor(jsonFile)
 				if donor
-					woman.SendModEvent("BeeingFemale", "AddSpermImpregnate", donor.GetFormID())
+					if !Controller.IsPregnant(woman)
+						Controller.Impregnate(woman, donor, 1)
+					endif
 					imported+=1
 				else
 					FW_log.WriteLog("FWSystemConfig::ImportCouples - No donor found in " + f)
