@@ -166,13 +166,12 @@ function AddChildFather(actor Mother, actor Father) global
 	if !Mother
 		return
 	endif
+	if !Father
+		return
+	endif
 	StorageUtil.FormListAdd(Mother, "FW.ChildFather", Father)
 	StorageUtil.StringListAdd(Mother, "FW.ChildFatherStr", GetStringFromForm(Father))
-	if Father
-		StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", Father.GetRace())
-	else
-		StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", none)
-	endif
+	StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", Father.GetRace())
 endFunction
 
 function RemoveChildFatherAt(actor Mother, int Index) global

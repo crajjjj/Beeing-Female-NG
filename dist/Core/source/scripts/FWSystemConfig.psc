@@ -3723,7 +3723,6 @@ function ImportCouples()
 	string[] files = FWUtility.GetFileNames("Couples","json")
 	int c = files.length
 	if c<=0
-		FW_log.WriteLog("FWSystemConfig::ImportCouples - No couple files found")
 		return
 	endif
 	int imported = 0
@@ -3733,12 +3732,10 @@ function ImportCouples()
 		string f = files[c]
 		int len = StringUtil.GetLength(f)
 		if len < 5
-			FW_log.WriteLog("FWSystemConfig::ImportCouples - File name too short: " + f)
 			f = f + ".json"
 		else
 			string suffix = StringUtil.SubString(f, len - 5, 5)
 			if FWUtility.ToLower(suffix) != ".json"
-				FW_log.WriteLog("FWSystemConfig::ImportCouples - Missing .json extension: " + f)
 				f = f + ".json"
 			endif
 		endif
@@ -3749,30 +3746,13 @@ function ImportCouples()
 			if status > 0
 				actor donor = FWUtility.GetRandomAutoCouplesDonor(jsonFile)
 				if donor
-					string wName = "<none>"
-					string dName = "<none>"
-					ActorBase wBase = woman.GetLeveledActorBase()
-					ActorBase dBase = donor.GetLeveledActorBase()
-					if wBase
-						wName = wBase.GetName()
-					endif
-					if dBase
-						dName = dBase.GetName()
-					endif
 					if !Controller.IsPregnant(woman)
 						Controller.Impregnate(woman, donor, 1)
-						FW_log.WriteLog("FWSystemConfig::ImportCouples Impregnated - woman: " + woman + " (" + wName + ") donor: " + donor + " (" + dName + ")")
 						impregnated += 1
 					endif
 					imported+=1
-				else
-					FW_log.WriteLog("FWSystemConfig::ImportCouples - No donor found in " + f)
 				endif
-			else
-				FW_log.WriteLog("FWSystemConfig::ImportCouples - Invalid female actor for " + f + " (status=" + status + ")")
 			endif
-		else
-			FW_log.WriteLog("FWSystemConfig::ImportCouples - Failed to resolve female from " + f)
 		endif
 	endWhile
 	Debug.Notification("AutoCouples import: "+imported+" / impregnated: "+impregnated)
