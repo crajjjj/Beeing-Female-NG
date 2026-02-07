@@ -668,58 +668,83 @@ string function GetNames(actor[] Actors) global native
 float function floatModulo(float Value, float Mod) global native
 
 ; Concatenates two form arrays (capped to 128).
-Form[] function FormArrayConcat(Form[] f1, Form[] f2) global native
+Form[] function FormArrayConcat(Form[] f1, Form[] f2) global
+	return PapyrusUtil.MergeFormArray(f1, f2)
+endFunction
 
 ; Removes duplicate actors while preserving order.
-Actor[] function removeDuplicatedActors(Actor[] list) global native
+Actor[] function removeDuplicatedActors(Actor[] list) global
+	return PapyrusUtil.RemoveDupeActor(list)
+endFunction
 
 
 ; Appends Count copies of Append to OldArray (capped to 128).
-Actor[] function ActorArrayAppend(Actor[] OldArray, actor Append, int Count=1) global native
+Actor[] function ActorArrayAppend(Actor[] OldArray, actor Append, int Count=1) global
+	if Count < 1
+		return OldArray
+	endif
+	Actor[] res = OldArray
+	while Count > 0
+		Count -= 1
+		res = PapyrusUtil.PushActor(res, Append)
+	endWhile
+	return res
+endFunction
 
 ; Resizes an actor array to NewSize (clamped to 1..128).
-Actor[] function ActorArrayResize(Actor[] OldArray, int NewSize) global native
+Actor[] function ActorArrayResize(Actor[] OldArray, int NewSize) global
+	return PapyrusUtil.ResizeActorArray(OldArray, NewSize)
+endFunction
 
 ; Removes duplicate actors in-place style and returns a compacted array.
-Actor[] function ActorArrayUnique(Actor[] a) global native
+Actor[] function ActorArrayUnique(Actor[] a) global
+	return PapyrusUtil.RemoveDupeActor(a)
+endFunction
 
 
 ; Appends Append to a float array (capped to 128).
-Float[] function FloatArrayAppend(Float[] OldArray, Float Append) global native
+Float[] function FloatArrayAppend(Float[] OldArray, Float Append) global
+	return PapyrusUtil.PushFloat(OldArray, Append)
+endFunction
 
 ; Resizes a float array to NewSize (clamped to 1..128).
-Float[] function FloatArrayResize(Float[] OldArray, int NewSize) global native
+Float[] function FloatArrayResize(Float[] OldArray, int NewSize) global
+	return PapyrusUtil.ResizeFloatArray(OldArray, NewSize)
+endFunction
 
 ; Appends Append to an int array (capped to 128).
-int[] function IntArrayAppend(int[] OldArray, int Append) global native
+int[] function IntArrayAppend(int[] OldArray, int Append) global
+	return PapyrusUtil.PushInt(OldArray, Append)
+endFunction
 
 int[] function IntArrayResize(int[] OldArray, int NewSize) global
-	int[] res = IntArray(NewSize)
-	int i=0
-	while i<NewSize && i<OldArray.length
-		res[i]=OldArray[i]
-		i+=1
-	endwhile
-	return res
+	return PapyrusUtil.ResizeIntArray(OldArray, NewSize)
 endFunction
 
 
 ; Array Functions
 
 ; Allocates an actor array of the requested size (clamped to 1..128).
-Actor[] Function ActorArray(Int size) Global native
-
-; Allocates an actor base array of the requested size (clamped to 1..128).
-ActorBase[] Function ActorBaseArray(Int size) Global native
+Actor[] Function ActorArray(Int size) Global
+	return PapyrusUtil.ActorArray(size)
+endFunction
 
 ; Allocates a bool array of the requested size (clamped to 1..128).
-Bool[] Function BoolArray(Int size) Global native
+Bool[] Function BoolArray(Int size) Global
+	return PapyrusUtil.BoolArray(size)
+endFunction
 ; Allocates a float array of the requested size (clamped to 1..128).
-Float[] Function FloatArray(Int size) Global native
+Float[] Function FloatArray(Int size) Global
+	return PapyrusUtil.FloatArray(size)
+endFunction
 ; Allocates an int array of the requested size (clamped to 1..128).
-Int[] Function IntArray(Int size) Global native
+Int[] Function IntArray(Int size) Global
+	return PapyrusUtil.IntArray(size)
+endFunction
 ; Allocates a string array of the requested size (clamped to 1..128).
-String[] Function StringArray(Int size) Global native
+String[] Function StringArray(Int size) Global
+	return PapyrusUtil.StringArray(size)
+endFunction
 bool function IsNumber(string Char) global
 	if StringUtil.GetLength(Char) != 1
 		return false
@@ -734,6 +759,8 @@ string function GetVersionString(string modDesc) global native
 
 
 ; Allocates a form array of the requested size (clamped to 1..128).
-Form[] Function FormArray(Int size) Global native
+Form[] Function FormArray(Int size) Global
+	return PapyrusUtil.FormArray(size)
+endFunction
 
 ; 03.06.2019 Tkc (Loverslab) optimizations: Changes marked with "Tkc (Loverslab)" comment

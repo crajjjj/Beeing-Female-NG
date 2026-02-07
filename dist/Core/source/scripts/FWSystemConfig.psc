@@ -3727,6 +3727,7 @@ function ImportCouples()
 		return
 	endif
 	int imported = 0
+	int impregnated = 0
 	while c>0
 		c-=1
 		string f = files[c]
@@ -3748,8 +3749,20 @@ function ImportCouples()
 			if status > 0
 				actor donor = FWUtility.GetRandomAutoCouplesDonor(jsonFile)
 				if donor
+					string wName = "<none>"
+					string dName = "<none>"
+					ActorBase wBase = woman.GetLeveledActorBase()
+					ActorBase dBase = donor.GetLeveledActorBase()
+					if wBase
+						wName = wBase.GetName()
+					endif
+					if dBase
+						dName = dBase.GetName()
+					endif
 					if !Controller.IsPregnant(woman)
 						Controller.Impregnate(woman, donor, 1)
+						FW_log.WriteLog("FWSystemConfig::ImportCouples Impregnated - woman: " + woman + " (" + wName + ") donor: " + donor + " (" + dName + ")")
+						impregnated += 1
 					endif
 					imported+=1
 				else
@@ -3762,9 +3775,7 @@ function ImportCouples()
 			FW_log.WriteLog("FWSystemConfig::ImportCouples - Failed to resolve female from " + f)
 		endif
 	endWhile
-	if imported>0
-		Debug.Notification("AutoCouples import: "+imported)
-	endif
+	Debug.Notification("AutoCouples import: "+imported+" / impregnated: "+impregnated)
 endFunction
 
 int function getCompatiblity_SKSE()

@@ -299,6 +299,7 @@ endFunction
 ; This function will impregnate the given actor and forcing the 1. Trimester-State
 function Impregnate(actor Mother, actor Father, int NumChilds=1)
 	System.Trace("FWController.Impregnate",Mother)
+	FW_log.WriteLog("FWController::Impregnate - Mother: " + Mother + " Father: " + Father + " NumChilds: " + NumChilds)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
 		if cfg.NPCCanBecomePregnant
@@ -343,9 +344,8 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 	While xNumChilds>0
 		xNumChilds -= 1
 		actor tFather = Fathers[Utility.RandomInt(0, cSperm - 1)]
-		if System.CheckIsLoreFriendlyMetting(Mother, tFather)
-			FWUtility.AddChildFather(Mother, tFather)
-		endif
+		FW_log.WriteLog("FWController::ImpregnateA - tFather: " + tFather)
+		FWUtility.AddChildFather(Mother, tFather)
 	EndWhile
 	StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 	StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
@@ -353,6 +353,12 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 	Manager.OnImpregnate(Mother, NumChilds,Fathers)
 	SendConceptionEvent(Mother, Fathers)
 	ChangeState(Mother,4)
+	int fatherCount = StorageUtil.FormListCount(Mother,"FW.ChildFather")
+	actor father0 = none
+	if fatherCount > 0
+		father0 = StorageUtil.FormListGet(Mother,"FW.ChildFather",0) as actor
+	endif
+	FW_log.WriteLog("FWController::ImpregnateA - Pregnant: " + Mother.GetLeveledActorBase().GetName() + " father0: " + father0 + " fathers: " + fatherCount)
 endFunction
 
 function SendConceptionEvent(actor Mother, actor[] Fathers)
