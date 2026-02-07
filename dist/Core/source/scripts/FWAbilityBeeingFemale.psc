@@ -227,6 +227,8 @@ Event OnEffectFinish(Actor akTarget, Actor akCaster)
 		ResetBelly()
 		onExitState()
 	endif
+	; Defensive cleanup in case birth was interrupted.
+	StorageUtil.FormListRemove(none,"FW.GivingBirth", ActorRef)
 	If ActorRef && ActorRef.HasSpell(BeeingFemaleSpell)
 		ActorRef.RemoveSpell(BeeingFemaleSpell)
 	EndIf
@@ -2763,6 +2765,8 @@ state LaborPains_State
 		FWUtility.ActorRemoveSpell(ActorRef,Effect_Eroeffnungswehen)
 		FWUtility.ActorRemoveSpell(ActorRef,Effect_Presswehen)
 		Manager.RemoveCME(ActorRef,8)
+		; Defensive cleanup in case birth was interrupted.
+		StorageUtil.FormListRemove(none,"FW.GivingBirth", ActorRef)
 		;System.InstantBornChilds(ActorRef)
 	endFunction
 endState
