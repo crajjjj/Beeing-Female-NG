@@ -930,6 +930,12 @@ function GiveBirth(actor Mother)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
 	EndIf
+
+	; Guard against re-entrancy / multiple triggers causing duplicate births.
+	if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
+		FW_log.WriteLog("FWController.GiveBirth: already giving birth for " + Mother)
+		return
+	endif
 	
 	int NumChilds = StorageUtil.GetIntValue(Mother,"FW.NumChilds",0)
 	if NumChilds ;Tkc (Loverslab) optimization
