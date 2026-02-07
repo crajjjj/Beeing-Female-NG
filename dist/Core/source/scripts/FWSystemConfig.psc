@@ -3744,7 +3744,8 @@ function ImportCouples()
 		string jsonFile = "../../../BeeingFemale/Couples/" + f
 		actor woman = FWUtility.FindFemaleFromJsonFileName(f)
 		if woman
-			if System.IsValidateFemaleActor(woman) > 0
+			int status = System.IsValidateFemaleActor(woman)
+			if status > 0
 				actor donor = FWUtility.GetRandomAutoCouplesDonor(jsonFile)
 				if donor
 					woman.SendModEvent("BeeingFemale", "AddSpermImpregnate", donor.GetFormID())
@@ -3753,7 +3754,7 @@ function ImportCouples()
 					FW_log.WriteLog("FWSystemConfig::ImportCouples - No donor found in " + f)
 				endif
 			else
-				FW_log.WriteLog("FWSystemConfig::ImportCouples - Invalid female actor for " + f)
+				FW_log.WriteLog("FWSystemConfig::ImportCouples - Invalid female actor for " + f + " (status=" + status + ")")
 			endif
 		else
 			FW_log.WriteLog("FWSystemConfig::ImportCouples - Failed to resolve female from " + f)

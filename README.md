@@ -68,7 +68,7 @@ dist/Core/skse/plugins
 
 ## For Modders
 
-### AutoCouples Import
+### Couples Import
 
 Beeing Female NG can auto-import sperm donors from JSON couple files and apply them to the matching female actor.
 
@@ -85,6 +85,17 @@ How to run it:
 Notes:
 - The `.json` extension check is case-insensitive.
 - Errors are logged with `FW_log.WriteLog` if the file name is invalid, the female cannot be resolved, or no donor is found.
+- Female validation rejection codes (from `System.IsValidateFemaleActor`):
+  - `-10`: actor is `None` or has no `ActorBase`.
+  - `-3`: actor sex is male.
+  - `-2`: actor is dead OR has ghost keyword (when ghosts are not allowed).
+  - `-1`: actor is summoned (when summoned females aren’t allowed) OR in a forbidden faction/keyword.
+  - `-5`: actor is the player but player relevance is disabled.
+  - `-6`: actor is a follower but follower relevance is disabled.
+  - `-7`: actor is an NPC (non‑follower) but NPC relevance is disabled.
+  - `-11`: actor is a creature and creature sperm is disabled.
+  - `-8`: actor is a child race or in forbidden races.
+  - `-9`: actor is an elder race and elder females are disabled.
 
 ## Add-on Framework
 

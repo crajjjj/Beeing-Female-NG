@@ -2323,10 +2323,6 @@ endFunction
 
 bool function canBecomePregnant(actor woman)
 	if(woman)
-		if IsCleanupDummyActor(woman)
-			FW_log.WriteLog("FWSystem - canBecomePregnant: the actor " + woman + " is cleanup dummy; skipping")
-			return false
-		endif
 		if woman.GetActorBase() == none
 			FW_log.WriteLog("FWSystem - canBecomePregnant: the actor " + woman + " has no actor base; skipping")
 			return false
