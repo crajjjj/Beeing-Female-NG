@@ -50,6 +50,7 @@ FWController property Controller auto
 
 import PO3_SKSEFunctions
 import PO3_Events_Alias
+import PO3_Events_AME
 
 Event OnInit()
 	bInit=true
@@ -58,26 +59,29 @@ endEvent
 Event OnEffectStart(Actor target, Actor caster)
 	IsCreature = target.GetRace().HasKeyword(ActorTypeCreature)
 	IsSpouse = target.IsInFaction(PlayerMarriedFaction)
+	PO3_Events_AME.RegisterForHitEventEx(self, aiBlockFilter = 0)
+endEvent
+
+Event OnEffectFinish(Actor target, Actor caster)
+	PO3_Events_AME.UnregisterForAllHitEventsEx(self)
 endEvent
 
 Event OnDeath(Actor akKiller)
 	FWChildActor ca = akKiller as FWChildActor
-	if ca;/!=none/;
+	if ca
 		ca.AddExp(ActorRef.GetLevel() * 2)
 	endif
 EndEvent
 
 float lastTimeGaveExp=0.0
-Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
+float lastTimeBabySound=0.0
+Event OnHitEx(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
 	FWChildActor ca = akAggressor as FWChildActor
-	if ca;/!=none/;
-		float t = Utility.GetCurrentRealTime()
-		if t>lastTimeGaveExp+1
-			if abPowerAttack || abSneakAttack || abBashAttack && abHitBlocked==false
+	float t = Utility.GetCurrentRealTime()
+	if ca
+		if t>lastTimeGaveExp+3
+			if abPowerAttack || abSneakAttack || abBashAttack
 				ca.AddExp(ActorRef.GetLevel() / 5)
-				lastTimeGaveExp = t
-			elseif abHitBlocked;/==true/;
-				ca.AddExp(ActorRef.GetLevel() / 25)
 				lastTimeGaveExp = t
 			else
 				ca.AddExp(ActorRef.GetLevel() / 15)
@@ -86,8 +90,9 @@ Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjecti
 		endif
 	endif
 	
-	if IsPlayer;/==true/; && bIsWearingBaby;/==true/; && cfg.ChildrenMayCry;/==true/;
+	if IsPlayer && bIsWearingBaby && cfg.ChildrenMayCry && t>lastTimeBabySound+3
 		PlayBabySound_OnHit()
+		lastTimeBabySound = t
 	endif
 EndEvent
 

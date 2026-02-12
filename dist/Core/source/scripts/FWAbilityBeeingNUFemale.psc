@@ -195,33 +195,4 @@ function GiveItems_DifficultyHeavy(actor akTarget)
 	; On Heavy, no items will be added
 endFunction
 
-
-;bool OnHitIsBusy
-;float lastTimeGaveExp=0.0
-;Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
-;if OnHitIsBusy; Tkc (Loverslab) ;spamguard no so need for npcs like for player but will prevent additional stacks
-;else
-;OnHitIsBusy = true
-
-;	FWChildActor ca = akAggressor as FWChildActor
-;	if ca;/!=none/;
-;		float t = Utility.GetCurrentRealTime()
-;		if t>lastTimeGaveExp+1
-;			if abPowerAttack || abSneakAttack || abBashAttack && abHitBlocked==false
-;				ca.AddExp(ActorRef.GetLevel() / 5)
-;				lastTimeGaveExp = t
-;			elseif abHitBlocked == true
-;				ca.AddExp(ActorRef.GetLevel() / 25)
-;				lastTimeGaveExp = t
-;			else
-;				ca.AddExp(ActorRef.GetLevel() / 15)
-;				lastTimeGaveExp = t
-;			endif
-;		endif
-;	endif
-	
-;OnHitIsBusy = false
-;endif
-;EndEvent
-
 ; 02.06.2019 Tkc (Loverslab) optimizations: Changes marked with "Tkc (Loverslab)" comment

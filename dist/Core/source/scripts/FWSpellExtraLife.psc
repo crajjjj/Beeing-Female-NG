@@ -1,5 +1,7 @@
 ﻿Scriptname FWSpellExtraLife extends ActiveMagicEffect
 
+import PO3_Events_AME
+
 float property HealPercent auto
 float property MagickaPercent auto
 float property CoolDown auto
@@ -8,7 +10,7 @@ actor me
 
 
 ; Event received when this object is hit by a source (weapon, spell, explosion) or projectile attack
-Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
+Event OnHitEx(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
 	CheckHealing()
 endEvent
 
@@ -36,4 +38,9 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 		HealPercent=GetMagnitude()
 	endif
 	me=akTarget
+	PO3_Events_AME.RegisterForHitEventEx(self)
+endEvent
+
+Event OnEffectFinish(Actor akTarget, Actor akCaster)
+	PO3_Events_AME.UnregisterForAllHitEventsEx(self)
 endEvent

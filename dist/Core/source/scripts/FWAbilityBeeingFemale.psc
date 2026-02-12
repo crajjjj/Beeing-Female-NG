@@ -196,7 +196,6 @@ Event OnEffectStart(Actor target, Actor caster)
 		endif
 	endIf
 	
-	PO3_Events_AME.RegisterForHitEventEx(self, aiBlockFilter = 0)
 endEvent
 
 Event OnPlayerLoadGame()
@@ -234,6 +233,7 @@ Event OnEffectFinish(Actor akTarget, Actor akCaster)
 	If ActorRef && ActorRef.HasSpell(BeeingFemaleSpell)
 		ActorRef.RemoveSpell(BeeingFemaleSpell)
 	EndIf
+	PO3_Events_AME.UnregisterForAllHitEventsEx(self)
 endEvent
 
 ; Bane --> On Update is now only needed by the player for triggering any Baby events via the parent.Onupdate() function
@@ -442,12 +442,12 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 EndFunction
 
 bool OnHitIsBusy
-Event OnImpact(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
+Event OnHitEx(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
 if OnHitIsBusy;spamguard
 else
 	OnHitIsBusy = true
 	
-	parent.OnImpact(akAggressor, akSource, akProjectile, abPowerAttack, abSneakAttack, abBashAttack, abHitBlocked)
+	parent.OnHitEx(akAggressor, akSource, akProjectile, abPowerAttack, abSneakAttack, abBashAttack, abHitBlocked)
 	
 	OnHitIsBusy = false
 endif
@@ -1855,8 +1855,6 @@ function onExitState()
 endFunction
 function onUpdateFunction()
 endFunction
-Event OnHitEx(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
-endEvent
 function onPotionFunction(potion Item)
 endFunction
 function onCastSpellFunction(spell SpellID)
