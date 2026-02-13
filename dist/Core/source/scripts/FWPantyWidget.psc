@@ -99,13 +99,26 @@ event OnWidgetLoad()
 	if GetType()==77
 		RegisterForSingleUpdateGameTime(1)
 	endif
-	UpdateContent()
+	; Avoid a one-frame flash on load before widget profile settings are applied.
+	RegisterForSingleUpdate(5.0)
 endEvent
 
 Event OnUpdateGameTime()
-	UpdateContent()
+	if CFG_Enabled
+		UpdateContent()
+	else
+		Shown = false
+	endif
 	RegisterForSingleUpdateGameTime(1)
 endEvent
+
+Event OnUpdate()
+	if CFG_Enabled
+		UpdateContent()
+	else
+		Shown = false
+	endif
+EndEvent
 
 function showWidget()
 	if(Ready && CFG_Enabled)
