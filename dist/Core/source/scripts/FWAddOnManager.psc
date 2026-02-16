@@ -4460,20 +4460,39 @@ Faction SexLabForbiddenActors			; // FormID: 0x049068 in SexLab.esm
 Function RaceExcludeFromSLandBF(actor TargetActor, actor ParentActor)
 	bool bool_AddToForbidden = true
 
-	if TargetActor == PlayerRef
-		trace("ExcludeFromSLandBF: TargetActor is PlayerRef. Skipping forbidden flags.")
+	if !TargetActor
+		trace("ExcludeFromSLandBF: Failed to get child actor. Please report to the BeeingFemaleSE_Opt mod page...")
 		return
 	endif
-	
-	if(TargetActor)
-		if(ParentActor)
-			if(StorageUtil.GetIntValue(ParentActor, "FW.AddOn.AllowUnrestrictedS", 0) == 0)
-				race ParentRace = ParentActor.GetRace()
-				if(StorageUtil.GetIntValue(ParentRace, "FW.AddOn.AllowUnrestrictedS", 0) == 0)
-					if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_AllowUnrestrictedS", 0) == 0)
-					else
-						bool_AddToForbidden = false
-					endIf
+
+	if TargetActor == PlayerRef
+		trace("ExcludeFromSLandBF: TargetActor is player. Skipping forbidden flags.")
+		return
+	endif
+	if ParentActor && TargetActor == ParentActor
+		trace("ExcludeFromSLandBF: TargetActor equals ParentActor. Skipping forbidden flags.")
+		return
+	endif
+
+	; Extra safety for custom-race copy paths: only process tracked BF child actors.
+	bool isTrackedChild = false
+	if StorageUtil.GetFormValue(TargetActor, "FW.Child.ParentActor", none)
+		isTrackedChild = true
+	elseif (TargetActor as FWChildActor)
+		isTrackedChild = true
+	elseif StorageUtil.GetIntValue(TargetActor, "FW.Child.IsCustomChildActor", 0) == 1
+		isTrackedChild = true
+	endif
+	if !isTrackedChild
+		trace("ExcludeFromSLandBF: TargetActor is not tracked as BF child. Skipping forbidden flags.")
+		return
+	endif
+
+	if(ParentActor)
+		if(StorageUtil.GetIntValue(ParentActor, "FW.AddOn.AllowUnrestrictedS", 0) == 0)
+			race ParentRace = ParentActor.GetRace()
+			if(StorageUtil.GetIntValue(ParentRace, "FW.AddOn.AllowUnrestrictedS", 0) == 0)
+				if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_AllowUnrestrictedS", 0) == 0)
 				else
 					bool_AddToForbidden = false
 				endIf
@@ -4481,33 +4500,33 @@ Function RaceExcludeFromSLandBF(actor TargetActor, actor ParentActor)
 				bool_AddToForbidden = false
 			endIf
 		else
-			Debug.Messagebox("ExcludeFromSLandBF: Failed to find parent actor. Please report to the BeeingFemaleSE_Opt mod page...")		
-		endIf
-
-		; Force human children into forbidden, regardless of unrestricted settings.
-		race childRace = TargetActor.GetRace()
-		if childRace
-			if childRace.HasKeywordString("ActorTypeNPC")
-				bool_AddToForbidden = true
-			endif
-		endIf
-			
-		if(bool_AddToForbidden)
-			TargetActor.AddToFaction(BF_ForbiddenFaction)
-			if(Game.IsPluginInstalled("SexLab.esm"))
-				SexLabForbiddenActors = Game.GetFormFromFile(0x049068, "SexLab.esm") as Faction
-								
-				if(SexLabForbiddenActors)
-					TargetActor.AddToFaction(SexLabForbiddenActors)
-				else
-					Debug.Messagebox("ExcludeFromSLandBF: Failed to get SexLabForbiddenActors faction from SexLab.esm. Please report to the BeeingFemaleSE_Opt mod page...")
-				endIf
-			else
-				Debug.Messagebox("ExcludeFromSLandBF: SexLab is not installed...")		
-			endIf
+			bool_AddToForbidden = false
 		endIf
 	else
-		Debug.Messagebox("ExcludeFromSLandBF: Failed to get child actor. Please report to the BeeingFemaleSE_Opt mod page...")		
+		Debug.Messagebox("ExcludeFromSLandBF: Failed to find parent actor. Please report to the BeeingFemaleSE_Opt mod page...")		
+	endif
+
+	; Force human children into forbidden, regardless of unrestricted settings.
+	race childRace = TargetActor.GetRace()
+	if childRace
+		if childRace.HasKeywordString("ActorTypeNPC")
+			bool_AddToForbidden = true
+		endIf
+	endIf
+		
+	if(bool_AddToForbidden)
+		TargetActor.AddToFaction(BF_ForbiddenFaction)
+		if(Game.IsPluginInstalled("SexLab.esm"))
+			SexLabForbiddenActors = Game.GetFormFromFile(0x049068, "SexLab.esm") as Faction
+							
+			if(SexLabForbiddenActors)
+				TargetActor.AddToFaction(SexLabForbiddenActors)
+			else
+				Debug.Messagebox("ExcludeFromSLandBF: Failed to get SexLabForbiddenActors faction from SexLab.esm. Please report to the BeeingFemaleSE_Opt mod page...")
+			endIf
+		else
+			Debug.Messagebox("ExcludeFromSLandBF: SexLab is not installed...")
+		endIf
 	endIf
 endFunction
 
