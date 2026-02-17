@@ -141,11 +141,22 @@ Function FinalizeMature()
 endFunction
 
 Event OnEffectFinish(Actor akTarget, Actor akCaster)
+	if !TargetActor
+		return
+	endif
+	if TargetActor.IsDead()
+		FW_log.WriteLog("FWDefaultCustomChildEffect: OnEffectFinish on dead actor. Skipping recast logic.")
+		return
+	endif
+
 	if(TargetActor.Is3DLoaded())
 		FW_log.WriteLog("FWDefaultCustomChildEffect: Finished for some unknown reason!")
 		if((!TargetActor.HasSpell(_BF_DefaultCustomChildSpell)) || (!TargetActor.HasMagicEffect(_BF_DefaultCustomChildEffect)))
 			FW_log.WriteLog("FWDefaultCustomChildEffect: re-casting!")
-			TargetActor.AddSpell(_BF_DefaultCustomChildSpell)
+			if !TargetActor.IsDead()
+				Utility.Wait(5)
+				TargetActor.AddSpell(_BF_DefaultCustomChildSpell)
+			endIf
 		endIf
 	else
 		FW_log.WriteLog("FWDefaultCustomChildEffect: Finished as player is far away from the actor " + TargetActor)

@@ -441,7 +441,49 @@ ActorBase function GetChildBaseFromManager(actor ParentActor, race ParentRace, i
 	endIf
 endFunction
 
-ActorBase function ResolveFallbackChildBase(actor Mother, actor ParentActor, string logPrefix)
+ActorBase function ResolveConfiguredFallbackChildBase(int sex, bool isPlayerChild)
+	if isPlayerChild
+		if sex == 0
+			if FallBack_MalePlayerBabyActor
+				return FallBack_MalePlayerBabyActor
+			elseif FallBack_MaleBabyActor
+				return FallBack_MaleBabyActor
+			endif
+		else
+			if FallBack_FemalePlayerBabyActor
+				return FallBack_FemalePlayerBabyActor
+			elseif FallBack_FemaleBabyActor
+				return FallBack_FemaleBabyActor
+			endif
+		endif
+	else
+		if sex == 0
+			if FallBack_MaleBabyActor
+				return FallBack_MaleBabyActor
+			elseif FallBack_MalePlayerBabyActor
+				return FallBack_MalePlayerBabyActor
+			endif
+		else
+			if FallBack_FemaleBabyActor
+				return FallBack_FemaleBabyActor
+			elseif FallBack_FemalePlayerBabyActor
+				return FallBack_FemalePlayerBabyActor
+			endif
+		endif
+	endif
+	return none
+endFunction
+
+ActorBase function ResolveFallbackChildBase(actor Mother, actor ParentActor, int sex, bool isPlayerChild, string logPrefix)
+	ActorBase fallbackBase = ResolveConfiguredFallbackChildBase(sex, isPlayerChild)
+	if fallbackBase
+		FW_log.WriteLog(logPrefix + " - BabyActor cannot be found. Using configured fallback actor base: " + fallbackBase)
+		if cfg.ShowDebugMessage
+			Debug.Messagebox("BabyActor cannot be found. Using configured fallback actor base.")
+		endIf
+		return fallbackBase
+	endIf
+
 	if(ParentActor == none)
 		FW_log.WriteLog(logPrefix + " - BabyActor cannot be found and thus summoning base NPC of the mother race...")
 		if cfg.ShowDebugMessage
@@ -468,7 +510,7 @@ ActorBase function ResolveChildBase(actor Mother, actor ParentActor, race Parent
 			if b
 				return b
 			endIf
-			return ResolveFallbackChildBase(Mother, ParentActor, logPrefix)
+			return ResolveFallbackChildBase(Mother, ParentActor, sex, isPlayerChild, logPrefix)
 		else
 			FW_log.WriteLog(logPrefix + " - Summoning base NPC of the Parent race due to the AddOn settings...")
 			return ParentActor.GetLeveledActorBase()
@@ -478,7 +520,7 @@ ActorBase function ResolveChildBase(actor Mother, actor ParentActor, race Parent
 		if b
 			return b
 		endIf
-		return ResolveFallbackChildBase(Mother, ParentActor, logPrefix)
+		return ResolveFallbackChildBase(Mother, ParentActor, sex, isPlayerChild, logPrefix)
 	endIf
 endFunction
 
@@ -607,6 +649,10 @@ Form[] function getBabyActorNew(actor Mother, actor Father, int sex, Race Father
 		Debug.Messagebox("Child Parent Race: " + ParentRace)
 	endIf
 	ActorBase b = ResolveChildBase(Mother, ParentActor, ParentRace, sex, false, "BeeingFemale - FWBabyItemList - getBabyActor")
+	if !b
+		FW_log.WriteLog("BeeingFemale - FWBabyItemList - getBabyActor - Failed to resolve child actor base.")
+		return BuildBabyActorResult(none, ParentActor, ParentRace)
+	endIf
 	if(ShouldProtectChildActor(ParentActor, ParentRace))
 		b.SetProtected()
 	endIf
@@ -641,6 +687,10 @@ Form[] function getPlayerBabyActorNew(actor Mother, actor Father, int sex, Race 
 		Debug.Messagebox("Child Parent Race: " + ParentRace)
 	endIf
 	ActorBase b = ResolveChildBase(Mother, ParentActor, ParentRace, sex, true, "BeeingFemale - FWBabyItemList - getPlayerBabyActor")
+	if !b
+		FW_log.WriteLog("BeeingFemale - FWBabyItemList - getPlayerBabyActor - Failed to resolve child actor base.")
+		return BuildBabyActorResult(none, ParentActor, ParentRace)
+	endIf
 	if(ShouldProtectChildActor(ParentActor, ParentRace))
 		b.SetProtected()
 	endIf

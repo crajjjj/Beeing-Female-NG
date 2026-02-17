@@ -2959,6 +2959,7 @@ actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = non
 		
 		;FW_log.WriteLog("FWSystem - SpawnChildActor: LastRace of the child " + newChild + " is " + BabyItemList.LastRace)
 		StorageUtil.SetFormValue(newChild, "FW.Child.ParentActor", ParentActor)
+		FW_log.WriteLog("FWSystem - SpawnChildActor: Calling RaceExcludeFromSLandBF with TargetActor=" + newChild + ", ParentActor=" + ParentActor + ", TargetIsPlayer=" + (newChild == PlayerRef))
 		Manager.RaceExcludeFromSLandBF(newChild, ParentActor)
 		
 		if(ShouldAllowPCDialogue(ParentActor, ParentRace))

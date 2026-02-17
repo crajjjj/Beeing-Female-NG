@@ -3818,7 +3818,7 @@ int Function ActorChildSexDetermMale(actor a)
 	int DefaultChildSexDetermMale = myBFA_ProbChildSexDetermMale.GetValue() as int
 ;	FW_log.WriteLog("FWAddOnManager - ActorChildSexDetermMale: DefaultChildSexDetermMale = " + DefaultChildSexDetermMale)
 	
-	int ChildSexDetermMale
+	int ChildSexDetermMale = -1
 	if a
 		ChildSexDetermMale = StorageUtil.GetIntValue(a, "FW.AddOn.ProbChildSexDetermMale", DefaultChildSexDetermMale)
 		if((ChildSexDetermMale == DefaultChildSexDetermMale) || (ChildSexDetermMale < 0))
@@ -4458,36 +4458,20 @@ endFunction
 ; Get ExcludeFromSLandBF
 Faction SexLabForbiddenActors			; // FormID: 0x049068 in SexLab.esm
 Function RaceExcludeFromSLandBF(actor TargetActor, actor ParentActor)
-	bool bool_AddToForbidden = true
-
 	if !TargetActor
-		trace("ExcludeFromSLandBF: Failed to get child actor. Please report to the BeeingFemaleSE_Opt mod page...")
 		return
 	endif
 
-	if TargetActor == PlayerRef
-		trace("ExcludeFromSLandBF: TargetActor is player. Skipping forbidden flags.")
-		return
+	actor myPlayer = PlayerRef
+	if !myPlayer
+		myPlayer = Game.GetPlayer()
 	endif
-	if ParentActor && TargetActor == ParentActor
-		trace("ExcludeFromSLandBF: TargetActor equals ParentActor. Skipping forbidden flags.")
+
+	if (myPlayer && TargetActor == myPlayer) || (ParentActor && TargetActor == ParentActor)
 		return
 	endif
 
-	; Extra safety for custom-race copy paths: only process tracked BF child actors.
-	bool isTrackedChild = false
-	if StorageUtil.GetFormValue(TargetActor, "FW.Child.ParentActor", none)
-		isTrackedChild = true
-	elseif (TargetActor as FWChildActor)
-		isTrackedChild = true
-	elseif StorageUtil.GetIntValue(TargetActor, "FW.Child.IsCustomChildActor", 0) == 1
-		isTrackedChild = true
-	endif
-	if !isTrackedChild
-		trace("ExcludeFromSLandBF: TargetActor is not tracked as BF child. Skipping forbidden flags.")
-		return
-	endif
-
+	bool bool_AddToForbidden = true
 	if(ParentActor)
 		if(StorageUtil.GetIntValue(ParentActor, "FW.AddOn.AllowUnrestrictedS", 0) == 0)
 			race ParentRace = ParentActor.GetRace()
@@ -4502,30 +4486,26 @@ Function RaceExcludeFromSLandBF(actor TargetActor, actor ParentActor)
 		else
 			bool_AddToForbidden = false
 		endIf
-	else
-		Debug.Messagebox("ExcludeFromSLandBF: Failed to find parent actor. Please report to the BeeingFemaleSE_Opt mod page...")		
 	endif
 
 	; Force human children into forbidden, regardless of unrestricted settings.
 	race childRace = TargetActor.GetRace()
-	if childRace
-		if childRace.HasKeywordString("ActorTypeNPC")
-			bool_AddToForbidden = true
-		endIf
+	if childRace && childRace.HasKeywordString("ActorTypeNPC")
+		bool_AddToForbidden = true
 	endIf
 		
-	if(bool_AddToForbidden)
-		TargetActor.AddToFaction(BF_ForbiddenFaction)
-		if(Game.IsPluginInstalled("SexLab.esm"))
+	if !bool_AddToForbidden
+		return
+	endif
+
+	TargetActor.AddToFaction(BF_ForbiddenFaction)
+	if(Game.IsPluginInstalled("SexLab.esm"))
+		if !SexLabForbiddenActors
 			SexLabForbiddenActors = Game.GetFormFromFile(0x049068, "SexLab.esm") as Faction
-							
-			if(SexLabForbiddenActors)
-				TargetActor.AddToFaction(SexLabForbiddenActors)
-			else
-				Debug.Messagebox("ExcludeFromSLandBF: Failed to get SexLabForbiddenActors faction from SexLab.esm. Please report to the BeeingFemaleSE_Opt mod page...")
-			endIf
-		else
-			Debug.Messagebox("ExcludeFromSLandBF: SexLab is not installed...")
+		endIf
+		if(SexLabForbiddenActors)
+			TargetActor.AddToFaction(SexLabForbiddenActors)
+			FW_log.WriteLog("ExcludeFromSLandBF: Added SexLabForbiddenActors to " + TargetActor)
 		endIf
 	endIf
 endFunction
