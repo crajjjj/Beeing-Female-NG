@@ -66,6 +66,115 @@ dist/Core/skse/plugins
 - Papyrus sources live in `dist/Core/Source/Scripts`.
 - SSEEDIT_locations is just for reference. Don't compile or import
 
+## Widgets
+
+Beeing Female NG ships a set of SkyUI-based HUD widgets (backed by `BeeingFemale/BeeingFemaleWidget.swf`) that display live cycle/pregnancy state on screen. All widgets are positioned, scaled, and anchored through MCM settings stored on the quest.
+
+### State Widget (`FWStateWidget`)
+
+Displays the current cycle or pregnancy phase for the player (or a tracked NPC target).
+
+- **Female actors**: shows the cycle state name (Follicular, Ovulation, Luteal, Menstruation, 1st/2nd/3rd Trimester, Labor Pains, Replenish), a matching icon, a fill bar representing progress through the current state, and elapsed time since the state began.
+- **Male actors**: shows virility percentage and estimated time until full virility recovery.
+- Hidden in immersive message mode.
+- Configurable fill direction, color, dark color, flash color, and icon position.
+
+### Baby Health Widget (`FWBabyHealthWidget`)
+
+Dual-mode widget that changes display based on the actor's current state.
+
+- **Cycle phase (states 0–3)**: shows the player's relative pregnancy chance as a percentage.
+- **Pregnancy (states 4–7)**: shows unborn baby health (0–100). Displays `0` when abortus has been triggered.
+- Suppressed until baby health drops to 8 or below (alert-only mode), unless already in a non-cycle state under immersive mode settings.
+
+### Contraception Widget (`FWContraceptionWidget`)
+
+Shows the active contraception level for the player.
+
+- Displays contraception strength (0–100%) as a fill bar and numeric label.
+- Countdown shows time remaining before the effect expires; shows "Overdue" when lapsed.
+- Only visible when contraception was applied within the past 8 in-game days.
+- Configurable fill direction, color, dark color, flash color, and icon position.
+
+### Progress Widget (`FWProgressWidget`)
+
+Temporary loading/status widget shown during background operations (initialization, add-on scanning, file checks, etc.).
+
+- Shows an icon, a short status message, and an optional percentage bar.
+- Fades in when a task starts and flashes before fading out on completion.
+- Icon names map to built-in constants on the script (e.g. `ICN_Init`, `ICN_AddOn`, `ICN_Search`, `ICN_Sperm`).
+
+### Panty Widget (`FWPantyWidget`)
+
+Monitors the player's menstrual hygiene item during menstruation (state 3). Polls every in-game hour.
+
+- **Bloody icon** – shown when a soiled sanitary napkin or tampon is equipped.
+- **Needed icon** – shown when menstruating with no hygiene item worn (reminder).
+- **Hidden** when not menstruating, or when a clean hygiene item is worn.
+
+### Couple Widget (`FWCoupleWidget`)
+
+Developer/debug widget for editing NPC couple data interactively in-game. Reads and writes `Data/BeeingFemale/Couples/<ModName>_<FormHex>.json`. Must be enabled in MCM.
+
+- **E (hold 1.5 s)** – select a female NPC as the active subject.
+- **H (hold 1.5 s)** – assign or clear the husband for the selected female.
+- **G (hold 1.5 s)** – add or remove an affair partner.
+- **P (hold 1.5 s)** – add or remove a regular partner.
+- Auto-detects existing spouses via relationship rank (≥ Lover) or the vanilla `Spouse` association type.
+
+### Widget Controller (`FWWidgetController`)
+
+Orchestrates the State, Baby Health, and Contraception widgets via a configurable hotkey.
+
+- **Tap hotkey**: show all three widgets for 5 seconds, then auto-hide.
+- **Hold 1.2 s**: keep widgets visible until the hotkey is pressed again to dismiss.
+- **Hold 5 s**: open the ranked info box for the player instead.
+
+### HUD Profiles (`Data/BeeingFemale/HUD/*.ini`)
+
+Widget layout is driven by INI profile files in `Data/BeeingFemale/HUD/`. The active profile defaults to `default.ini`. When more than one `.ini` file exists in that folder, the MCM exposes a dropdown to switch between profiles at runtime.
+
+Each file contains one section per widget. All keys are optional — omitted keys fall back to the previously loaded value.
+
+**Common keys (all widgets):**
+
+| Key | Description |
+|-----|-------------|
+| `PositionX` | Horizontal pixel offset from the anchor point. |
+| `PositionY` | Vertical pixel offset from the anchor point. |
+| `Enabled` | `true`/`false` — whether the widget is shown at all. |
+| `Alpha` | Opacity, 0–100. |
+| `HAnchor` | Horizontal anchor: `left`, `right`, or `center`. |
+| `VAnchor` | Vertical anchor: `top`, `bottom`, or `center`. |
+| `Scale` | Size multiplier (`1.0` = 100%). |
+
+**Extra keys for `[StateWidget]` and `[ContraceptionWidget]`:**
+
+| Key | Description |
+|-----|-------------|
+| `FillDirection` | Direction the bar fills: `left` or `right`. |
+| `Color` | Bar fill color as hex (`0xRRGGBB`). |
+| `DarkColor` | Bar background/dark color as hex. |
+| `FlashColor` | Flash highlight color as hex. |
+| `IconPosition` | Side the icon sits on: `left` or `right`. |
+
+**Shipped profiles:**
+
+- `dist/Core/BeeingFemale/HUD/default.ini` — standard layout (state widget bottom-left, contraception bottom-right, baby/panty top-right area).
+- `dist/Core/BeeingFemale/HUD/LeftOver.ini` — alternate layout with both cycle widgets stacked on the bottom-left.
+
+To create a custom layout, copy `default.ini` to a new file (e.g., `mylayout.ini`) in the same folder, edit the values, and select it in the MCM under the widget profile dropdown.
+
+### Widget Timing (Global Settings INI)
+
+Widget fade timing can be tuned via a `type=global` add-on INI (see `dist/Core/BeeingFemale/AddOn/GlobalSettingsExample/AddOn Global Settings Example.ini`). Only one global add-on may be active at a time.
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `Global_WidgetFadeOutTime` | `3` (s) | Time the widget stays visible before fading out. `0` uses the system default of 3 s. |
+| `Global_WidgetFlashShowTime` | `0.01` (s) | Fade-in duration for widgets that flash on appearance. `0` or negative uses the system default. |
+| `Global_WidgetNoFlashShowTime` | `0.2` (s) | Fade-in duration for widgets that appear without a flash. `0` or negative uses the system default. |
+
 ## For Modders
 
 ### Couples Import
