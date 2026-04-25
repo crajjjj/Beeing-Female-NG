@@ -937,12 +937,19 @@ function GiveBirth(actor Mother)
 	else;if NumChilds==0
 		if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
 			StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother)
+			StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
 		endif
 		return;
 	EndIf
 	if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
-		FW_log.WriteLog("FWController.GiveBirth: already giving birth for " + Mother)
-		return
+		float birthStart = StorageUtil.GetFloatValue(Mother, "FW.GivingBirthTime", 0.0)
+		if birthStart > 0.0 && (GameDaysPassed.GetValue() - birthStart) < 0.25
+			FW_log.WriteLog("FWController.GiveBirth: already giving birth for " + Mother)
+			return
+		endif
+		; stale guard from a previous stack dump — clear and proceed
+		FW_log.WriteLog("FWController.GiveBirth: clearing stale GivingBirth flag for " + Mother)
+		StorageUtil.FormListRemove(none, "FW.GivingBirth", Mother)
 	endif
 
 	int laborEvent = ModEvent.Create("BeeingFemaleLabor")
@@ -969,6 +976,7 @@ function GiveBirth(actor Mother)
 	endif
 	
 	StorageUtil.FormListAdd(none,"FW.GivingBirth", Mother) ;Tkc (Loverslab): Mother added to the GivingBirth list to detect her when is giving birth by papyrus condition or from esp
+	StorageUtil.SetFloatValue(Mother, "FW.GivingBirthTime", GameDaysPassed.GetValue())
 	
 	Manager.OnGiveBirthStart(Mother)
 	Mother.EvaluatePackage()
@@ -1127,37 +1135,50 @@ function GiveBirth(actor Mother)
 	while NumChilds > 0
 		NumChilds -= 1
 		Utility.Wait(4*IntervalBabyScale)
-		
+
 		if(my_BirthPain)
 			System.Mimik(Mother, "Pained", 30)
+		endIf
 
-		
-			if(cfg.PlayAnimations)
-				Debug.SendAnimationEvent(Mother, "Birth_S2");
-				Utility.Wait(1)
-				int j = 8
-				Debug.SendAnimationEvent(Mother, "Birth_S3");
+		if(cfg.PlayAnimations)
+			Debug.SendAnimationEvent(Mother, "Birth_S2");
+			Utility.Wait(1)
+			int j = 8
+			Debug.SendAnimationEvent(Mother, "Birth_S3");
+			if(my_BirthPain)
 				System.Mimik(Mother, "Pained", 40)
-				while j > 0
+			endIf
+			while j > 0
+				if(my_BirthPain)
 					System.PlayPainSound(Mother)
 					System.DoDamage(Mother,9 * DamageScale,10)
-					Utility.Wait(2*IntervalBabyScale)
-					j -= 1
-				endWhile
-				System.Mimik(Mother, "Pained", 20)
-			
-				;Debug.SendAnimationEvent(Mother, "Birth_S3");
+				endIf
 				Utility.Wait(2*IntervalBabyScale)
+				j -= 1
+			endWhile
+			if(my_BirthPain)
+				System.Mimik(Mother, "Pained", 20)
+			endIf
+
+			;Debug.SendAnimationEvent(Mother, "Birth_S3");
+			Utility.Wait(2*IntervalBabyScale)
+			if(my_BirthPain)
 				System.Mimik(Mother, "Pained", 80)
-			else
+			endIf
+		else
+			if(my_BirthPain)
 				int j = 4
 				while j > 0
 					System.DoDamage(Mother,16 * DamageScale,10)
 					Utility.Wait(1*IntervalBabyScale)
 					j -= 1
 				endWhile
-			endif
-			
+			else
+				Utility.Wait(4*IntervalBabyScale)
+			endIf
+		endif
+
+		if(my_BirthPain)
 			System.PlayPainSound(Mother,60)
 			System.DoDamage(Mother,18 * DamageScale,9)
 		endIf
@@ -1235,6 +1256,7 @@ function GiveBirth(actor Mother)
 	SendModEvent("BeeingFemale","Update", Mother.GetFormID())
 	
 	StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother) ; Tkc (Loverslab) : end of givingbirth anim, remove the Mother
+	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
 endFunction
 
 ; Forcing a Belly-Refresh for the given actor
