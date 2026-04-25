@@ -110,6 +110,8 @@ bool  Property NPCBornChild = true Auto Hidden
 bool  Property NPCHaveItems = false Auto Hidden
 ; Children
 bool property ChildrenMayCry = true auto hidden
+bool property BabyTrackerTattoos = false auto hidden
+bool property SemenCircleTattoos = false auto hidden
 ; Impregnation
 bool property ImpregnateActive = false auto hidden
 bool property ImpregnateHusband = true auto hidden
@@ -207,6 +209,8 @@ bool NPCHaveItemsDef = false
 ;bool NPCHaveItemsDef = true
 ; Children
 bool ChildrenMayCryDef = true
+bool BabyTrackerTattoosDef = false
+bool SemenCircleTattoosDef = false
 ; Impregnate
 bool ImpregnateActiveDef = false
 bool ImpregnateHusbandDef = true
@@ -718,6 +722,7 @@ bool function IsProfile(string File)
 		bool tmpNPCMenstrualNoTalk = JsonUtil.GetIntValue(s, "NPC_MenstrualNoTalk", FWUtility.SwitchInt(NPCMenstrualNoTalk,1,0))==1
 		bool tmpNPCBornChild = JsonUtil.GetIntValue(s, "NPC_BornChild", FWUtility.SwitchInt(NPCBornChild,1,0))==1
 		bool tmpChildrenMayCry = JsonUtil.GetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))==1
+		bool tmpBabyTrackerTattoos = JsonUtil.GetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))==1
 		bool tmpUpdateIntervalEnabled = JsonUtil.GetIntValue(s, "SYSTEM_UpdateIntervalEnabled", FWUtility.SwitchInt(UpdateIntervalEnabled,1,0))==1
 		bContinue=false
 		if 	tmpNPCCanBecomePregnant==NPCCanBecomePregnant && \
@@ -843,7 +848,9 @@ function LoadProfile(string File)
 	
 	; Children
 	ChildrenMayCry = JsonUtil.GetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))==1
-	
+	BabyTrackerTattoos = JsonUtil.GetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))==1
+	SemenCircleTattoos = JsonUtil.GetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))==1
+
 	; Impregnation
 	ImpregnateActive = JsonUtil.GetIntValue(s, "IMPREGNATE_NPC_Active", FWUtility.SwitchInt(ImpregnateActive,1,0))==1
 	ImpregnateHusband = JsonUtil.GetIntValue(s, "IMPREGNATE_NPC_Husband", FWUtility.SwitchInt(ImpregnateHusband,1,0))==1
@@ -977,6 +984,8 @@ string function SaveProfile(string FileName="")
 	
 	; Children
 	JsonUtil.SetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))
+	JsonUtil.SetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))
+	JsonUtil.SetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))
 	
 	; Impregnation
 	JsonUtil.SetIntValue(s, "IMPREGNATE_NPC_Active", FWUtility.SwitchInt(ImpregnateActive,1,0))
@@ -2522,7 +2531,9 @@ Event OnPageReset(string page)
 		SetCursorPosition(0)
 		AddHeaderOption("$FW_MENU_CHILDREN_Settings")
 		AddToggleOptionST("ToggleBabyMayCry","$FW_MENU_CHILDREN_MayCry", ChildrenMayCry, OPTION_FLAG_NONE)
-		
+		AddToggleOptionST("ToggleBabyTrackerTattoos","BabyTracker Tattoos (SlaveTats)", BabyTrackerTattoos, OPTION_FLAG_NONE)
+		AddToggleOptionST("ToggleSemenCircleTattoos","Semen Circle Tattoos (SlaveTats)", SemenCircleTattoos, OPTION_FLAG_NONE)
+
 		SetCursorPosition(1)
 		AddHeaderOption("$FW_MENU_CHILDREN_YourChildren")
 		int c = StorageUtil.FormListCount(none, "FW.Babys")
@@ -6644,6 +6655,54 @@ state ToggleBabyMayCry
 	
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CHILDREN_ChildrenMayCry")
+	EndEvent
+endstate
+
+state ToggleBabyTrackerTattoos
+	Event OnSelectST()
+		BabyTrackerTattoos = !BabyTrackerTattoos
+		if BabyTrackerTattoos
+			Controller.ApplyBabyTrackerTattoos(PlayerRef)
+		else
+			Controller.RemoveBabyTrackerTattoos(PlayerRef)
+		endif
+		SetToggleOptionValueST(BabyTrackerTattoos)
+	EndEvent
+
+	Event OnDefaultST()
+		BabyTrackerTattoos = BabyTrackerTattoosDef
+		if !BabyTrackerTattoos
+			Controller.RemoveBabyTrackerTattoos(PlayerRef)
+		endif
+		SetToggleOptionValueST(BabyTrackerTattoos)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("Apply birth-count tattoos via SlaveTats after each birth. Requires SlaveTats and BabyTracker tattoo pack.")
+	EndEvent
+endstate
+
+state ToggleSemenCircleTattoos
+	Event OnSelectST()
+		SemenCircleTattoos = !SemenCircleTattoos
+		if SemenCircleTattoos
+			Controller.ApplySemenCircleTattoo(PlayerRef)
+		else
+			Controller.RemoveSemenCircleTattoo(PlayerRef)
+		endif
+		SetToggleOptionValueST(SemenCircleTattoos)
+	EndEvent
+
+	Event OnDefaultST()
+		SemenCircleTattoos = SemenCircleTattoosDef
+		if !SemenCircleTattoos
+			Controller.RemoveSemenCircleTattoo(PlayerRef)
+		endif
+		SetToggleOptionValueST(SemenCircleTattoos)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("Semen circle tattoo when cum is inside. Hearts version when there is conception chance. Requires SlaveTats and BabyTracker tattoo pack.")
 	EndEvent
 endstate
 

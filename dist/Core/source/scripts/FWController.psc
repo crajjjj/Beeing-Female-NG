@@ -812,6 +812,7 @@ function WashOutSperm(actor woman, int WashOutType = 1, float Strength=1.0)
 			endIf
 		endWhile
 	endif
+	ApplySemenCircleTattoo(woman)
 endfunction
 
 function ContraceptionSpermKill(actor Woman)
@@ -1259,9 +1260,110 @@ function GiveBirth(actor Mother)
 	UpdateParentFaction(Mother)
 	
 	SendModEvent("BeeingFemale","Update", Mother.GetFormID())
-	
+
+	ApplyBabyTrackerTattoos(Mother)
+
 	StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother) ; Tkc (Loverslab) : end of givingbirth anim, remove the Mother
 	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
+endFunction
+
+; BabyTracker SlaveTats integration
+function ApplyBabyTrackerTattoos(actor Mother)
+	if !cfg.BabyTrackerTattoos || !Mother
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	int births = StorageUtil.GetIntValue(Mother, "FW.NumBirth", 0)
+	if births <= 0
+		return
+	endif
+	RemoveBabyTrackerTattoos(Mother)
+	; Compose tattoos from available denominations: 12, 8, 4, 3, 2, 1
+	int remaining = births
+	if remaining >= 12
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby12", 0, true, true)
+		remaining -= 12
+	endif
+	if remaining >= 8
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby8", 0, true, true)
+		remaining -= 8
+	endif
+	if remaining >= 4
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby4", 0, true, true)
+		remaining -= 4
+	endif
+	if remaining >= 3
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby3", 0, true, true)
+		remaining -= 3
+	endif
+	if remaining >= 2
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby2", 0, true, true)
+		remaining -= 2
+	endif
+	if remaining >= 1
+		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby1", 0, true, true)
+	endif
+endFunction
+
+function RemoveBabyTrackerTattoos(actor Mother)
+	if !Mother
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby1", true, true)
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby2", true, true)
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby3", true, true)
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby4", true, true)
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby8", true, true)
+	SlaveTats.simple_remove_tattoo(Mother, "BabyTracker", "Babytracker_baby12", true, true)
+endFunction
+
+; BabyTracker semen circle tattoo — regular when cum inside, hearts when conception chance
+function ApplySemenCircleTattoo(actor Woman)
+	if !cfg.SemenCircleTattoos || !Woman
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	; Remove both semen tattoos first
+	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
+	; Check if there is significant sperm
+	bool hasCum = false
+	int sa = StorageUtil.FormListCount(Woman, "FW.SpermName")
+	while sa > 0
+		sa -= 1
+		if StorageUtil.FloatListGet(Woman, "FW.SpermAmount", sa) > 0.01
+			hasCum = true
+			sa = 0
+		endif
+	endWhile
+	if !hasCum
+		return
+	endif
+	; Hearts version during fertile states (ovulation=1), regular otherwise
+	int cycleState = StorageUtil.GetIntValue(Woman, "FW.CurrentState", 0)
+	if cycleState == 1
+		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", 0, true, true)
+	else
+		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_semen", 0, true, true)
+	endif
+endFunction
+
+function RemoveSemenCircleTattoo(actor Woman)
+	if !Woman
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
 endFunction
 
 ; Forcing a Belly-Refresh for the given actor
@@ -1562,7 +1664,9 @@ function AddSperm(actor Woman, actor PotentialFather, float amount = 1.0)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermTime", GameDaysPassed.GetValue())
 	FWUtility.AddSpermMirror(Woman, PotentialFather)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
-	
+
+	ApplySemenCircleTattoo(Woman)
+
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef
 		StateWidget.showTimed(PotentialFather)
@@ -1610,7 +1714,9 @@ function AddSpermTimed(actor Woman, float Time, actor PotentialFather, float amo
 	StorageUtil.FloatListAdd(Woman,"FW.SpermTime", Time)
 	FWUtility.AddSpermMirror(Woman, PotentialFather)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
-	
+
+	ApplySemenCircleTattoo(Woman)
+
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef
 		StateWidget.showTimed(PotentialFather)

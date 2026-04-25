@@ -13,9 +13,53 @@ xmake f -m release && xmake        # -> dist/Core/skse/plugins/BeeingFemale.dll
 # Sources: dist/Core/source/scripts/*.psc -> dist/Core/scripts/*.pex
 ```
 
+## Papyrus Language Notes
+
+### Reserved keywords (case-insensitive, cannot be used as identifiers)
+`As`, `Auto`, `AutoReadOnly`, `Bool`, `Else`, `ElseIf`, `EndEvent`, `EndFunction`, `EndIf`, `EndProperty`, `EndState`, `EndWhile`, `Event`, `Extends`, `False`, `Float`, `Function`, `Global`, `If`, `Import`, `Int`, `Length`, `Native`, `New`, `None`, `Parent`, `Property`, `Return`, `ScriptName`, `Self`, `State`, `String`, `True`, `While`
+
+### Control flow
+- No `break` or `continue` -- use flags (`sa = 0`) or early `return` to exit loops.
+- Only `if/elseif/else/endif` and `while/endwhile`. No for-loops, switch, or do-while.
+- Logical `||` and `&&` short-circuit.
+
+### Variables & types
+- Five base types: `Bool`, `Int`, `Float`, `String`, plus object references and arrays.
+- Value types (Bool/Int/Float/String) are copied on assignment. Objects/arrays are by reference.
+- Variables inside `while` loops persist across iterations (NOT reset each iteration). Always initialize explicitly.
+- Script-level variables can only be initialized with literals, not expressions. Function-level can use expressions.
+- Division by zero and modulus by zero produce undefined results (engine logs error).
+
+### Arrays
+- Max 128 elements. Size must be an integer literal (`new int[128]`), not a variable.
+- `array[i] += 5` does NOT compile -- use `array[i] = array[i] + 5`.
+- No arrays of arrays. Arrays are passed/assigned by reference.
+- `Find()`/`RFind()` and SKSE string functions are case-insensitive. `==` string comparison is case-sensitive.
+
+### Properties & optional mod dependencies
+- Global/static function calls (e.g. `SlaveTats.simple_add_tattoo(...)`) resolve lazily at call time, not script load. Safe to reference optional mods if guarded by `Game.GetModByName()`.
+- Properties typed to external scripts (e.g. `SexLabFramework Property SexLab Auto`) resolve at script load -- the type must exist or the script fails to load entirely.
+- Auto property getters/setters are external calls in threading context.
+
+### States
+- Script can be in only one state at a time. `GotoState("")` returns to empty state.
+- State function signatures must exactly match the empty-state definition.
+- Call `GotoState()` BEFORE external calls, not after (threading safety).
+- State transitions fire `OnEndState()` → change → `OnBeginState()`.
+
+### Threading
+- Only one thread can run a script instance at a time. Any external call (including `Debug.Trace()`, property access on other objects) unlocks the script, allowing other threads in.
+- After an external call returns, local assumptions about script state may be stale.
+- Internal operations (own variables, own properties, array ops) do NOT unlock.
+
+### Misc gotchas
+- `GetAnimationVariableInt()` only works on actors with loaded 3D in third-person view.
+- Compiler does not check all code paths for return values -- missing returns cause undefined behavior.
+- `parent.FunctionName()` calls one level up, not necessarily the base definition.
+- Unary minus can misbehave without spaces: write `x = y - 1` not `x = y-1`.
+
 ## Code Conventions
 
-- Papyrus has no `break` or `continue` -- use flags/early returns instead.
 - Keep UTF-16 LE BOM encoding for translation files (`dist/Core/Interface/translations/`).
 - Keep edits ASCII unless the file already contains non-ASCII.
 - `SSEEDIT_locations/` is reference only -- do not compile or import.

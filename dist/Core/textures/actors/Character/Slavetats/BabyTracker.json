@@ -1,0 +1,50 @@
+[
+    {
+        "name": "Babytracker_baby1",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby1.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_baby2",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby2.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_baby3",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby3.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_baby4",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby4.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_baby8",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby8.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_baby12",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\baby12.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_hearts semen sircle",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\hearts semen sircle.dds",
+        "area": "Body"
+    },
+    {
+        "name": "Babytracker_semen",
+        "section": "BabyTracker",
+        "texture": "BabyTracker\\semen sircle.dds",
+        "area": "Body"
+    }
+]
