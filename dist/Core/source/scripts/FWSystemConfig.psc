@@ -5415,7 +5415,7 @@ State TextNpcChangeState
 	Event OnSelectST()
 		If System.Player
 			actor f = Game.GetCurrentCrosshairRef() as actor
-			If(f.GetLeveledActorBase().GetSex()==1)
+			if f && f.GetLeveledActorBase().GetSex()==1
 				Controller.changeState(f, Controller.GetNextState(f))
 				Controller.SetBelly(f)
 				ForcePageReset()
@@ -5564,6 +5564,9 @@ EndState
 State TextNpcJobToDo
 	Event OnSelectST()
 		actor target = Game.GetCurrentCrosshairRef() as actor
+		if !target
+			return
+		endif
 		If(target.GetLeveledActorBase().GetSex()==0)
 			return
 		endif
@@ -5659,6 +5662,9 @@ EndState
 State TextResetNPC
 	Event OnSelectST()
 		actor target = Game.GetCurrentCrosshairRef() as actor
+		if !target
+			return
+		endif
 		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		;if ShowMessage("$FW_MESSAGE_CONTENT_ResetPlayer",true,"$FW_MESSAGE_OPTION_Reset")
 			if target.HasSpell(BeeingFemaleSpell)
@@ -5684,8 +5690,11 @@ EndState
 
 state TextUpdateNPC
 	Event OnSelectST()
-		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		actor target = Game.GetCurrentCrosshairRef() as actor
+		if !target
+			return
+		endif
+		SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		if System.IsValidateFemaleActor(target) > 0
 			Data.Update(target)
 		endif
@@ -5814,6 +5823,9 @@ endState
 state TextChildAddLevel
 	Event OnSelectST()
 		FWChildActor ch = Game.GetCurrentCrosshairRef() as FWChildActor
+		if !ch
+			return
+		endif
 		If(ch.GetLevel() >= FWChildSettings.ChildMaxLevel())
 			SetOptionFlagsST(OPTION_FLAG_DISABLED)
 		else
@@ -6102,43 +6114,17 @@ EndState
 
 State TogglePlayAnimations
 	Event OnSelectST()
-		if FNIS.VersionCompare(5, 4, 2) < 0
-			ShowMessage(Content.FNISTXTNotInstalled,False,"$OK")
-			PlayAnimations = false
-		elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
-			ShowMessage(Content.FNISTXTOverdue,False,"$OK")
-			PlayAnimations = false
-		else
-			PlayAnimations = (! PlayAnimations)
-		endif
+		PlayAnimations = !PlayAnimations
 		SetToggleOptionValueST(PlayAnimations)
 	EndEvent
-	
+
 	Event OnDefaultST()
-		if PlayAnimationsDef;/==true/;
-			if FNIS.VersionCompare(5, 4, 2) < 0
-				ShowMessage(Content.FNISTXTNotInstalled,False,"$OK")
-				PlayAnimations = false
-			elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
-				ShowMessage(Content.FNISTXTOverdue,False,"$OK")
-				PlayAnimations = false
-			else
-				PlayAnimations = PlayAnimationsDef
-			endif
-		else
-			PlayAnimations = PlayAnimationsDef
-		endif
+		PlayAnimations = PlayAnimationsDef
 		SetToggleOptionValueST(PlayAnimations)
 	EndEvent
-	
+
 	Event OnHighlightST()
-		if FNIS.VersionCompare(5, 4, 2) < 0
-			SetInfoText("$GAME_CONTENT_FNIS_TXTNotInstalled")
-		elseif getCompatiblity_Animation() == 2;PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") < GetAnimationVersion() ;Tkc (Loverslab): Fix. PlayerRef.GetAnimationVariableInt("BeeingFemaleAnimationVersion") and GetAnimationVersion() doing same. must be GetAnimationVersionRequired
-			SetInfoText("$GAME_CONTENT_FNIS_TXTOverdue")
-		else
-			SetInfoText("$FW_MENUTXT_SETTINGS_PlayAnimations")
-		endif
+		SetInfoText("$FW_MENUTXT_SETTINGS_PlayAnimations")
 	EndEvent
 EndState
 

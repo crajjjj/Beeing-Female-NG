@@ -2300,7 +2300,7 @@ endFunction
 
 Armor function GetBabyArmor(race ParentRace,int Gender)
 	Armor m;=none ;Tkc (Loverslab): optimization
-	string sGender="BabyMesh_Male"
+	string sGender="BabyArmor_Male"
 	if Gender==1
 		sGender="BabyArmor_Female"
 	endif

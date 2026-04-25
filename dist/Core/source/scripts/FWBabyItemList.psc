@@ -103,7 +103,7 @@ Form[] function getBabyItem(actor Mother, actor Father, int sex, Race FatherRace
 			endif
 			; Random Child was none, go through list
 			int i=0
-			while i<mCount
+			while i<fCount
 				i+=1
 				force_mo_f=StorageUtil.FormListGet(ParentActor, "FW.AddOn.BabyMesh_Female", i) as MiscObject
 				if force_mo_f!=none
@@ -138,7 +138,7 @@ Form[] function getBabyItem(actor Mother, actor Father, int sex, Race FatherRace
 				endif
 				; Random Child was none, go through list
 				int i=0
-				while i<mCount
+				while i<fCount
 					i+=1
 					force_mo_f=StorageUtil.FormListGet(ParentRace,"FW.AddOn.BabyMesh_Female", i) as MiscObject
 					if force_mo_f!=none
@@ -173,7 +173,7 @@ Form[] function getBabyItem(actor Mother, actor Father, int sex, Race FatherRace
 					endif
 					; Random Child was none, go through list
 					int i=0
-					while i<mCount
+					while i<fCount
 						i+=1
 						force_mo_f=StorageUtil.FormListGet(none, "FW.AddOn.Global_BabyMesh_Female", i) as MiscObject
 						if force_mo_f!=none
@@ -273,7 +273,7 @@ Form[] function getBabyArmor(actor Mother, actor Father, int sex, Race FatherRac
 			endif
 			; Random Child was none, go through list
 			int i=0
-			while i<mCount
+			while i<fCount
 				i+=1
 				force_mo_f=StorageUtil.FormListGet(ParentActor, "FW.AddOn.BabyArmor_Female", i) as Armor
 				if force_mo_f!=none
@@ -308,7 +308,7 @@ Form[] function getBabyArmor(actor Mother, actor Father, int sex, Race FatherRac
 				endif
 				; Random Child was none, go through list
 				int i=0
-				while i<mCount
+				while i<fCount
 					i+=1
 					force_mo_f=StorageUtil.FormListGet(ParentRace, "FW.AddOn.BabyArmor_Female", i) as Armor
 					if force_mo_f!=none
@@ -343,7 +343,7 @@ Form[] function getBabyArmor(actor Mother, actor Father, int sex, Race FatherRac
 					endif
 					; Random Child was none, go through list
 					int i=0
-					while i<mCount
+					while i<fCount
 						i+=1
 						force_mo_f=StorageUtil.FormListGet(none, "FW.AddOn.Global_BabyArmor_Female", i) as Armor
 						if force_mo_f!=none
