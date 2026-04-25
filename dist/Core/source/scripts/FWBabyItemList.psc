@@ -524,6 +524,21 @@ ActorBase function ResolveChildBase(actor Mother, actor ParentActor, race Parent
 	endIf
 endFunction
 
+ActorBase function ResolveStoredFatherRaceChildBase(actor ParentActor, race ParentRace, race storedFatherRace, int sex, bool isPlayerChild, string logPrefix)
+	if !storedFatherRace
+		return none
+	endif
+	if ParentRace == storedFatherRace
+		return none
+	endif
+
+	FW_log.WriteLog(logPrefix + " - Primary child lookup failed. Trying stored father race: " + storedFatherRace)
+	if cfg.ShowDebugMessage
+		Debug.Messagebox("Primary child lookup failed. Trying stored father race.")
+	endIf
+	return GetChildBaseFromManager(ParentActor, storedFatherRace, sex, isPlayerChild)
+endFunction
+
 ; Check "Female_Force_This_Baby" setting on specific actor
 bool function myForcedBabySetting(Actor act, Race act_race)
 	if(act)
@@ -549,16 +564,21 @@ endFunction
 ; Returns [0]=ParentActor, [1]=ParentRace, [2]=selectedFatherRace (optional).
 bool function ShouldUseStoredFatherRace(actor Mother, race storedFatherRace)
 	if(myForcedBabySetting(Mother, none))
+		FW_log.WriteLog("FWBabyItemList - ShouldUseStoredFatherRace: mother is forcing her own baby model. storedFatherRace = " + storedFatherRace)
 		return false
 	elseif(myForcedBabySetting(none, storedFatherRace))
+		FW_log.WriteLog("FWBabyItemList - ShouldUseStoredFatherRace: stored father race is forcing its baby model. storedFatherRace = " + storedFatherRace)
 		return true
 	else
 		int myProbRandom = Utility.RandomInt(0, 99)
 		int myChildRaceDeterminedByFather = Manager.ActorChildRaceDeterminedByFather(none, storedFatherRace)
+		FW_log.WriteLog("FWBabyItemList - ShouldUseStoredFatherRace: mother = " + Mother + ", storedFatherRace = " + storedFatherRace + ", myProbRandom = " + myProbRandom + ", ChildRaceDeterminedByFather = " + myChildRaceDeterminedByFather)
 		if(myProbRandom < myChildRaceDeterminedByFather)
+			FW_log.WriteLog("FWBabyItemList - ShouldUseStoredFatherRace: using stored father race")
 			return true
 		endif
 	endif
+	FW_log.WriteLog("FWBabyItemList - ShouldUseStoredFatherRace: using mother race")
 	return false
 endFunction
 
@@ -632,6 +652,7 @@ Form[] function getBabyActorNew(actor Mother, actor Father, int sex, Race Father
 	if Father == none && FatherRace
 		storedFatherRace = FatherRace
 	endif
+	FW_log.WriteLog("FWBabyItemList - getBabyActorNew: Mother = " + Mother + ", Father = " + Father + ", FatherRace arg = " + FatherRace + ", storedFatherRace = " + storedFatherRace)
 
 	Form[] parentContext = ResolveParentActorAndRace(Mother, Father, none, storedFatherRace)
 	Actor ParentActor = parentContext[0] as Actor
@@ -649,6 +670,9 @@ Form[] function getBabyActorNew(actor Mother, actor Father, int sex, Race Father
 		Debug.Messagebox("Child Parent Race: " + ParentRace)
 	endIf
 	ActorBase b = ResolveChildBase(Mother, ParentActor, ParentRace, sex, false, "BeeingFemale - FWBabyItemList - getBabyActor")
+	if !b && storedFatherRace
+		b = ResolveStoredFatherRaceChildBase(ParentActor, ParentRace, storedFatherRace, sex, false, "BeeingFemale - FWBabyItemList - getBabyActor")
+	endIf
 	if !b
 		FW_log.WriteLog("BeeingFemale - FWBabyItemList - getBabyActor - Failed to resolve child actor base.")
 		return BuildBabyActorResult(none, ParentActor, ParentRace)
@@ -671,6 +695,7 @@ Form[] function getPlayerBabyActorNew(actor Mother, actor Father, int sex, Race 
 	if Father == none && FatherRace
 		storedFatherRace = FatherRace
 	endIf
+	FW_log.WriteLog("FWBabyItemList - getPlayerBabyActorNew: Mother = " + Mother + ", Father = " + Father + ", FatherRace arg = " + FatherRace + ", storedFatherRace = " + storedFatherRace)
 	Form[] parentContext = ResolveParentActorAndRace(Mother, Father, none, storedFatherRace)
 	Actor ParentActor = parentContext[0] as Actor
 	race ParentRace = parentContext[1] as Race
@@ -687,6 +712,9 @@ Form[] function getPlayerBabyActorNew(actor Mother, actor Father, int sex, Race 
 		Debug.Messagebox("Child Parent Race: " + ParentRace)
 	endIf
 	ActorBase b = ResolveChildBase(Mother, ParentActor, ParentRace, sex, true, "BeeingFemale - FWBabyItemList - getPlayerBabyActor")
+	if !b && storedFatherRace
+		b = ResolveStoredFatherRaceChildBase(ParentActor, ParentRace, storedFatherRace, sex, true, "BeeingFemale - FWBabyItemList - getPlayerBabyActor")
+	endIf
 	if !b
 		FW_log.WriteLog("BeeingFemale - FWBabyItemList - getPlayerBabyActor - Failed to resolve child actor base.")
 		return BuildBabyActorResult(none, ParentActor, ParentRace)

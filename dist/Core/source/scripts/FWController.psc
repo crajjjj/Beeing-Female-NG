@@ -1172,6 +1172,7 @@ function GiveBirth(actor Mother)
 			if StorageUtil.FormListCount(Mother, "FW.ChildFatherRace") > NumChilds
 				childFatherRace = StorageUtil.FormListGet(Mother, "FW.ChildFatherRace", NumChilds) as race
 			endif
+			FW_log.WriteLog("FWController.GiveBirth: spawning child index " + NumChilds + ", father = " + ChildFather[NumChilds] + ", childFatherRace = " + childFatherRace + ", childFatherRaceCount = " + StorageUtil.FormListCount(Mother, "FW.ChildFatherRace"))
 			System.SpawnChild(Mother,ChildFather[NumChilds],childFatherRace)
 		else
 			System.Message("You've born a dead child...", System.MSG_ALWAYS)

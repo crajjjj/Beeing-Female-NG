@@ -2050,6 +2050,7 @@ function InstantBornChilds(actor a)
 			if StorageUtil.FormListCount(a, "FW.ChildFatherRace") > numChilds
 				tempFatherRace = StorageUtil.FormListGet(a, "FW.ChildFatherRace", numChilds) as race
 			endif
+			FW_log.WriteLog("FWSystem.InstantBornChilds: spawning child index " + numChilds + ", father = " + (StorageUtil.FormListGet(a,"FW.ChildFather",numChilds) As Actor) + ", tempFatherRace = " + tempFatherRace + ", childFatherRaceCount = " + StorageUtil.FormListCount(a, "FW.ChildFatherRace"))
 			SpawnChild(a, StorageUtil.FormListGet(a,"FW.ChildFather",numChilds) As Actor, tempFatherRace)
 		else
 			; Totgeburt
