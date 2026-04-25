@@ -521,7 +521,8 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 					endIf
 
 					;while rnd_r>=relevantSperm[j] && j<c
-					while((rnd_r >= my_determinator) && ((j + 1) < c))
+					; (j + 2) < c ensures a[j+1] is valid after j is incremented inside the loop
+					while((rnd_r >= my_determinator) && ((j + 2) < c))
 						rnd_r -= relevantSperm[j]
 						j += 1
 
@@ -537,7 +538,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 								my_Impreg_boost_new = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
 							endIf
 						endIf
-						
+
 						if(my_Impreg_boost_prev < 0)
 							if(my_Impreg_boost_new < 0)
 								if(my_Impreg_boost_prev < my_Impreg_boost_new)
@@ -575,6 +576,10 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 							my_determinator = (my_prev_determ - my_next_determ) / my_Impreg_boost_abs_max
 						endIf
 					endWhile
+					; advance to last donor if random value still exceeds threshold
+					if (rnd_r >= my_determinator) && ((j + 1) < c)
+						j += 1
+					endIf
 				endIf
 				FWUtility.AddChildFather(Mother, a[j])
 				Fathers[numChild]=a[j]
