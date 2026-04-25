@@ -1681,8 +1681,6 @@ function ResetSystem(bool ResetBaseSystem = true) ;***Edit by BAne
 	System.CheckPlayerSex()
 	
 	System.UnregisterForAllModEvents()
-	System.RegisterForModEvent("OrgasmStart", "onSexLabOrgasm")
-	System.RegisterForModEvent("SexLabOrgasmSeparate", "onSexLabOrgasmSeparate")
 	System.RegisterForModEvent("AddActorSperm", "onAddActorSperm")
 	System.RegisterForModEvent("AddSperm", "onAddActorSperm")
 	System.RegisterForModEvent("BeeingFemale", "onBeeingFemaleCommand")

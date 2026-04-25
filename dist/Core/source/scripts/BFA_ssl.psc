@@ -16,6 +16,7 @@ FWTextContents property Content auto
 Actor Property PlayerRef Auto
 
 bool bZad = false
+bool bSexLabPP = false
 
 Keyword zad_DeviousPlugAnal
 Keyword zad_DeviousPlugVaginal
@@ -26,6 +27,7 @@ function OnGameLoad()
 		System = GetSystem()
 	endif
 	bSexLab = false
+	bSexLabPP = false
 	bZad=false
 	UnregisterForAllModEvents()
 	TryRegisterCount = 0
@@ -33,15 +35,21 @@ function OnGameLoad()
 endFunction
 
 event OnUpdate()
-	if Game.GetModByName("SexLab.esm") != 255 
+	if Game.GetModByName("SexLab.esm") != 255
 		SexLab = Game.GetFormFromFile(0x00000D62, "SexLab.esm") as SexLabFramework
-		Lib = Game.GetFormFromFile(0x00000D62, "SexLab.esm") as sslThreadLibrary
-		if SexLab && Lib
+		; Lib = Game.GetFormFromFile(0x00000D62, "SexLab.esm") as sslThreadLibrary
+		if SexLab ;&& Lib
 			bSexLab = true
-			RegisterForModEvent("OrgasmStart", "OnSexLabOrgasm")
-			RegisterForModEvent("HookOrgasmStart", "OnSexLabOrgasm")
-			RegisterForModEvent("SexLabOrgasmSeparate", "OnSexLabOrgasmSeparate")
-			;Trace("BFA_ssl::OnGameLoad() = true");temporary uncommented for tests
+			; SexLab P+ 2.17.1+ packs version as (major<<24)|(minor<<16)|(patch<<4)|build
+			; 2.17.1.0 = (2<<24)|(17<<16)|(1<<4) = 34668560
+			if SKSE.GetPluginVersion("SexLabUtil") >= 34668560
+				bSexLabPP = true
+				RegisterForModEvent("SexLabApplyCumFX", "OnSexLabApplyCumFX")
+			else
+				RegisterForModEvent("OrgasmStart", "OnSexLabOrgasm")
+				RegisterForModEvent("HookOrgasmStart", "OnSexLabOrgasm")
+				RegisterForModEvent("SexLabOrgasmSeparate", "OnSexLabOrgasmSeparate")
+			endif
 			If Game.GetModByName("Devious Devices - Assets.esm") != 255
 				bZad = true
 				zad_DeviousPlugAnal		= Game.GetFormFromFile(0x0001DD7D, "Devious Devices - Assets.esm") as Keyword
@@ -191,6 +199,28 @@ Event OnSexLabOrgasmSeparate(Form ActorRef, Int thread)
 	endIf
 EndEvent
 
+; SexLab P+ 2.17.1+ cum effect event — more precise than legacy orgasm events
+; aiType: 0 = vaginal, 1 = anal, 2 = oral
+Event OnSexLabApplyCumFX(Form TargetRef, Form SourceRef, int aiType)
+	if aiType == 2
+		return
+	endif
+	Actor Female = TargetRef as Actor
+	Actor Male = SourceRef as Actor
+	if !Female || !Male
+		return
+	endif
+	if aiType == 1
+		if Utility.RandomInt(1, 100) > cfg.NoVaginalCumChance
+			return
+		endif
+	endif
+	if sexlab.ActorLib.IsCreature(Male) && !cfg.CreatureSperm
+		return
+	endif
+	processPair(Female, Male, aiType == 1)
+EndEvent
+
 Actor Function GetSpermDonorFromList(Actor[] actorList)
 	Int i = 0
 	While i < actorList.Length
@@ -252,16 +282,10 @@ Function OrgasmSeparate(sslThreadController ssl_controller, sslBaseAnimation ani
 	EndIf
 
 	;process receiving actors
-	If (anim.hasTag("Vaginal") && isVaginalInside) || (anim.hasTag("Anal") && isAnalInside && Utility.RandomInt(1,100)<=cfg.NoVaginalCumChance)
-	else
+	bool bool_cameInsideAnal = anim.hasTag("Anal") && isAnalInside && Utility.RandomInt(1, 100) <= cfg.NoVaginalCumChance
+	If !((anim.hasTag("Vaginal") && isVaginalInside) || bool_cameInsideAnal)
 		return
 	EndIf
-	; To determine whether zad_DeviousPlugAnal affects AddSperm
-	bool bool_cameInsideAnal = false
-	if(anim.hasTag("Anal") && isAnalInside && (Utility.RandomInt(1, 100) <= cfg.NoVaginalCumChance))
-		bool_cameInsideAnal = true
-	endIf
-	String callback = ""
 	int i = actors.length
 	while i > 0
 			i -= 1
