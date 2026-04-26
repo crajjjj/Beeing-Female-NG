@@ -33,8 +33,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 3.1 | P0 | AddSperm during Ovulation (peak fertility) | Sperm stored in `FW.SpermName`/`Amount`/`Time`, `ActiveSpermImpregnation` fires, conception possible | FWController |
 | 3.2 | P0 | AddSperm outside fertility window | Sperm stored but `canBecomePregnant` returns false, no conception | FWController |
 | 3.3 | P1 | Contraception active | `ContraceptionSpermKillTimed` reduces sperm below threshold, no conception | FWController |
-| 3.4 | P1 | Multiple fathers — weighted selection | `calculateNumChildren` produces 1–3, father selection weighted by amount + addon boost, `FW.ChildFather` populated correctly | FWController |
+| 3.4 | P1 | Multiple fathers — weighted selection | `calculateNumChildren` produces 1–3, father selection weighted by amount + addon boost, `FW.ChildFather` populated correctly. Father selection loop OOB fix applied (commit 479c2d8) | FWController |
 | 3.5 | P2 | Non-lore-friendly pairing | Sperm amount zeroed to `Sperm_Amount_For_Delete`, no conception | FWController |
+| 3.9 | P1 | Creature father unloads before conception | `FW.SpermRace` mirror persists donor race. Sperm entries preserved when actor is None. All-None-donors fallback conceives with stored race. MCM cheat bypasses washout delay | FWController, FWUtility |
 | 3.6 | P2 | NPC pregnancy disabled in MCM | `cfg.NPCCanBecomePregnant = false` → NPCs skipped, no error | FWController |
 | 3.7 | P1 | `BeeingFemaleConception` mod event | Fires with correct Mother, ChildCount, Father0–2 args | FWController |
 | 3.8 | P1 | Sperm expiry after 50+ game days | Entries older than `SpermDeleteTime` pruned via `RemoveSpermMirrorAt`, lists stay consistent | FWSaveLoad, FWUtility |
@@ -44,7 +45,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | # | P | Scenario | Expected | Scripts |
 |---|---|----------|----------|---------|
 | 4.1 | P0 | Full pregnancy: Tri 1 → 2 → 3 → Labor → Replenish → Follicular | All transitions fire, belly/breast scaling progresses and resets | FWAbilityBeeingFemale, FWController |
-| 4.2 | P0 | Labor multi-stage sequence | Vorwehen → Eroffnungswehen → Presswehen → Nachwehen complete, animations play | FWController |
+| 4.2 | P0 | Labor multi-stage sequence | Vorwehen → Eroffnungswehen → Presswehen → Nachwehen complete, animations play. Birth_S2/S3 decoupled from pain gate (commit 4ecc49e) | FWController |
 | 4.3 | P0 | GiveBirth spawns correct children | Live births added to `FW.Babys`, stillbirths excluded; `BeeingFemaleLabor` fires at labor start; `FW.NumBabys` counts live births only | FWController, FWSystem |
 | 4.4 | P1 | GiveBirth re-entrancy guard | Second `GiveBirth` within 0.25 days blocked by `FW.GivingBirth` FormList | FWController |
 | 4.5 | P1 | GiveBirth after crash/reload | Stale `FW.GivingBirth` clears after 0.25-day window, birth proceeds normally | FWController |
@@ -158,7 +159,8 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | # | P | Scenario | Expected | Scripts |
 |---|---|----------|----------|---------|
 | 14.1 | P2 | Bathing in Skyrim washout | Bathing event triggers `WashOutSperm` with appropriate reduction | BFA_BathingInSkyrim |
-| 14.2 | P2 | SlaveTats baby tracker | Tattoo applied/removed per BabyTracker config | BabyTracker |
+| 14.2 | P2 | SlaveTats birth count tattoos | MCM toggle off by default. Enable → tattoos composed from 1/2/3/4/8/12 denominations. Disable → removed immediately. Requires SlaveTats.esp | FWController, FWSystemConfig |
+| 14.3 | P2 | SlaveTats semen circle | Regular semen circle when cum inside, hearts variant during ovulation. Applied on AddSperm, updated on WashOut, removed on toggle-off | FWController, FWSystemConfig |
 
 ## 15. HUD Widgets
 
@@ -185,7 +187,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 |---|---|----------|----------|---------|
 | 17.1 | P0 | All 10 MCM pages render | Settings, Cycle, Pregnancy, Impregnate, Male, Children, AddOn, Info, Cheat, System — no script errors | FWSystemConfig |
 | 17.2 | P1 | Settings persist across save/load | SKSE-persistent properties survive save cycle | FWSystemConfig |
-| 17.3 | P2 | Cheat page: force state change | Manual state override applies correctly | FWSystemConfig |
+| 17.3 | P2 | Cheat page: force state change | Manual state override applies correctly. Null checks on crosshair target (commit 530c34a) | FWSystemConfig |
+| 17.5 | P1 | Cheat page: force impregnation with creature | MCM cheat passes `bShowTravelingSperm=true` to bypass washout delay. Creature father found immediately | FWSystemConfig |
+| 17.6 | P2 | PlayAnimations toggle | FNIS gate removed — Nemesis users can enable (commit 530c34a) | FWSystemConfig |
 | 17.4 | P2 | System page: mod reset | Full reset clears StorageUtil, re-runs init | FWSystem |
 
 ## 18. Mod Events API
@@ -242,7 +246,7 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | 22.2 | ~P0~ | ~~**Virility operator precedence** — missing parentheses around subtraction~~ **FIXED** | FWController `GetVirility` | Added parens: `(GameDaysPassed - LastSexTime) / (recovery * scale)` |
 | 22.3 | P2 | **ProcessActor female branch missing cleanup** — male branch removes `BeeingFemaleSpell` on gender change, but female branch was missing `RemoveSpell(BeeingMaleSpell)` — **fixed** | FWPlayerAlias `ProcessActor` | Gender change male→female could leave both spells active |
 | 22.4 | P2 | **GiveBirth state write** — `FW.CurrentState = 8` and `UpdateParentFaction` are separate calls but consecutive native ops; as tight as Papyrus allows | FWController `GiveBirth` | Accepted — no meaningful fix possible |
-| 22.5 | P2 | **Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash | FWController `GiveBirth` | Rare but possible double-spawn |
+| 22.5 | ~P2~ | ~~**Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash~~ **FIXED** — timestamp-based staleness check clears flag after 0.25 game days (commit 4ecc49e) | FWController `GiveBirth` | Self-heals after stack dumps |
 | 22.6 | ~~ | ~~**PMSSexHurt missing P+ hook**~~ **NOT A BUG** — P+ still sends `HookStageStart`/`HookOrgasmStart`/`HookAnimationEnd` events; PMSSexHurt uses stage hooks, not cum events | BFA_AbilityEffectPMSSexHurt | Works with both legacy and P+ |
 | 22.7 | ~P2~ | ~~**`hasWillBecomePregnant()` implicit None return**~~ **FIXED** — added `return false` | FWSaveLoad | Function now returns false when actor is not pregnant |
 | 22.8 | ~~ | ~~**Bloody tampon/napkin equip gap**~~ **BY DESIGN** — bloody items are auto-equipped by cycle state machine which manages blood effects; no need to dispel on equip | FWPlayerAlias, FWAbilityBeeingFemale | Not a bug |
@@ -252,6 +256,15 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | 22.12 | P2 | **Addon INI comma in mod name** — `required` split on `","` breaks parsing | FWAddOnManager | Addon with comma-containing dependency name silently skipped |
 | 22.13 | ~P2~ | ~~**Hardcoded scan alias count**~~ **FIXED** — now uses `FoundFemales.Length` | FWPlayerAlias | Dynamically matches quest alias count |
 | 22.14 | P2 | **Couple widget stale husband polling** — form goes None while key exists → infinite 5s re-poll | FWCoupleWidget | Wasted CPU cycles, potential log spam |
+| 22.15 | ~P1~ | ~~**Birth animations skipped when pain scale zero** — Birth_S2/S3 gated by `my_BirthPain`~~ **FIXED** — animations now gated only by `cfg.PlayAnimations` (commit 4ecc49e) | FWController `GiveBirth` | Low pain near shrines no longer suppresses delivery sequence |
+| 22.16 | ~P1~ | ~~**Father selection OOB** — `a[j+1]` accessed past array bounds with 2+ donors~~ **FIXED** — loop condition tightened + post-loop advancement (commit 479c2d8) | FWController `ActiveSpermImpregnationTimed` | Father selection no longer biased |
+| 22.17 | ~P1~ | ~~**Female baby list wrong counter** — 8 loops used `mCount` instead of `fCount`~~ **FIXED** (commit 530c34a) | FWBabyItemList | Female baby mesh/armor selection correct |
+| 22.18 | ~P1~ | ~~**Male baby armor wrong key** — `BabyMesh_Male` instead of `BabyArmor_Male`~~ **FIXED** (commit 530c34a) | FWAddOnManager `GetBabyArmor` | Male baby armor lookup correct |
+| 22.19 | ~P1~ | ~~**Creature fathers lost on unload** — sperm entries deleted when actor None, no race fallback~~ **FIXED** — `FW.SpermRace` mirror restored, None entries preserved until expired, `AddChildFather` stores race fallback (commit 3fe384d) | FWController, FWUtility | Creature race persists through unload |
+| 22.20 | ~P1~ | ~~**MCM cheat ignores fresh sperm** — washout delay blocks immediate force-impregnation~~ **FIXED** — cheat passes `bShowTravelingSperm=true` (commit 3fe384d) | FWSystemConfig | Cheat works immediately after insemination |
+| 22.21 | ~P1~ | ~~**Dead SexLab event registrations on System quest**~~ **FIXED** — removed orphaned registrations (commit e56921b) | FWSystemConfig | No handler existed on target script |
+| 22.22 | ~P2~ | ~~**SexLab anal cum double-roll** — `NoVaginalCumChance` rolled twice independently~~ **FIXED** — single roll reused (commit e56921b) | BFA_ssl `OrgasmSeparate` | Consistent anal conception chance |
+| 22.23 | ~P1~ | ~~**ContraceptionSpermKillTimed null crash** — `.GetRace()` on None actor~~ **FIXED** — null-safe fallback to global setting (commit 3fe384d) | FWController | No crash on unloaded creature donors |
 
 ---
 
