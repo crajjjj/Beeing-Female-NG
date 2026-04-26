@@ -252,7 +252,7 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | 22.8 | ~~ | ~~**Bloody tampon/napkin equip gap**~~ **BY DESIGN** — bloody items are auto-equipped by cycle state machine which manages blood effects; no need to dispel on equip | FWPlayerAlias, FWAbilityBeeingFemale | Not a bug |
 | 22.9 | ~~ | ~~**Unequip tampon no effect reapply**~~ **BY DESIGN** — next cycle tick reapplies blood effects; widget updates immediately as visual cue | FWPlayerAlias | Not a bug |
 | 22.10 | P2 | **NPC children lost out of range** — `InstantBornChilds` only fires when `Is3DLoaded()` is true | FWAbilityBeeingFemale | NPCs completing pregnancy while player is away lose children silently |
-| 22.11 | P2 | **Child learnSpell AI freeze** — 50+ second `Utility.Wait()` with AI locks, no recovery on interruption | FWChildActor | Actor permanently frozen if script interrupted |
+| 22.11 | ~P2~ | ~~**Child learnSpell AI freeze** — 50+ second `Utility.Wait()` with AI locks, no recovery on interruption~~ **MITIGATED** — OnLoad fix restores AI state | FWChildActor | Actor recovers on cell reload |
 | 22.12 | P2 | **Addon INI comma in mod name** — `required` split on `","` breaks parsing | FWAddOnManager | Addon with comma-containing dependency name silently skipped |
 | 22.13 | ~P2~ | ~~**Hardcoded scan alias count**~~ **FIXED** — now uses `FoundFemales.Length` | FWPlayerAlias | Dynamically matches quest alias count |
 | 22.14 | P2 | **Couple widget stale husband polling** — form goes None while key exists → infinite 5s re-poll | FWCoupleWidget | Wasted CPU cycles, potential log spam |

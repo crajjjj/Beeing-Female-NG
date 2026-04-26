@@ -2531,8 +2531,9 @@ Event OnPageReset(string page)
 		SetCursorPosition(0)
 		AddHeaderOption("$FW_MENU_CHILDREN_Settings")
 		AddToggleOptionST("ToggleBabyMayCry","$FW_MENU_CHILDREN_MayCry", ChildrenMayCry, OPTION_FLAG_NONE)
-		AddToggleOptionST("ToggleBabyTrackerTattoos","BabyTracker Tattoos (SlaveTats)", BabyTrackerTattoos, OPTION_FLAG_NONE)
-		AddToggleOptionST("ToggleSemenCircleTattoos","Semen Circle Tattoos (SlaveTats)", SemenCircleTattoos, OPTION_FLAG_NONE)
+		AddToggleOptionST("ToggleBabyTrackerTattoos","$FW_MENU_CHILDREN_BabyTrackerTattoos", BabyTrackerTattoos, OPTION_FLAG_NONE)
+		AddToggleOptionST("ToggleSemenCircleTattoos","$FW_MENU_CHILDREN_SemenCircleTattoos", SemenCircleTattoos, OPTION_FLAG_NONE)
+		AddTextOptionST("RefreshTattoos", "$FW_MENU_CHILDREN_RefreshTattoos", "")
 
 		SetCursorPosition(1)
 		AddHeaderOption("$FW_MENU_CHILDREN_YourChildren")
@@ -6678,7 +6679,7 @@ state ToggleBabyTrackerTattoos
 	EndEvent
 
 	Event OnHighlightST()
-		SetInfoText("Apply birth-count tattoos via SlaveTats after each birth. Requires SlaveTats and BabyTracker tattoo pack.")
+		SetInfoText("$FW_MENUTXT_CHILDREN_BabyTrackerTattoos")
 	EndEvent
 endstate
 
@@ -6702,7 +6703,23 @@ state ToggleSemenCircleTattoos
 	EndEvent
 
 	Event OnHighlightST()
-		SetInfoText("Semen circle tattoo when cum is inside. Hearts version when there is conception chance. Requires SlaveTats and BabyTracker tattoo pack.")
+		SetInfoText("$FW_MENUTXT_CHILDREN_SemenCircleTattoos")
+	EndEvent
+endstate
+
+state RefreshTattoos
+	Event OnSelectST()
+		if BabyTrackerTattoos
+			Controller.ApplyBabyTrackerTattoos(PlayerRef)
+		endif
+		if SemenCircleTattoos
+			Controller.ApplySemenCircleTattoo(PlayerRef)
+		endif
+		ShowMessage("$FW_MENU_BASIC_Success")
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_RefreshTattoos")
 	EndEvent
 endstate
 

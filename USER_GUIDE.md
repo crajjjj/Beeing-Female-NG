@@ -49,6 +49,24 @@ Contraception is a percentage (0--98%) that reduces your chance of getting pregn
 - **Maximum is 98%** -- there is always a small chance.
 - **NPCs auto-consume pills** if they have them in inventory.
 
+### How Contraception Actually Works
+
+Contraception does **not** directly block pregnancy. Instead, it attacks stored sperm each time a conception check runs:
+
+1. For each sperm entry, the system rolls a random threshold (varies between 1--100).
+2. If your contraception level meets or exceeds the threshold, that sperm entry is killed.
+3. If it misses the kill but contraception is above 20%, it still reduces the sperm amount slightly.
+4. If all sperm is reduced below the minimum threshold, conception cannot occur.
+
+At 98% contraception, each sperm entry has roughly a 96% chance of being eliminated per tick. However, this is **per entry, per tick** -- with multiple donors or high sperm amounts, some may survive a single check. The check runs once per cycle update (roughly hourly in game time), so surviving sperm will face additional checks on subsequent ticks.
+
+**Important:** Contraception and the "Can get pregnant this cycle" flag are independent systems. The cycle flag is rolled once at the start of each cycle and determines whether conception checks happen at all. If the flag is off, you cannot get pregnant regardless of sperm. If it is on, contraception must defeat the sperm probabilistically.
+
+**Tips for maximum protection:**
+- Keep contraception topped up by taking pills regularly (before the effect expires).
+- Use **Wash-Out Fluids** to directly remove sperm -- this stacks with contraception.
+- At 98%, pregnancy is rare but not impossible. This is by design.
+
 ### Washing Out Sperm
 
 You can remove sperm before it leads to conception:
@@ -244,6 +262,61 @@ NPCs can go through the same cycle and pregnancy system as the player. Key setti
 | NPC Have Items | Off | NPCs receive hygiene/contraception items via scripts |
 
 NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time.
+
+### NPC Auto-Insemination (Couples System)
+
+When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This simulates NPCs having an ongoing intimate life with their partners.
+
+**How it works:** Once per in-game day (at a configurable time), the system picks several random tracked females and attempts to inseminate them with a suitable male partner.
+
+**Partner selection is weighted by relationship:**
+
+| Source | Weight | Description |
+|--------|--------|-------------|
+| Husband | 10x | Vanilla spouse or manually assigned via Couple Widget |
+| Affairs | 4x | Assigned via Couple Widget |
+| Partners | 2x | Assigned via Couple Widget |
+| Last Seen NPCs | 1x | Males the female was recently near (automatic) |
+
+A male is picked randomly from this weighted pool (e.g. a husband is 10 times more likely to be chosen than a random nearby NPC). The system tries up to 3 times to find a valid male.
+
+**A male is valid if:**
+- Not in the player's current location
+- Not a player follower
+- Had sex more than ~7 hours ago (cooldown)
+- Relationship rank is neutral or better (not an enemy)
+- Not a creature (unless creature sperm is enabled)
+
+**Couple data** is stored in JSON files at `Data/BeeingFemale/Couples/`. Each file is named `ModName_FormID.json` and contains husband, affairs, and partners for one female NPC. You can edit these manually or use the in-game Couple Widget.
+
+### Couple Widget
+
+The Couple Widget is a debug/editing tool for managing NPC relationships in-game. Enable it in MCM under the System page.
+
+| Hotkey | Action |
+|--------|--------|
+| E (hold 1.5s) | Select a female NPC as subject |
+| H (hold 1.5s) | Assign or clear husband |
+| G (hold 1.5s) | Add or remove affair partner |
+| P (hold 1.5s) | Add or remove regular partner |
+
+The widget auto-detects existing vanilla spouses (relationship rank 4+ or Spouse association).
+
+### Couples Import
+
+You can bulk-import couple data from JSON files via MCM (first page, "Couples Import"). This scans `Data/BeeingFemale/Couples/` and applies stored partner data to matching NPCs.
+
+### MCM Settings (Impregnate Page)
+
+| Setting | Default | What It Does |
+|---------|---------|-------------|
+| Active | Off | Master toggle for NPC auto-insemination |
+| Husband | On | Include husbands in partner pool |
+| Affairs | On | Include affairs in partner pool |
+| Partners | On | Include regular partners in partner pool |
+| Last Seen NPCs | Off | Include recently nearby males |
+| Time | Configurable | What time of day the daily check runs |
+| Count | 3 | How many NPCs to attempt per daily check |
 
 ---
 
