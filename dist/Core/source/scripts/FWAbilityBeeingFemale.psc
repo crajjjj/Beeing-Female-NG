@@ -607,8 +607,10 @@ endFunction
 
 function changeState(int NewState)
 	if (abortus > 1 && (NewState==4 || NewState==5 || NewState==6)) || (abortus > 2 && NewState==7)
+		FW_log.WriteLog("FWAbilityBeeingFemale.changeState: blocked state " + NewState + " for " + ActorRef + " (abortus=" + abortus + ")")
 		return
 	endif
+	FW_log.WriteLog("FWAbilityBeeingFemale.changeState: " + ActorRef + " state " + currentState + " -> " + NewState)
 	currentState=NewState
 	StorageUtil.SetIntValue(ActorRef,"FW.CurrentState",currentState)
 	StorageUtil.SetFloatValue(ActorRef,"FW.StateEnterTime", GameDaysPassed.GetValue())

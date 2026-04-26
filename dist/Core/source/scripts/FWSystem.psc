@@ -2888,8 +2888,10 @@ actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = non
 	race ParentRace = babyResult[2] as Race
 	if newChildBase ;Tkc (Loverslab): optimization
 	else;if newChildBase==none
+		FW_log.WriteLog("FWSystem - SpawnChildActor: newChildBase is None. Mother=" + Mother + ", Father=" + Father + ", FatherRace=" + FatherRace + ", ParentActor=" + ParentActor + ", ParentRace=" + ParentRace)
 		return none
 	endif
+	FW_log.WriteLog("FWSystem - SpawnChildActor: resolved newChildBase=" + newChildBase + ", ParentActor=" + ParentActor + ", ParentRace=" + ParentRace + ", FatherRace arg=" + FatherRace + ", gender=" + gender)
 	gender = newChildBase.GetSex()
 	
 	Actor newChild

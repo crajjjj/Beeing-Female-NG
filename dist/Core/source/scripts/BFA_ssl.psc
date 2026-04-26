@@ -216,8 +216,10 @@ Event OnSexLabApplyCumFX(Form TargetRef, Form SourceRef, int aiType)
 		endif
 	endif
 	if sexlab.ActorLib.IsCreature(Male) && !cfg.CreatureSperm
+		FW_log.WriteLog("BFA_ssl.OnSexLabApplyCumFX: blocked — creature donor but CreatureSperm=false")
 		return
 	endif
+	FW_log.WriteLog("BFA_ssl.OnSexLabApplyCumFX: processing pair Female=" + Female + ", Male=" + Male + ", type=" + aiType)
 	processPair(Female, Male, aiType == 1)
 EndEvent
 
@@ -270,20 +272,24 @@ Function OrgasmSeparate(sslThreadController ssl_controller, sslBaseAnimation ani
     endif
 
 	If !inseminationTrigger
+		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: no insemination trigger — vaginal=" + anim.hasTag("Vaginal") + ", anal=" + anim.hasTag("Anal") + ", hentairimVag=" + isVaginalInside + ", hentairimAnal=" + isAnalInside)
 		return
 	endif
 
 	if sexlab.ActorLib.IsCreature(currentOrgasmingActor) && !cfg.CreatureSperm
+		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: blocked — creature donor but CreatureSperm=false")
 		return
 	endif
 
 	If (!sexlab.config.allowFFCum && sexlab.MaleCount(actors) < 1 && sexlab.CreatureCount(actors) < 1)
+		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: blocked — FF scene and allowFFCum=false")
 		return
 	EndIf
 
 	;process receiving actors
 	bool bool_cameInsideAnal = anim.hasTag("Anal") && isAnalInside && Utility.RandomInt(1, 100) <= cfg.NoVaginalCumChance
 	If !((anim.hasTag("Vaginal") && isVaginalInside) || bool_cameInsideAnal)
+		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: no vaginal/anal cum path matched")
 		return
 	EndIf
 	int i = actors.length

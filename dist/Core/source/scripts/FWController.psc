@@ -238,7 +238,7 @@ endFunction
 ; Creating the Menstruation Cycle for this Actor
 ; returns false when there was an error
 bool function CreateFemaleActor(actor woman, bool force_new=false)
-	System.Trace("FWController.CreateFemaleActor",woman)
+	;System.Trace("FWController.CreateFemaleActor",woman)
 	;if System.CloakingSpellEnabled.GetValueInt()!=1 || System.ModEnabled.GetValueInt()!=1
 	if ModEnabled.GetValue() As int ;Tkc (Loverslab) optimization
 	else;if System.ModEnabled.GetValueInt()!=1
@@ -298,7 +298,7 @@ endFunction
 
 ; This function will impregnate the given actor and forcing the 1. Trimester-State
 function Impregnate(actor Mother, actor Father, int NumChilds=1)
-	System.Trace("FWController.Impregnate",Mother)
+	;System.Trace("FWController.Impregnate",Mother)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
 		if cfg.NPCCanBecomePregnant
@@ -325,7 +325,7 @@ endFunction
 ; Fathers[1] = Alvor
 ; Fathers[2] = Ulfric
 function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
-	System.Trace("FWController.ImpregnateA",Mother)
+	;System.Trace("FWController.ImpregnateA",Mother)
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
 		if cfg.NPCCanBecomePregnant
@@ -385,35 +385,38 @@ endFunction
 
 ; Check for the normal impregnation, using the sperm, the value if she can become pregnant in this cycle, and so on.
 bool function ActiveSpermImpregnation(actor Mother, bool bIgnoreContraception = false)
-	System.Trace("FWController.ActiveSpermImpregnation",Mother)
+	;System.Trace("FWController.ActiveSpermImpregnation",Mother)
 	return ActiveSpermImpregnationTimed(Mother, GameDaysPassed.GetValue(), bIgnoreContraception)
 endFunction
 
 ; Check for the normal impregnation at the given time, using the sperm, the value if she can become pregnant in this cycle, and so on.
 bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnoreContraception = false)
-	System.Trace("FWController.ActiveSpermImpregnationTimed",Mother)
-	;FW_log.WriteLog("ActiveSpermImpregnationTimed 01 - "+Time)
+	;System.Trace("FWController.ActiveSpermImpregnationTimed",Mother)
+	int spermEntries = StorageUtil.FormListCount(Mother, "FW.SpermName")
+	int curState = StorageUtil.GetIntValue(Mother, "FW.CurrentState", 0)
+	FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: " + Mother + ", state=" + curState + ", spermEntries=" + spermEntries + ", time=" + Time + ", contraception=" + getContraceptionTimed(Mother, Time))
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
 		if cfg.NPCCanBecomePregnant
 		else;if System.cfg.NPCCanBecomePregnant==false
+			FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: blocked — NPCCanBecomePregnant=false")
 			return false
 		endif
 	endif
 	bool bCanBecomePregnant=canBecomePregnant(Mother)
 	if bCanBecomePregnant ;Tkc (Loverslab) optimization
 	else;if bCanBecomePregnant==false
+		FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: blocked — canBecomePregnant=false")
 		return false
 	endif
 	if bIgnoreContraception ;Tkc (Loverslab) optimization
 	else;if bIgnoreContraception==false
 		ContraceptionSpermKillTimed(Mother,Time)
 	endIf
-	;FW_log.WriteLog("ActiveSpermImpregnationTimed 02")
-	if HasRelevantSpermTimed(Mother,Time,false)
-		;FW_log.WriteLog("ActiveSpermImpregnationTimed 03 - Has relevant sperm")
+	bool bHasSperm = HasRelevantSpermTimed(Mother,Time,false)
+	FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: hasRelevantSperm=" + bHasSperm)
+	if bHasSperm
 		if Manager.ActorCanBecomePregnant(Mother);/==true/;
-			;FW_log.WriteLog("ActiveSpermImpregnationTimed 04 - can become pregnant")
 			; Impregnate by active sperm
 			int numChild=System.calculateNumChildren(Mother)
 			if numChild ;Tkc (Loverslab) optimization
@@ -431,6 +434,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			if c ;Tkc (Loverslab) optimization
 			else;if c==0
 				; All donors may be unloaded (creatures) — still conceive using stored sperm race
+				FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: all " + spermEntries + " donors unloaded — using FW.SpermRace fallback for " + numChild + " children")
 				StorageUtil.SetIntValue(Mother,"FW.NumChilds",numChild)
 				int spermCount = StorageUtil.FormListCount(Mother, "FW.SpermRace")
 				int nc = numChild
@@ -611,23 +615,23 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			ChangeStateTimed(Mother,Time,4)
 			return true
 		else
-			;FW_log.WriteLog("ActiveSpermImpregnationTimed 04 - can't become pregnant")
+			FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: blocked — ActorCanBecomePregnant=false")
 		endIf
 	else
-		;FW_log.WriteLog("ActiveSpermImpregnationTimed 03 - Has no relevant sperm")
+		FW_log.WriteLog("FWController.ActiveSpermImpregnationTimed: no relevant sperm (spermEntries=" + spermEntries + ", loreFriendly=" + cfg.ImpregnateLoreFriendly + ", creatureSperm=" + cfg.CreatureSperm + ")")
 	endIf
 	return false
 endFunction
 
 ; A Speed-Up variant for ActiveSpermImpregnation - without calculating the contraception-value
 bool function ActiveSpermImpregnationContraception(actor Mother, float contraception)
-	System.Trace("FWController.ActiveSpermImpregnationContraception",Mother)
+	;System.Trace("FWController.ActiveSpermImpregnationContraception",Mother)
 	return ActiveSpermImpregnationNoContraceptionTimed(Mother, GameDaysPassed.GetValue(), contraception)
 endFunction
 
 ; A Speed-Up variant for ActiveSpermImpregnationTimed - without calculating the contraception-value
 bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Time, float contraception)
-	System.Trace("FWController.ActiveSpermImpregnationContraceptionTimed",Mother)
+	;System.Trace("FWController.ActiveSpermImpregnationContraceptionTimed",Mother)
 	;if Mother!=PlayerRef && System.cfg.NPCCanBecomePregnant==false
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
 	else;if Mother!=PlayerRef
@@ -788,7 +792,7 @@ endFunction
 ;
 ; Strength is a multiplyer - by default it's 1.0, so Itemwithsoudscript's tha chance setting in the mcm menu
 function WashOutSperm(actor woman, int WashOutType = 1, float Strength=1.0)
-	System.Trace("FWController.WashOutSperm",woman)
+	;System.Trace("FWController.WashOutSperm",woman)
 	float chance=0
 	if Strength<=0
 		return
@@ -835,12 +839,12 @@ function WashOutSperm(actor woman, int WashOutType = 1, float Strength=1.0)
 endfunction
 
 function ContraceptionSpermKill(actor Woman)
-	System.Trace("FWController.ContraceptionSpermKill",Woman)
+	;System.Trace("FWController.ContraceptionSpermKill",Woman)
 	ContraceptionSpermKillTimed(Woman, GameDaysPassed.GetValue())
 endFunction
 
 function ContraceptionSpermKillTimed(actor Woman, float Time)
-	System.Trace("FWController.ContraceptionSpermKillTimed",Woman)
+	;System.Trace("FWController.ContraceptionSpermKillTimed",Woman)
 	float contraception = getContraceptionTimed(Woman,Time)
 	int c= StorageUtil.FormListCount(woman, "FW.SpermName");StorageUtil.FloatListCount(Woman, "FW.SpermAmount")
 	
@@ -908,14 +912,14 @@ endFunction
 
 ; This function will unimpregnate the woman and forcing the replanish state
 function Unimpregnate(actor Mother)
-	System.Trace("FW Debug: FWController.Unimpregnate",Mother)
+	;System.Trace("FW Debug: FWController.Unimpregnate",Mother)
 	UnimpregnateState(Mother,0)
 endFunction
 
 
 ; This function will unimpregnate the woman and changing to the given menstrual-cycle-state
 function UnimpregnateState(actor Mother, int Menstrual_Cycle_State)
-	System.Trace("FW Debug: FWController.UnimpregnateState",Mother)
+	;System.Trace("FW Debug: FWController.UnimpregnateState",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		CreateFemaleActor(Mother)
 	EndIf
@@ -953,8 +957,8 @@ endFunction
 ; This function will force the birth for the given pregnant woman
 ; The given Woman must be pregnant already
 function GiveBirth(actor Mother)
-	
-	System.Trace("FW Debug: FWController.GiveBirth",Mother)
+
+	;System.Trace("FW Debug: FWController.GiveBirth",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -962,6 +966,9 @@ function GiveBirth(actor Mother)
 
 	; Guard against re-entrancy / multiple triggers causing duplicate births.
 	int NumChilds = StorageUtil.GetIntValue(Mother,"FW.NumChilds",0)
+	int fatherCount = StorageUtil.FormListCount(Mother, "FW.ChildFather")
+	int fatherRaceCount = StorageUtil.FormListCount(Mother, "FW.ChildFatherRace")
+	FW_log.WriteLog("FWController.GiveBirth: " + Mother + ", numChilds=" + NumChilds + ", fatherCount=" + fatherCount + ", fatherRaceCount=" + fatherRaceCount + ", playAnimations=" + cfg.PlayAnimations + ", babySpawn=" + cfg.BabySpawn)
 	if NumChilds ;Tkc (Loverslab) optimization
 	else;if NumChilds==0
 		if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
@@ -1391,7 +1398,7 @@ endFunction
 
 ; Forcing a Belly-Refresh for the given actor
 function SetBelly(actor Woman, bool ForceNPC=true)
-	System.Trace("FWController.SetBelly",Woman)
+	;System.Trace("FWController.SetBelly",Woman)
 	if Woman==PlayerRef
 		System.Player.SetBelly()
 	elseif ForceNPC;/==true/;
@@ -1405,7 +1412,7 @@ function DamageBaby(actor Mother,float Damage)
 	if(cfg.abortus)
 		FW_log.WriteLog("FWController - DamageBaby: Abortus is turned on! Processing DamageBaby on mother " + Mother)
 
-		System.Trace("FWController.DamageBaby",Mother)
+		;System.Trace("FWController.DamageBaby",Mother)
 		If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 			;CreateFemaleActor(Mother)
 			return; never was initialised - so can't be pregnant
@@ -1515,7 +1522,7 @@ endFunction
 
 ; This function will heal the unborn child of the given mother
 function HealBaby(actor Mother,float Healing)
-	System.Trace("FWController.HealBaby",Mother) ;Tkc (Loverslab) optimization
+	;System.Trace("FWController.HealBaby",Mother) ;Tkc (Loverslab) optimization
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -1572,7 +1579,7 @@ endFunction
 
 ; This function will force an abortus to the given mother
 function AbortusBaby(actor Mother)
-	System.Trace("FWController.AbortusBaby",Mother)
+	;System.Trace("FWController.AbortusBaby",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -1595,7 +1602,7 @@ function AbortusBaby(actor Mother)
 	endif
 endFunction
 function AbortusBabyTimed(actor Mother,Float Time)
-	System.Trace("FWController.AbortusBabyTimed",Mother)
+	;System.Trace("FWController.AbortusBabyTimed",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -1620,7 +1627,7 @@ endFunction
 
 
 function AbortusState(actor Mother, int Abortus_State)
-	System.Trace("FWController.AbortusState",Mother)
+	;System.Trace("FWController.AbortusState",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -1644,7 +1651,7 @@ function AbortusState(actor Mother, int Abortus_State)
 endFunction
 
 function AbortusStateTimed(actor Mother, float Time, int Abortus_State)
-	System.Trace("FWController.AbortusStateTimed",Mother)
+	;System.Trace("FWController.AbortusStateTimed",Mother)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Mother)<0)
 		;CreateFemaleActor(Mother)
 		return; never was initialised - so can't be pregnant
@@ -1670,20 +1677,26 @@ endFunction
 
 ; This function will add sperm to the given mother from the given father
 function AddSperm(actor Woman, actor PotentialFather, float amount = 1.0)
-	System.Trace("FWController.AddSperm",Woman)
+	;System.Trace("FWController.AddSperm",Woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Woman)<0)
 		CreateFemaleActor(Woman)
 	EndIf
 	; Set last Sex-Time
 	StorageUtil.SetFloatValue(Woman, "FW.LastSexTime", GameDaysPassed.GetValue())
 	StorageUtil.SetFloatValue(PotentialFather, "FW.LastSexTime", GameDaysPassed.GetValue())
-	
+
 	; Add sperm to woman
 	float tmp_amount=amount * Manager.ActorSpermAmountScale(PotentialFather)
-	if System.CheckIsLoreFriendlyMetting(Woman, PotentialFather) ;Tkc (Loverslab) optimization
-	else;if !System.CheckIsLoreFriendlyMetting(Woman, PotentialFather)
+	bool bLoreFriendly = System.CheckIsLoreFriendlyMetting(Woman, PotentialFather)
+	if bLoreFriendly ;Tkc (Loverslab) optimization
+	else;if !bLoreFriendly
 		tmp_amount=Sperm_Amount_For_Delete ; Not lore friendly - sperm can't impregnate
 	endif
+	race fatherRace = none
+	if PotentialFather
+		fatherRace = PotentialFather.GetRace()
+	endif
+	FW_log.WriteLog("FWController.AddSperm: donor=" + PotentialFather + ", race=" + fatherRace + ", amount=" + tmp_amount + ", loreFriendly=" + bLoreFriendly + ", creatureSperm=" + cfg.CreatureSperm + ", spermDuration=" + cfg.SpermDuration + ", washOutDelay=" + cfg.WashOutHourDelay)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermTime", GameDaysPassed.GetValue())
 	FWUtility.AddSpermMirror(Woman, PotentialFather)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
@@ -1720,7 +1733,7 @@ endFunction
 
 ; This function will add sperm to the given mother from the given father
 function AddSpermTimed(actor Woman, float Time, actor PotentialFather, float amount = 1.0)
-	System.Trace("FWController.AddSpermTimed",Woman)
+	;System.Trace("FWController.AddSpermTimed",Woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Woman)<0)
 		CreateFemaleActor(Woman)
 	EndIf
@@ -1749,7 +1762,7 @@ endFunction
 
 ; This function will remove all sperm from the given woman she got from the given 'potential father'
 function RemoveSperm(actor Woman, actor PotentialFather)
-	System.Trace("FWController.RemoveSperm",Woman)
+	;System.Trace("FWController.RemoveSperm",Woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Woman)<0)
 		return;
 	EndIf
@@ -1765,7 +1778,7 @@ endFunction
 
 ; This function will remove all sperm from the given woman
 function RemoveAllSperm(actor Woman)
-	System.Trace("FWController.RemoveAllSperm",Woman)
+	;System.Trace("FWController.RemoveAllSperm",Woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",Woman)<0)
 		return
 	EndIf
@@ -1778,7 +1791,7 @@ endFunction
 ; If the woman is pregnant: 0 = 1st Trimester; 1 = 2nd Trimester; 2 = 3rd Trimester; 3 = Labor Pains; 4 = Replanish
 ; Changing to replanish will automaticle unimpregnate the woman
 function ChangeState(actor female, int state_number)
-	System.Trace("FWController.ChangeState",female)
+	;System.Trace("FWController.ChangeState",female)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",female)<0)
 		CreateFemaleActor(female)
 	EndIf
@@ -1818,7 +1831,7 @@ function ChangeState(actor female, int state_number)
 endFunction
 
 function setIrregulation(actor female,int state_number)
-	System.Trace("FWController.setIrregulation", female)
+	;System.Trace("FWController.setIrregulation", female)
 	float newIrregulation=1.0
 	if System.IrregulationChance(female, state_number) > Utility.RandomFloat(0,1.01)
 		newIrregulation*=System.IrregulationValue(female, state_number)
@@ -1828,7 +1841,7 @@ endfunction
 
 
 function ChangeStateTimed(actor female, float Time, int state_number)
-	System.Trace("FWController.ChangeStateTimed",female)
+	;System.Trace("FWController.ChangeStateTimed",female)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",female)<0)
 		CreateFemaleActor(female)
 	EndIf
@@ -1875,14 +1888,14 @@ endFunction
 
 ; Return if the actor is paused
 bool function IsPaused(actor Woman)
-	System.Trace("FWController.IsPaused", Woman)
+	;System.Trace("FWController.IsPaused", Woman)
 	return StorageUtil.GetFloatValue(Woman, "FW.PauseTime", 0.0)>0
 endfunction
 
 
 ; Pause the given actor
 function Pause(actor Woman, bool bPaused)
-	System.Trace("FWController.Pause", Woman)
+	;System.Trace("FWController.Pause", Woman)
 	if bPaused;/==true/;
 		StorageUtil.SetFloatValue(Woman, "FW.PauseTime", GameDaysPassed.GetValue())
 		if Woman == PlayerRef
@@ -1906,35 +1919,35 @@ endfunction
 
 ; Check if the woman got relevant sperm for impregnation inside
 bool function HasRelevantSperm(actor Woman, bool bShowTravelingSperm = false)
-	System.Trace("FWController.HasRelevantSperm", Woman)
+	;System.Trace("FWController.HasRelevantSperm", Woman)
 	return HasRelevantSpermTimed(Woman, GameDaysPassed.GetValue(),bShowTravelingSperm)
 endFunction
 
 
 ; Returns the number of relevant actors that have sperm inside
 int function RelevantSpermCount(actor Woman, bool bShowTravelingSperm = false)
-	System.Trace("FWController.RelevantSpermCount", Woman)
+	;System.Trace("FWController.RelevantSpermCount", Woman)
 	return RelevantSpermCountTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endFunction
 
 
 ; Get a list of actors that are most relevant
 actor[] function GetRelevantSpermActors(actor Woman, bool bShowTravelingSperm = false, bool bSort=true)
-	System.Trace("FWController.GetRelevantSpermActors", Woman)
+	;System.Trace("FWController.GetRelevantSpermActors", Woman)
 	return GetRelevantSpermActorsTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm, bSort)
 endfunction
 
 
 ;
 float[] function GetRelevantSpermFloat(actor Woman, bool bShowTravelingSperm = false, bool bSort=true)
-	System.Trace("FWController.GetRelevantSpermFloat", Woman)
+	;System.Trace("FWController.GetRelevantSpermFloat", Woman)
 	return GetRelevantSpermFloatTimed(Woman, GameDaysPassed.GetValue(), bShowTravelingSperm, bSort)
 endFunction
 
 
 ; Check if the woman got relevant sperm for impregnation inside at the given time
 bool function HasRelevantSpermTimed(actor woman,float Time, bool bShowTravelingSperm = false)
-	System.Trace("FWController.HasRelevantSpermTimed", woman)
+	;System.Trace("FWController.HasRelevantSpermTimed", woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -1969,7 +1982,7 @@ endFunction
 
 ; Returns the number of relevant actors that have sperm inside at the given time
 int function RelevantSpermCountTimed(actor woman,float Time, bool bShowTravelingSperm = false)
-	System.Trace("FWController.RelevantSpermCountTimed", woman)
+	;System.Trace("FWController.RelevantSpermCountTimed", woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -1990,7 +2003,7 @@ endFunction
 
 ; Get a list of actors that are most relevant at the given time
 actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowTravelingSperm = false, bool bSort = true)
-	System.Trace("FWController.GetRelevantSpermActorsTimed", woman)
+	;System.Trace("FWController.GetRelevantSpermActorsTimed", woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -2179,7 +2192,7 @@ endfunction
 
 ; Get a list of actors that are most relevant at the given time
 float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTravelingSperm = false, bool bSort=true)
-	System.Trace("FWController.GetRelevantSpermFloatTimed", woman)
+	;System.Trace("FWController.GetRelevantSpermFloatTimed", woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -2306,7 +2319,7 @@ endfunction
 
 ; Check for the normal impregnation at the given time, using the sperm, the value if she can become pregnant in this cycle, and so on.
 bool function MyActiveSpermImpregnationTimedForAnyPeriod(actor Mother, bool bIgnoreContraception = false)
-	System.Trace("FWController.MyActiveSpermImpregnationTimedForAnyPeriod",Mother)
+	;System.Trace("FWController.MyActiveSpermImpregnationTimedForAnyPeriod",Mother)
 	float Time = GameDaysPassed.GetValue()
 	
 	if Mother==PlayerRef ;Tkc (Loverslab) optimization
@@ -2450,7 +2463,7 @@ endFunction
 
 ; Get a list of actors that are most relevant at the given time
 actor[] function MyGetRelevantSpermActorsTimedForAnyPeriod(actor woman, float Time, bool bShowTravelingSperm = false, bool bSort = true)
-	System.Trace("FWController.MyGetRelevantSpermActorsTimedForAnyPeriod", woman)
+	;System.Trace("FWController.MyGetRelevantSpermActorsTimedForAnyPeriod", woman)
 	If(StorageUtil.FormListFind(none, "FW.SavedNPCs", woman) < 0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -2587,7 +2600,7 @@ endfunction
 
 ; Get a list of actors that are most relevant at the given time
 float[] function MyGetRelevantSpermFloatTimedForAnyPeriod(actor woman, float Time, bool bShowTravelingSperm = false, bool bSort = true)
-	System.Trace("FWController.MyGetRelevantSpermFloatTimedForAnyPeriod", woman)
+	;System.Trace("FWController.MyGetRelevantSpermFloatTimedForAnyPeriod", woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -2673,7 +2686,7 @@ endfunction
 ; Check if the woman got sperm from 'potential father' inside
 ; If female is none - all saved females will be checked
 bool function HasSpermInWoman(actor male, actor female=none, bool bShowTravelingSperm = true)
-	System.Trace("FWController.HasSpermInWoman", male)
+	;System.Trace("FWController.HasSpermInWoman", male)
 	return HasSpermInWomanTimed(male,female, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endFunction
 
@@ -2728,7 +2741,7 @@ endFunction
 ; Returns all actors the woman came has sperm inside
 ; When "bShowTravelingSperm" is false, only the sperms that can impregnate the woman will be shown
 actor[] function getWomansWithSperm(actor Male, bool bShowTravelingSperm = true)
-	System.Trace("FWController.getWomansWithSperm",Male)
+	;System.Trace("FWController.getWomansWithSperm",Male)
 	return getWomansWithSpermTimed(Male, GameDaysPassed.GetValue(), bShowTravelingSperm)
 endfunction
 
@@ -2870,7 +2883,7 @@ endFunction
 ; Set the "can become pms" flag
 ; Returns the Flag value
 int function setCanBecomePMS(actor woman, bool bActive)
-	System.Trace("FWController.setCanBecomePMS",woman)
+	;System.Trace("FWController.setCanBecomePMS",woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		CreateFemaleActor(woman)
 	EndIf
@@ -2927,7 +2940,7 @@ endFunction
 
 ; Returns true if the given woman will become PMS in the current cycle
 bool function canBecomePMS(actor Woman)
-	System.Trace("FWController.canBecomePMS", Woman)
+	;System.Trace("FWController.canBecomePMS", Woman)
 	int flag = StorageUtil.GetIntValue(woman, "FW.Flags",0)
 	return Math.LogicalAnd(flag,2)==2
 endFunction
@@ -3035,13 +3048,13 @@ endFunction
 
 ; Time till next pill is needed (0 = now)
 float function GetContraceptionDuration(actor Woman)
-	System.Trace("FWController.GetContraceptionDuration", Woman)
+	;System.Trace("FWController.GetContraceptionDuration", Woman)
 	return GetContraceptionDurationTimed(Woman, GameDaysPassed.GetValue())
 endFunction
 
 ; Time till next pill is needed depending on the given time
 float function GetContraceptionDurationTimed(Actor Woman, float Time)
-	System.Trace("FWController.GetContraceptionDurationTimed", Woman)
+	;System.Trace("FWController.GetContraceptionDurationTimed", Woman)
 	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
 		return 0
 	EndIf
@@ -3057,13 +3070,13 @@ endFunction
 
 ; returns the Time that has gone, since the actors last child was born
 float function getLastChildBornTime(actor ParentActor)
-	System.Trace("FWController.getLastChildBornTime", ParentActor)
+	;System.Trace("FWController.getLastChildBornTime", ParentActor)
 	return StorageUtil.GetFloatValue(ParentActor,"FW.LastBornChildTime", 0)
 endFunction
 
 ; Updates the BeeingFemale faction for the given actor
 function UpdateParentFaction(actor ParentActor)
-	System.Trace("FWController.UpdateParentFaction", ParentActor)
+	;System.Trace("FWController.UpdateParentFaction", ParentActor)
 	if ParentActor == none || System == none || System.ParentFaction == none
 		return
 	endif
