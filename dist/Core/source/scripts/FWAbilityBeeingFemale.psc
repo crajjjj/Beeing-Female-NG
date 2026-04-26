@@ -1873,7 +1873,7 @@ state Follicular_State
 			Controller.setAutoFlag(ActorRef)
 		endIf
 		Manager.CastCME(ActorRef,0,cfg.PMSEffects)
-		bHasPMS==false
+		bHasPMS=false
 		if IsPlayer ;Tkc (Loverslab): show widged when state was changed
 			StateWidget.showTimed(ActorRef)
 		endif
@@ -1918,7 +1918,7 @@ state Follicular_State
 							bool_NotPregnant = false
 							FWUtility.ActorRemoveSpell(ActorRef, Effect_Vorwehen)
 							Manager.RemoveCME(ActorRef, 0) ; Remove Follicular Effects
-							bHasPMS == false
+							bHasPMS = false
 							changeState(4)
 						endif
 					endIf
@@ -1931,7 +1931,7 @@ state Follicular_State
 		;ActorRef.removeSpell(Effect_Vorwehen)
 		FWUtility.ActorRemoveSpell(ActorRef, Effect_Vorwehen)
 		Manager.RemoveCME(ActorRef,0) ; Remove Follicular Effects
-		bHasPMS==false
+		bHasPMS=false
 	endfunction
 endState
 
@@ -1944,7 +1944,7 @@ state Ovulation_State
 		Manager.removeCME(ActorRef,0) ; Remove Follicular Effects
 		System.ActorAddSpellOpt(ActorRef,Effect_Mittelschmerz, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 		Manager.CastCME(ActorRef,1,cfg.PMSEffects)
-		bHasPMS==false
+		bHasPMS=false
 		if IsPlayer ;Tkc (Loverslab): show widged when state was changed
 			StateWidget.showTimed(ActorRef)
 		endif
@@ -2003,7 +2003,7 @@ state Ovulation_State
 							bool_NotPregnant = false
 							FWUtility.ActorRemoveSpell(ActorRef, Effect_Mittelschmerz)
 							Manager.removeCME(ActorRef, 1)
-							bHasPMS == false
+							bHasPMS = false
 							changeState(4)
 						endif
 					endIf	
@@ -2017,7 +2017,7 @@ state Ovulation_State
 								bool_NotPregnant = false
 								FWUtility.ActorRemoveSpell(ActorRef, Effect_Mittelschmerz)
 								Manager.removeCME(ActorRef, 1)
-								bHasPMS == false
+								bHasPMS = false
 								changeState(4)
 							endIf
 						endIf
@@ -2043,7 +2043,7 @@ state Ovulation_State
 		; Make sure Mittelschmerz was removed
 		FWUtility.ActorRemoveSpell(ActorRef,Effect_Mittelschmerz)
 		Manager.removeCME(ActorRef,1)
-		bHasPMS==false
+		bHasPMS=false
 	endfunction
 endState
 

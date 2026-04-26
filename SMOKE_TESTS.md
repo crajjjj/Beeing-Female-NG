@@ -227,7 +227,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 21.1 | P1 | All 10 PMS variants apply/remove cleanly | Effect applied on enter, actor values restored on `OnEffectFinish` | BFA_AbilityEffectPMS* |
 | 21.2 | P1 | PMSAlgesic resistance restore | -30% resistances saved at start, restored exactly on finish (test with 0 base resist) | BFA_AbilityEffectPMSAlgesic |
 | 21.3 | P1 | PMSFaint stamina drain | Drain every 2 game-hours, stamina hits floor but actor does not die | BFA_AbilityEffectPMSFaint |
-| 21.4 | P1 | PMSSexHurt during SexLab P+ | **Gap**: only hooks legacy `HookOrgasmStart`, not P+ `SexLabApplyCumFX` — damage may not fire with P+ 2.17.1+ | BFA_AbilityEffectPMSSexHurt |
+| 21.4 | P2 | PMSSexHurt during SexLab P+ | Uses `HookStageStart`/`HookOrgasmStart` which P+ still sends — works with both legacy and P+ | BFA_AbilityEffectPMSSexHurt |
 | 21.5 | P2 | PMSSexHurt position check | Damage only for position index 0 (receiver); initiator takes no damage | BFA_AbilityEffectPMSSexHurt |
 
 ---
@@ -238,12 +238,12 @@ These are confirmed or high-confidence issues found during code inspection. Each
 
 | # | P | Issue | Location | Impact |
 |---|---|-------|----------|--------|
-| 22.1 | P1 | **PMS flag: comparison instead of assignment** — `bHasPMS==false` does not clear the flag | FWAbilityBeeingFemale, Follicular/Ovulation `OnBeginState` | PMS spells may persist across cycles |
+| 22.1 | ~P1~ | ~~**PMS flag: comparison instead of assignment** — `bHasPMS==false` does not clear the flag~~ **FIXED** | FWAbilityBeeingFemale | 6 occurrences changed `==` to `=` |
 | 22.2 | P0 | **Virility operator precedence** — `GameDaysPassed - LastSexTime / recoveryDays` evaluates as `GameDaysPassed - (LastSexTime / recoveryDays)` instead of `(GameDaysPassed - LastSexTime) / recoveryDays` | FWController `GetVirility` | Virility calculation wrong for any non-zero LastSexTime |
 | 22.3 | P2 | **ProcessActor female branch missing cleanup** — male branch removes `BeeingFemaleSpell` on gender change, but female branch was missing `RemoveSpell(BeeingMaleSpell)` — **fixed** | FWPlayerAlias `ProcessActor` | Gender change male→female could leave both spells active |
 | 22.4 | P1 | **GiveBirth non-atomic state write** — `FW.CurrentState = 8` written directly, `UpdateParentFaction` is separate call | FWController `GiveBirth` | Interruption between the two leaves faction stale |
 | 22.5 | P2 | **Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash | FWController `GiveBirth` | Rare but possible double-spawn |
-| 22.6 | P1 | **PMSSexHurt missing P+ hook** — not wired to `SexLabApplyCumFX`, only legacy events | BFA_AbilityEffectPMSSexHurt | Sex-during-PMS damage non-functional with SexLab P+ |
+| 22.6 | ~~ | ~~**PMSSexHurt missing P+ hook**~~ **NOT A BUG** — P+ still sends `HookStageStart`/`HookOrgasmStart`/`HookAnimationEnd` events; PMSSexHurt uses stage hooks, not cum events | BFA_AbilityEffectPMSSexHurt | Works with both legacy and P+ |
 | 22.7 | P2 | **`hasWillBecomePregnant()` implicit None return** — no `return false` at end of function | FWSaveLoad | Callers may receive None instead of false |
 | 22.8 | P2 | **Bloody tampon/napkin equip gap** — `OnObjectEquipped` only checks normal variants, not bloody | FWPlayerAlias | Blood effects not dispelled when equipping bloody items |
 | 22.9 | P2 | **Unequip tampon no effect reapply** — removing tampon during menstruation doesn't re-add blood VFX | FWPlayerAlias | Visual inconsistency (widget shows "needed" but no blood effect) |
