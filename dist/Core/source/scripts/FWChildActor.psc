@@ -641,7 +641,12 @@ Event OnPlayerLoadGame()
 		return
 	endif
 	bOnLoadRunning = true
-	
+	if bIsLearning
+		bIsLearning = false
+		SetDontMove(false)
+		AllowPCDialogue(true)
+	endif
+
 ;	FW_log.WriteLog("BeeingFemale: FWChildActor - Checking ChildNoEssential...")
 ;	FW_log.WriteLog("BeeingFemale: FWChildActor - ChildNoEssential is " + System.cfg.ChildNoEssential)
 ;	ActorBase myChildBase
