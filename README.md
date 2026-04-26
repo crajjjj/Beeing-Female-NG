@@ -60,6 +60,176 @@ dist/Core/skse/plugins
   Changelog:
 	https://github.com/crajjjj/Beeing-Female-NG/releases
 
+## Insemination, Conception & Birth
+
+### Overview
+
+The reproductive system follows this pipeline:
+
+1. **Insemination** -- sperm is deposited via SexLab/OStim orgasm events or the `AddSperm` mod event.
+2. **Travel delay** -- sperm must age past `WashOutHourDelay` (default 6 hours) before it is considered "arrived" and eligible for conception.
+3. **Contraception & wash-out** -- pills reduce sperm viability; bathing/fluids can remove sperm entirely.
+4. **Conception check** -- during the fertility window the system rolls conception chance, weighted by sperm amount, donor virility, and contraception level.
+5. **Pregnancy** -- three trimesters with progressive belly/breast scaling, baby health tracking, and combat damage risk.
+6. **Birth** -- multi-stage labor with pain, animations, and child actor spawning.
+
+### Insemination
+
+When sperm is added (via `FWController.AddSperm`):
+
+- Sperm amount is scaled by the donor's virility (0.02--1.0, based on time since last sex) and the addon `Sperm_Amount_Scale` multiplier.
+- Non-lore-friendly pairings (when `ImpregnateLoreFriendly` is on) have their amount set to `0.0008` -- below the impregnation threshold, so they cannot conceive.
+- Sperm is stored as three parallel lists on the mother: `FW.SpermName` (donor), `FW.SpermAmount`, `FW.SpermTime`.
+- Sperm remains viable for `SpermDuration` days (default 2), scaled by the donor's `Duration_MaleSperm` addon multiplier.
+- Entries older than 50 days are hard-pruned from storage.
+
+| MCM Setting | Default | Effect |
+|-------------|---------|--------|
+| `SpermDuration` | 2.0 days | How long sperm stays viable |
+| `MaleVirilityRecovery` | 1.0 (= 24h) | Time for a male to recover full virility |
+| `CreatureSperm` | false | Allow creature males to deposit viable sperm |
+| `ImpregnateLoreFriendly` | true | Restrict conception to species-compatible pairs |
+| `WashOutHourDelay` | 0.25 days (6h) | Delay before sperm "arrives" and can be washed out or participate in conception |
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `Sperm_Amount_Scale` | actor/race/global | 1.0 | Multiplier on sperm amount at deposit |
+| `Duration_MaleSperm` | actor/race/global | 1.0 | Multiplier on sperm viability duration |
+| `Male_Recovery_Scale` | actor/race/global | 1.0 | Multiplier on virility recovery time |
+
+### Contraception & Wash-Out
+
+Contraception is a 0--100% value stored per-actor. It is checked during the conception roll and reduces the effective chance.
+
+- Pills add contraception when consumed (player) or auto-consumed (NPCs, checked in `FWSaveLoad.UpdatePerDay`).
+- Contraception decays over time based on `ContraceptionDuration` (addon-tunable, clamped 1--8 days).
+- Maximum contraception is capped at 98%.
+
+Wash-out removes sperm entries:
+- **No assistance**: `WashOutChance` (default 0%)
+- **Swimming/water**: `WashOutWaterChance` (default 2%)
+- **Anti-sperm fluid**: `WashOutFluidChance` (default 75%)
+- **Bathing in Skyrim**: triggers `WashOutSperm` via integration addon
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `ContraceptionDuration` | actor/race/global | 1.0 | Multiplier on pill duration |
+| `Ignore_Contraception_Prob` | race/global | -1 (off) | Probability that this race's sperm ignores contraception |
+
+### Conception
+
+Conception is checked in `ActiveSpermImpregnationTimed` when the mother has viable sperm. The check requires:
+
+1. **Viable sperm** -- amount >= 0.0009, not expired, father is a valid actor.
+2. **Fertility window** -- normally only during ovulation (state 1). Addon key `Allow_Impregnation_For_Any_Period` can bypass this.
+3. **Pregnancy eligibility** -- `canBecomePregnant` checks: female, not dead, conception chance roll passes.
+4. **Contraception** -- reduces effective chance (can be bypassed by addon `Ignore_Contraception_Prob`).
+
+The conception chance is:
+
+```
+base_chance = ConceiveChance (player) / ConceiveChanceFollower / ConceiveChanceNPC
+scaled_chance = base_chance * PregnancyChanceActorScale (from addon ChanceToBecomePregnantScale)
+roll = RandomFloat(0, 99.9) < scaled_chance
+```
+
+If multiple donors have viable sperm, the father is selected weighted by sperm amount plus any `Sperm_Impregnation_Boost`.
+
+| MCM Setting | Default | Effect |
+|-------------|---------|--------|
+| `ConceiveChance` | 40% | Player conception chance per eligible cycle |
+| `ConceiveChanceFollower` | 40% | Follower conception chance |
+| `ConceiveChanceNPC` | 40% | Generic NPC conception chance |
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `ChanceToBecomePregnantScale` | actor/race/global | 1.0 | Multiplier on conception chance |
+| `DisablePregnancy` | actor/race/global | 0 | Set to 1 to completely block pregnancy |
+| `Allow_Impregnation_For_Any_Period` | actor/race/global | 0 | Allow conception outside ovulation |
+| `Sperm_Impregnation_Boost` | actor/race/global | 0 | Bonus weight for father selection |
+| `Sperm_Impregnation_Prob_For_Any_Period` | actor/race/global | 0 | Extra % chance added for any-period conception |
+
+### Multiple Pregnancy
+
+After conception, the system rolls for multiples based on total sperm count:
+
+- If total sperm exceeds `MultipleThreshold` (default 85), each unit above rolls for an extra baby.
+- Maximum babies per pregnancy: `MaxBabys` (default 3).
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `Multiple_Threshold_Chance` | actor/race/global | 1.0 | Scale on threshold value |
+| `Multiple_Threshold_Max_Babys` | actor/race/global | 1.0 | Scale on max babies cap |
+
+### Pregnancy (States 4--6)
+
+Three trimesters with configurable durations. Each trimester applies progressive belly and breast scaling.
+
+- Baby health starts at 100 and can be reduced by combat damage (`DamageBaby`) or the infection spell.
+- If health drops too low and `abortus` is enabled, miscarriage can trigger (states 0--6 of the abortus system).
+
+| MCM Setting | Default | Effect |
+|-------------|---------|--------|
+| `Trimster1Duration` | 10 days | First trimester length |
+| `Trimster2Duration` | 10 days | Second trimester length |
+| `Trimster3Duration` | 10 days | Third trimester length |
+| `abortus` | true | Enable miscarriage system |
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `Duration_05_Trimester1` | actor/race/global | 1.0 | Multiplier on first trimester duration |
+| `Duration_06_Trimester2` | actor/race/global | 1.0 | Multiplier on second trimester |
+| `Duration_07_Trimester3` | actor/race/global | 1.0 | Multiplier on third trimester |
+| `Modify_Trimester1_by_FatherRace` | race | 0 | Additive offset from father's race |
+| `Modify_Trimester2_by_FatherRace` | race | 0 | Additive offset from father's race |
+| `Modify_Trimester3_by_FatherRace` | race | 0 | Additive offset from father's race |
+
+### Birth (State 7)
+
+Labor is a multi-stage process: Vorwehen (early contractions) -> Eroffnungswehen (opening) -> Presswehen (pushing) -> Nachwehen (afterpains). For each child:
+
+- Health check: `UnbornHealth > RandomFloat(0, 35)` determines live birth vs stillbirth.
+- Live births call `SpawnChild` and increment `FW.NumBabys`.
+- Stillbirths show a message but do not spawn an actor.
+- `BeeingFemaleLabor` mod event fires at labor start with Mother, ChildCount, and up to 3 fathers.
+- After all children are delivered, state transitions to 8 (Replenish).
+
+| MCM Setting | Default | Effect |
+|-------------|---------|--------|
+| `BabySpawn` | 1 | Player baby spawn mode (0=none, 1=actor, 2=item/actor, 3=gem) |
+| `BabySpawnNPC` | 1 | NPC baby spawn mode |
+| `PlayAnimations` | true | Play birth animations |
+| `ReplanishDuration` | 30 days | Post-birth recovery length |
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `Duration_09_LaborPains` | actor/race/global | 0.2 | Labor phase duration scale (20% of base = short) |
+| `Duration_10_SecondsBetweenLaborPains` | actor/race/global | 1.0 | Real-time seconds between contractions |
+| `Duration_11_SecondsBetweenBabySpawn` | actor/race/global | 1.0 | Real-time seconds between each child spawning |
+| `Modify_SecondsBetweenLaborPains_by_FatherRace` | race | 0 | Offset from father's race |
+| `Modify_SecondsBetweenBabySpawn_by_FatherRace` | race | 0 | Offset from father's race |
+| `Modify_Pain_GivingBirth_by_FatherRace` | race | 1.0 | Pain damage multiplier from father's race |
+| `Duration_08_Recovery` | actor/race/global | 1.0 | Recovery phase duration scale |
+
+### Cycle Phases (States 0--3)
+
+The menstrual cycle drives the fertility window and PMS effects.
+
+| MCM Setting | Default | Effect |
+|-------------|---------|--------|
+| `FollicularDuration` | 5 days | Follicular phase |
+| `OvulationDuration` | 2 days | Ovulation (peak fertility) |
+| `LutealDuration` | 5 days | Luteal phase |
+| `MenstrualDuration` | 2 days | Menstruation |
+| `PMSChance` | 25% | Chance PMS triggers during late luteal/menstruation |
+
+| Addon Key | Scope | Default | Effect |
+|-----------|-------|---------|--------|
+| `Duration_01_Follicular` | actor/race/global | 1.0 | Duration multiplier |
+| `Duration_02_Ovulation` | actor/race/global | 1.0 | Duration multiplier |
+| `Duration_03_Luteal` | actor/race/global | 1.0 | Duration multiplier |
+| `Duration_04_Menstruation` | actor/race/global | 1.0 | Duration multiplier |
+
 ## Notes
 
 - `xmake-requires.lock` is tracked to keep dependency versions stable.

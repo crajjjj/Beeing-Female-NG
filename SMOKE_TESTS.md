@@ -45,7 +45,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 |---|---|----------|----------|---------|
 | 4.1 | P0 | Full pregnancy: Tri 1 → 2 → 3 → Labor → Replenish → Follicular | All transitions fire, belly/breast scaling progresses and resets | FWAbilityBeeingFemale, FWController |
 | 4.2 | P0 | Labor multi-stage sequence | Vorwehen → Eroffnungswehen → Presswehen → Nachwehen complete, animations play | FWController |
-| 4.3 | P0 | GiveBirth spawns correct children | `FW.NumChilds` children spawned, added to `FW.Babys`, `BeeingFemaleLabor` event fires | FWController, FWSystem |
+| 4.3 | P0 | GiveBirth spawns correct children | Live births added to `FW.Babys`, stillbirths excluded; `BeeingFemaleLabor` fires at labor start; `FW.NumBabys` counts live births only | FWController, FWSystem |
 | 4.4 | P1 | GiveBirth re-entrancy guard | Second `GiveBirth` within 0.25 days blocked by `FW.GivingBirth` FormList | FWController |
 | 4.5 | P1 | GiveBirth after crash/reload | Stale `FW.GivingBirth` clears after 0.25-day window, birth proceeds normally | FWController |
 | 4.6 | P1 | State 8 faction sync after birth | `FW.CurrentState = 8` written directly — verify `UpdateParentFaction` also fires | FWController |
@@ -146,7 +146,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 
 | # | P | Scenario | Expected | Scripts |
 |---|---|----------|----------|---------|
-| 13.1 | P0 | OStim NG orgasm → AddSperm | `ostim_start` event hooked, `processPair` calls `AddSperm` with correct args | BFA_Ostim |
+| 13.1 | P0 | OStim NG orgasm → AddSperm | Sperm path uses `FertilityModeAddSperm` compat event (OStim sends this natively); `ostim_start` is only a child-actor guard | BFA_Ostim |
 | 13.2 | P1 | OStim API version < 23 | Graceful no-op: retries 10× at 5s intervals, then gives up silently | BFA_Ostim |
 | 13.3 | P1 | Condom detection | `System.CheckForCondome(Female, Male)` → pair skipped when condom worn | BFA_Ostim |
 | 13.4 | P1 | Child actor in OStim scene | Actor in `FW.Babys` FormList → `OStim.ForceStop()` called | BFA_Ostim |
@@ -196,7 +196,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 18.2 | P1 | External `BeeingFemale` → `ChangeState` | State transition applied | FWController |
 | 18.3 | P1 | External `BeeingFemale` → `DamageBaby`/`HealBaby` | Unborn health modified within bounds | FWController |
 | 18.4 | P2 | Emitted `BeeingFemaleConception` | Args (Mother, ChildCount, Fathers) correct and parseable by external mods | FWController |
-| 18.5 | P2 | Emitted `BeeingFemaleLabor` | Args correct, fires after birth completes | FWController |
+| 18.5 | P2 | Emitted `BeeingFemaleLabor` | Args correct, fires at start of `GiveBirth` (before child spawning loop) | FWController |
 
 ## 19. SPID Item Distribution
 
