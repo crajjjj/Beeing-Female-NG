@@ -5520,7 +5520,7 @@ State TextJobToDo
 			int jobID = GetJobID()
 			
 			If jobID == 0
-				bool bHasSperm=Controller.HasRelevantSperm(PlayerRef)
+				bool bHasSperm=Controller.HasRelevantSperm(PlayerRef, true)
 				If bHasSperm;/==true/; || System.CheatAddFather.Length > 0
 					Actor[] donors
 					int cSperm=0
@@ -5529,7 +5529,7 @@ State TextJobToDo
 						donors[0] = Game.GetForm(System.CheatAddFather[Utility.RandomInt(0, System.CheatAddFather.Length - 1)]) as Actor
 						cSperm = 1
 					else
-						donors=Controller.GetRelevantSpermActors(PlayerRef)
+						donors=Controller.GetRelevantSpermActors(PlayerRef, true)
 						cSperm = donors.length
 					EndIf
 					
@@ -5586,7 +5586,7 @@ State TextNpcJobToDo
 			int jobID = GetJobID(target)
 			
 			If jobID == 0
-				bool bHasSperm=Controller.HasRelevantSperm(target)
+				bool bHasSperm=Controller.HasRelevantSperm(target, true)
 				If bHasSperm;/==true/; || System.CheatAddFather.Length > 0
 					Actor[] donors
 					int cSperm=0
@@ -5595,7 +5595,7 @@ State TextNpcJobToDo
 						donors[0] = Game.GetForm(System.CheatAddFather[Utility.RandomInt(0, System.CheatAddFather.Length - 1)]) as Actor
 						cSperm = 1
 					else
-						donors=Controller.GetRelevantSpermActors(target)
+						donors=Controller.GetRelevantSpermActors(target, true)
 						cSperm = donors.length
 					EndIf
 					

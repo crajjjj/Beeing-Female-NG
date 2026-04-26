@@ -162,16 +162,20 @@ endFunction
 ;--------------------------------------------------------------------------------
 ; Mirrored list helpers (ChildFather / Sperm)
 ;--------------------------------------------------------------------------------
-function AddChildFather(actor Mother, actor Father) global
+function AddChildFather(actor Mother, actor Father, race FatherRace = none) global
 	if !Mother
 		return
 	endif
-	if !Father
-		return
-	endif
+	; Allow None fathers (unloaded creature actors) — store entries so list
+	; counts stay consistent with FW.NumChilds. Birth flow handles None gracefully.
 	StorageUtil.FormListAdd(Mother, "FW.ChildFather", Father)
-	StorageUtil.StringListAdd(Mother, "FW.ChildFatherStr", GetStringFromForm(Father))
-	StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", Father.GetRace())
+	if Father
+		StorageUtil.StringListAdd(Mother, "FW.ChildFatherStr", GetStringFromForm(Father))
+		StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", Father.GetRace())
+	else
+		StorageUtil.StringListAdd(Mother, "FW.ChildFatherStr", "")
+		StorageUtil.FormListAdd(Mother, "FW.ChildFatherRace", FatherRace)
+	endif
 endFunction
 
 function RemoveChildFatherAt(actor Mother, int Index) global
@@ -214,7 +218,7 @@ function AddSpermMirror(actor Woman, actor Father) global
 		return
 	endif
 	StorageUtil.FormListAdd(Woman, "FW.SpermName", Father)
-	; removed FW.SpermNameStr and FW.SpermRace mirrors (unused)
+	StorageUtil.FormListAdd(Woman, "FW.SpermRace", Father.GetRace())
 endFunction
 
 function RemoveSpermMirrorAt(actor Woman, int Index) global
@@ -230,7 +234,9 @@ function RemoveSpermMirrorAt(actor Woman, int Index) global
 	if StorageUtil.FloatListCount(Woman, "FW.SpermAmount") > Index
 		StorageUtil.FloatListRemoveAt(Woman, "FW.SpermAmount", Index)
 	endif
-	; removed FW.SpermNameStr and FW.SpermRace mirrors (unused)
+	if StorageUtil.FormListCount(Woman, "FW.SpermRace") > Index
+		StorageUtil.FormListRemoveAt(Woman, "FW.SpermRace", Index)
+	endif
 endFunction
 
 function ClearSpermMirror(actor Woman) global
@@ -240,7 +246,7 @@ function ClearSpermMirror(actor Woman) global
 	StorageUtil.FloatListClear(Woman, "FW.SpermTime")
 	StorageUtil.FormListClear(Woman, "FW.SpermName")
 	StorageUtil.FloatListClear(Woman, "FW.SpermAmount")
-	; removed FW.SpermNameStr and FW.SpermRace mirrors (unused)
+	StorageUtil.FormListClear(Woman, "FW.SpermRace")
 endFunction
 string function GetStringFromRaces(Race[] frms) global
 	int i=0

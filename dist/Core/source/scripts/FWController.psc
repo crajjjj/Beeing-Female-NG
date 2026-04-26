@@ -430,7 +430,26 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			int c=relevantSperm.length
 			if c ;Tkc (Loverslab) optimization
 			else;if c==0
-				return false
+				; All donors may be unloaded (creatures) — still conceive using stored sperm race
+				StorageUtil.SetIntValue(Mother,"FW.NumChilds",numChild)
+				int spermCount = StorageUtil.FormListCount(Mother, "FW.SpermRace")
+				int nc = numChild
+				while nc > 0
+					nc -= 1
+					race spermRace = none
+					if spermCount > 0
+						spermRace = StorageUtil.FormListGet(Mother, "FW.SpermRace", Utility.RandomInt(0, spermCount - 1)) as Race
+					endif
+					FWUtility.AddChildFather(Mother, none, spermRace)
+				endWhile
+				StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
+				StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+				StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
+				actor[] emptyFathers = FWUtility.ActorArray(numChild)
+				Manager.OnImpregnate(Mother, numChild, emptyFathers)
+				SendConceptionEvent(Mother, emptyFathers)
+				ChangeStateTimed(Mother,Time,4)
+				return true
 			endif
 			int i=0
 			float relevanceTotal=0.0
@@ -836,12 +855,16 @@ function ContraceptionSpermKillTimed(actor Woman, float Time)
 		
 		man_ignore_contraception = false
 		man_candidate = (StorageUtil.FormListGet(woman, "FW.SpermName", c) As Actor)
-		anti_cont = StorageUtil.GetFloatValue(man_candidate, "FW.AddOn.Ignore_Contraception_Prob", 0)
-		if(anti_cont == 0)
-			man_r = man_candidate.GetRace()
-			anti_cont = StorageUtil.GetFloatValue(man_r, "FW.AddOn.Ignore_Contraception_Prob", 0)
+		if !man_candidate
+			anti_cont = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Ignore_Contraception_Prob", 0)
+		else
+			anti_cont = StorageUtil.GetFloatValue(man_candidate, "FW.AddOn.Ignore_Contraception_Prob", 0)
 			if(anti_cont == 0)
-				anti_cont = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Ignore_Contraception_Prob", 0)
+				man_r = man_candidate.GetRace()
+				anti_cont = StorageUtil.GetFloatValue(man_r, "FW.AddOn.Ignore_Contraception_Prob", 0)
+				if(anti_cont == 0)
+					anti_cont = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Ignore_Contraception_Prob", 0)
+				endIf
 			endIf
 		endIf
 		if(anti_cont > 0)
@@ -1932,7 +1955,8 @@ bool function HasRelevantSpermTimed(actor woman,float Time, bool bShowTravelingS
 		if STime + System.getMaleSpermDuration(SName) > Time ;Tkc (Loverslab) optimization
 			if (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm)
 				if SAmou>=Sperm_Min_Amount_For_Impregnation
-					if System.CheckIsLoreFriendlyMetting(woman, SName)
+					; If actor is None (unloaded creature), still count as relevant — skip lore check
+					if SName == none || System.CheckIsLoreFriendlyMetting(woman, SName)
 						return true
 					endIf
 				endIf
@@ -1989,7 +2013,7 @@ actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowT
 				;FW_log.WriteLog(STime+" + "+maxSDuration+" > "+Time+" && ("+STime+" + "+System.cfg.WashOutHourDelay+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > "+0.01)
 				;FW_log.WriteLog((STime + maxSDuration)+" > "+Time+" && ("+(STime+System.cfg.WashOutHourDelay)+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > 0.01")
 				;FW_log.WriteLog((STime + maxSDuration > Time)+" && ("+(STime+System.cfg.WashOutHourDelay < Time)+" || "+bShowTravelingSperm+") && "+(SAmou>0.01))
-				
+
 				if STime + maxSDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 					;FWUtility.ActorArrayAppend(actors, SName)
 					if bFirst;/==true/;
@@ -2001,7 +2025,8 @@ actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowT
 						actors=FWUtility.ActorArrayAppend(actors, SName)
 					endif
 				endif
-			else
+			elseif STime + maxSDuration <= Time
+				; Actor gone and sperm expired — safe to clean up
 				FWUtility.RemoveSpermMirrorAt(woman, c)
 			endif
 		endwhile
@@ -2040,11 +2065,11 @@ actor[] function GetRelevantSpermActorsTimed(actor woman,float Time, bool bShowT
 						actorr=FWUtility.FloatArrayAppend(actorr, System.GetSpermRelevance(woman, SName) * SAmou * xScale)
 					endif
 				endif
-			else
+			elseif STime + maxSDuration <= Time
 				FWUtility.RemoveSpermMirrorAt(woman, c)
 			endif
 		endwhile
-		
+
 		int bi=1
 		int bj
 		int bc=actors.length ; Count
@@ -2164,7 +2189,7 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 	else;if c==0
 		return actorr
 	endif
-	
+
 	while c>0
 		c-=1
 		float STime = StorageUtil.FloatListGet(woman, "FW.SpermTime", c)
@@ -2176,7 +2201,7 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 			;FW_log.WriteLog(STime+" + "+maxSDuration+" > "+Time+" && ("+STime+" + "+System.cfg.WashOutHourDelay+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > "+0.01)
 			;FW_log.WriteLog((STime + maxSDuration)+" > "+Time+" && ("+(STime+System.cfg.WashOutHourDelay)+" < "+Time+" || "+bShowTravelingSperm+") && "+SAmou+" > 0.01")
 			;FW_log.WriteLog((STime + maxSDuration > Time)+" && ("+(STime+System.cfg.WashOutHourDelay < Time)+" || "+bShowTravelingSperm+") && "+(SAmou>0.01))
-			
+
 			if STime + maxSDuration > Time && (STime+cfg.WashOutHourDelay < Time || bShowTravelingSperm;/==true/;) && SAmou>=Sperm_Min_Amount_For_Impregnation && System.CheckIsLoreFriendlyMetting(woman, SName)
 				float SpermDurationPercent = (Time - STime) / maxSDuration
 				float xScale = 1.0
@@ -2185,7 +2210,7 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 				endIf
 				actorr=FWUtility.FloatArrayAppend(actorr, System.GetSpermRelevance(woman, SName) * SAmou * xScale)
 			endif
-		else
+		elseif STime + maxSDuration <= Time
 			FWUtility.RemoveSpermMirrorAt(woman, c)
 		endif
 	endwhile
@@ -2477,7 +2502,7 @@ actor[] function MyGetRelevantSpermActorsTimedForAnyPeriod(actor woman, float Ti
 						actors = FWUtility.ActorArrayAppend(actors, SName)
 					endif
 				endif
-			else
+			elseif STime + maxSDuration <= Time
 				FWUtility.RemoveSpermMirrorAt(woman, c)
 			endif
 		endwhile
@@ -2527,11 +2552,11 @@ actor[] function MyGetRelevantSpermActorsTimedForAnyPeriod(actor woman, float Ti
 						actorr = FWUtility.FloatArrayAppend(actorr, System.GetSpermRelevance(woman, SName) * SAmou * xScale)
 					endif
 				endif
-			else
+			elseif STime + maxSDuration <= Time
 				FWUtility.RemoveSpermMirrorAt(woman, c)
 			endif
 		endwhile
-		
+
 		int bi = 1
 		int bj
 		int bc = actors.length ; Count
@@ -2611,7 +2636,7 @@ float[] function MyGetRelevantSpermFloatTimedForAnyPeriod(actor woman, float Tim
 				endIf
 				actorr=FWUtility.FloatArrayAppend(actorr, System.GetSpermRelevance(woman, SName) * SAmou * xScale)
 			endif
-		else
+		elseif STime + maxSDuration <= Time
 			FWUtility.RemoveSpermMirrorAt(woman, c)
 		endif
 	endwhile

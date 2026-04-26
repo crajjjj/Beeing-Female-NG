@@ -204,6 +204,17 @@ Profiles in `BeeingFemale/HUD/*.ini`, timing in Global Settings INI.
 
 ## StorageUtil Keys (prefix `FW.`)
 
-**Per-actor (mother):** `CurrentState`, `StateEnterTime`, `NumChilds`, `UnbornHealth`, `ChildFather` (FormList), `SpermName`/`SpermAmount`/`SpermTime`, `Contraception`, `Abortus`, `Flags`
+**Per-actor (mother):** `CurrentState`, `StateEnterTime`, `NumChilds`, `UnbornHealth`, `ChildFather`/`ChildFatherRace` (FormList), `SpermName`/`SpermAmount`/`SpermTime`/`SpermRace`, `Contraception`, `Abortus`, `Flags`
 
 **Global:** `FW.SavedNPCs` (tracked females), `FW.Babys` (born children)
+
+## Actor Unloading & Creature Fathers
+
+Skyrim unloads actors when the player leaves their cell grid. Creature actors (dogs, horses, falmers) encountered during sex scenes will typically unload before the default sperm duration (2 game days) expires. When this happens, `StorageUtil.FormListGet("FW.SpermName")` returns None for that donor.
+
+**Mitigations:**
+- `FW.SpermRace` mirror stores the donor's race at AddSperm time, persisting across unloads.
+- `FW.ChildFatherRace` stores the father's race at conception time via `AddChildFather`.
+- Sperm entries with None actors are preserved (not deleted) until expired.
+- `AddChildFather` accepts None fathers and uses the stored `FW.SpermRace` as fallback.
+- Do NOT delete sperm entries just because the actor reference is None — the sperm data (time, amount, race) is still valid.
