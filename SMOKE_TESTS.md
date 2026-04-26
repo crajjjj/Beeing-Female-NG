@@ -239,18 +239,18 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | # | P | Issue | Location | Impact |
 |---|---|-------|----------|--------|
 | 22.1 | ~P1~ | ~~**PMS flag: comparison instead of assignment** — `bHasPMS==false` does not clear the flag~~ **FIXED** | FWAbilityBeeingFemale | 6 occurrences changed `==` to `=` |
-| 22.2 | P0 | **Virility operator precedence** — `GameDaysPassed - LastSexTime / recoveryDays` evaluates as `GameDaysPassed - (LastSexTime / recoveryDays)` instead of `(GameDaysPassed - LastSexTime) / recoveryDays` | FWController `GetVirility` | Virility calculation wrong for any non-zero LastSexTime |
+| 22.2 | ~P0~ | ~~**Virility operator precedence** — missing parentheses around subtraction~~ **FIXED** | FWController `GetVirility` | Added parens: `(GameDaysPassed - LastSexTime) / (recovery * scale)` |
 | 22.3 | P2 | **ProcessActor female branch missing cleanup** — male branch removes `BeeingFemaleSpell` on gender change, but female branch was missing `RemoveSpell(BeeingMaleSpell)` — **fixed** | FWPlayerAlias `ProcessActor` | Gender change male→female could leave both spells active |
-| 22.4 | P1 | **GiveBirth non-atomic state write** — `FW.CurrentState = 8` written directly, `UpdateParentFaction` is separate call | FWController `GiveBirth` | Interruption between the two leaves faction stale |
+| 22.4 | P2 | **GiveBirth state write** — `FW.CurrentState = 8` and `UpdateParentFaction` are separate calls but consecutive native ops; as tight as Papyrus allows | FWController `GiveBirth` | Accepted — no meaningful fix possible |
 | 22.5 | P2 | **Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash | FWController `GiveBirth` | Rare but possible double-spawn |
 | 22.6 | ~~ | ~~**PMSSexHurt missing P+ hook**~~ **NOT A BUG** — P+ still sends `HookStageStart`/`HookOrgasmStart`/`HookAnimationEnd` events; PMSSexHurt uses stage hooks, not cum events | BFA_AbilityEffectPMSSexHurt | Works with both legacy and P+ |
-| 22.7 | P2 | **`hasWillBecomePregnant()` implicit None return** — no `return false` at end of function | FWSaveLoad | Callers may receive None instead of false |
-| 22.8 | P2 | **Bloody tampon/napkin equip gap** — `OnObjectEquipped` only checks normal variants, not bloody | FWPlayerAlias | Blood effects not dispelled when equipping bloody items |
-| 22.9 | P2 | **Unequip tampon no effect reapply** — removing tampon during menstruation doesn't re-add blood VFX | FWPlayerAlias | Visual inconsistency (widget shows "needed" but no blood effect) |
+| 22.7 | ~P2~ | ~~**`hasWillBecomePregnant()` implicit None return**~~ **FIXED** — added `return false` | FWSaveLoad | Function now returns false when actor is not pregnant |
+| 22.8 | ~~ | ~~**Bloody tampon/napkin equip gap**~~ **BY DESIGN** — bloody items are auto-equipped by cycle state machine which manages blood effects; no need to dispel on equip | FWPlayerAlias, FWAbilityBeeingFemale | Not a bug |
+| 22.9 | ~~ | ~~**Unequip tampon no effect reapply**~~ **BY DESIGN** — next cycle tick reapplies blood effects; widget updates immediately as visual cue | FWPlayerAlias | Not a bug |
 | 22.10 | P2 | **NPC children lost out of range** — `InstantBornChilds` only fires when `Is3DLoaded()` is true | FWAbilityBeeingFemale | NPCs completing pregnancy while player is away lose children silently |
 | 22.11 | P2 | **Child learnSpell AI freeze** — 50+ second `Utility.Wait()` with AI locks, no recovery on interruption | FWChildActor | Actor permanently frozen if script interrupted |
 | 22.12 | P2 | **Addon INI comma in mod name** — `required` split on `","` breaks parsing | FWAddOnManager | Addon with comma-containing dependency name silently skipped |
-| 22.13 | P2 | **Hardcoded scan alias count** — `iActorIdx = 7` must match `FindActors` quest alias count | FWPlayerAlias | Extra aliases ignored; fewer aliases → None dereference (guarded) |
+| 22.13 | ~P2~ | ~~**Hardcoded scan alias count**~~ **FIXED** — now uses `FoundFemales.Length` | FWPlayerAlias | Dynamically matches quest alias count |
 | 22.14 | P2 | **Couple widget stale husband polling** — form goes None while key exists → infinite 5s re-poll | FWCoupleWidget | Wasted CPU cycles, potential log spam |
 
 ---

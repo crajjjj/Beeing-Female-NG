@@ -267,6 +267,7 @@ bool function hasWillBecomePregnant(actor Woman)
 			FWUtility.RemoveSpermMirrorAt(Woman, c)
 		endIf
 	endWhile
+	return false
 endFunction
 
 
