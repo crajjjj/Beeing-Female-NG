@@ -1,5 +1,20 @@
 # Beeing Female NG -- User Guide
 
+- [The Menstrual Cycle](#the-menstrual-cycle)
+- [Insemination](#insemination)
+- [Contraception](#contraception)
+- [Conception](#conception)
+- [Pregnancy](#pregnancy)
+- [Birth](#birth)
+- [Children](#children)
+- [HUD Widgets](#hud-widgets)
+- [SlaveTats Integration](#slavetats-integration)
+- [NPC Pregnancy](#npc-pregnancy)
+- [Integration with Other Mods](#integration-with-other-mods)
+- [MCM Pages at a Glance](#mcm-pages-at-a-glance)
+
+---
+
 ## The Menstrual Cycle
 
 Every tracked female goes through a repeating cycle with four phases:
