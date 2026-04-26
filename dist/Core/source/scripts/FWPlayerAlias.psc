@@ -117,27 +117,7 @@ EndEvent
 
 Event OnRaceSwitchComplete()
 	System.Message(Contents.RaceSwitchedCompleted,System.MSG_Debug)
-;/original>
-	If oldSex != GetActorReference().GetActorBase().GetSex()
-		If GetActorReference().GetActorBase().GetSex() == 0
-			If (! GetActorReference().HasSpell(BeeingMaleSpell))
-				GetActorReference().AddSpell(BeeingMaleSpell)
-			EndIf
-			If (GetActorReference().HasSpell(BeeingFemaleSpell))
-				GetActorReference().RemoveSpell(BeeingFemaleSpell)
-			EndIf
-		Else
-			If (! GetActorReference().HasSpell(BeeingFemaleSpell))
-				GetActorReference().AddSpell(BeeingFemaleSpell)
-			EndIf
-			If (! GetActorReference().HasSpell(BeeingMaleSpell)) ;Tkc , here is error, must be removed '!'
-				GetActorReference().RemoveSpell(BeeingMaleSpell)
-			EndIf
-		EndIf
-		oldSex = GetActorReference().GetActorBase().GetSex()
-	EndIf
-/; ;<original	
-	;Tkc (Loverslab): optimization
+	
 	Actor SelfActor = GetReference() as Actor
 	int newSex = SelfActor.GetActorBase().GetSex() ;Tkc (Loverslab): optimization ; will be using three times after this
 	If oldSex == newSex
@@ -163,122 +143,31 @@ Event OnRaceSwitchComplete()
 	EndIf
 EndEvent
 
-Function ProcessActor(Actor akTarget, bool IsFemale = true); Tkc (Loverslab): optimization: IsFemale added to split male and female processing
-;/original before questscan was added
-	;String sName = akTarget.GetActorBase().GetName()
-	;If sName == ""
-	;	sName = akTarget.GetLeveledActorBase().GetName()
-	;EndIf
-	;FW_log.WriteLog("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
-	;Debug.Notification("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
-	If akTarget.Is3DLoaded() ;Tkc (Loverslab): optimization
-	else;If !akTarget.Is3DLoaded() ;In my tests BeeingFemale effects fail to get applied if the character is not 3D Loaded
-		Return
-	EndIf
-	;If akTarget.GetFormID() < 4278190080;Exclude Temporary References (FormID > 0xFF000000)
-		If akTarget.HasSpell(BeeingFemaleSpell)
-			if akTarget.HasMagicEffect(BeeingFemaleSpell.GetNthEffectMagicEffect(0))
-			else;if !akTarget.HasMagicEffect(BeeingFemaleSpell.GetNthEffectMagicEffect(0))
-				;FW_log.WriteLog("BF: " + sName + " has Female Spell but not the Effect - removed")
-				akTarget.RemoveSpell(BeeingFemaleSpell)
-				;Utility.WaitMenuMode(0.5)
-			endif
-			Return
-		endif
-		if akTarget.HasSpell(BeeingMaleSpell)
-			if akTarget.HasMagicEffect(BeeingMaleSpell.GetNthEffectMagicEffect(0))
-			else;if !akTarget.HasMagicEffect(BeeingMaleSpell.GetNthEffectMagicEffect(0))
-				;FW_log.WriteLog("BF: " + sName + " has Male Spell but not the Effect - removed")
-				akTarget.RemoveSpell(BeeingMaleSpell)
-				;Utility.WaitMenuMode(0.5)
-			endif
-			Return
-		endif
-		
-		If ValidateActor(akTarget)
-			If System.IsValidateMaleActor(akTarget) > 0;(akTarget.GetLeveledActorBase().GetSex() == 0)
-				if akTarget.HasSpell(BeeingMaleSpell) ;Tkc (Loverslab): optimization
-				else;if akTarget.HasSpell(BeeingMaleSpell)==false
-					;FW_log.WriteLog("BF: "+ sName + " is male - Add BeeingMaleSpell")
-					akTarget.AddSpell(BeeingMaleSpell)
-				endif
-			ElseIf (akTarget.GetLeveledActorBase().IsUnique())
-				;if akTarget.HasSpell(BeeingFemaleSpell)==false  && System.IsValidateFemaleActor(akTarget) > 0
-				if akTarget.HasSpell(BeeingFemaleSpell) ;Tkc (Loverslab): optimization
-				else
-				if System.IsValidateFemaleActor(akTarget) > 0
-					;FW_log.WriteLog("BF: " + sName + " is female unique - Add BeeingFemaleSpell")
-					akTarget.AddSpell(BeeingFemaleSpell)
-				endif
-				endif
-			ElseIf BeeingNUFemaleSpell
-				if akTarget.HasSpell(BeeingNUFemaleSpell)
-				else;if akTarget.HasSpell(BeeingNUFemaleSpell)==false 
-					;FW_log.WriteLog("BF: " + sName + " is female non-unique - Add BeeingNUFemaleSpell")
-					akTarget.AddSpell(BeeingNUFemaleSpell)
-				endif
-			EndIf
-		Endif
-	;EndIf
-	Utility.WaitMenuMode(0.5) ;Throttle Process
-/;;;;;;;;;;;
-	;Tkc (Loverslab) rewrited for quest aliases scan
-	if akTarget; Tkc (Loverslab): skip if empty alias
-		;String sName = akTarget.GetActorBase().GetName()
-		;If sName == ""
-		;	sName = akTarget.GetLeveledActorBase().GetName()
-		;EndIf
-		;FW_log.WriteLog("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
-		;Debug.Notification("BF: " + sName+ " " + akTarget as string + " is in ProcessActor.")
-		if IsFemale		
-			;If (akTarget.GetLeveledActorBase().IsUnique())
-				if akTarget.HasSpell(BeeingFemaleSpell)
-					;FW_log.WriteLog("BF: " + sName + " has Female Spell but not the Effect - removed")
-					akTarget.RemoveSpell(BeeingFemaleSpell)
-					Return
-				else;if akTarget.HasSpell(BeeingFemaleSpell)==false
-					;FW_log.WriteLog("BF: " + sName + " is female unique - Add BeeingFemaleSpell")
-					akTarget.AddSpell(BeeingFemaleSpell)
-				endif
-;			Else;If BeeingNUFemaleSpell
-;				if akTarget.HasSpell(BeeingNUFemaleSpell)
-;					akTarget.RemoveSpell(BeeingNUFemaleSpell)
-;					Return
-;				else;if akTarget.HasSpell(BeeingNUFemaleSpell)==false 
-;					;FW_log.WriteLog("BF: " + sName + " is female non-unique - Add BeeingNUFemaleSpell")
-;					akTarget.AddSpell(BeeingNUFemaleSpell)
-;				endif
-;			Endif
-		else			
-			if akTarget.HasSpell(BeeingMaleSpell)
-				;FW_log.WriteLog("BF: " + sName + " has Female Spell but not the Effect - removed")
-				akTarget.RemoveSpell(BeeingFemaleSpell)
+; Quest alias conditions (FindActors) pre-filter: Is3DLoaded, IsChild, IsInCombat, HasMagicEffect BF/BM, distance, race, etc.
+; Actors reaching here have the spell but its effect is not running, or need the spell added.
+; Removes opposite spell on add to handle gender-change scenarios.
+Function ProcessActor(Actor akTarget, bool IsFemale = true)
+	if akTarget
+		if IsFemale
+			if akTarget.HasSpell(BeeingFemaleSpell)
+				akTarget.RemoveSpell(BeeingFemaleSpell) ; effect not running, remove so it re-applies next cycle
 				Return
-			else;if akTarget.HasSpell(BeeingMaleSpell)==false
-				;FW_log.WriteLog("BF: "+ sName + " is male - Add BeeingMaleSpell")
+			else
+				akTarget.AddSpell(BeeingFemaleSpell)
+				akTarget.RemoveSpell(BeeingMaleSpell)
+			endif
+		else
+			if akTarget.HasSpell(BeeingMaleSpell)
+				akTarget.RemoveSpell(BeeingMaleSpell) ; effect not running, remove so it re-applies next cycle
+				Return
+			else
 				akTarget.AddSpell(BeeingMaleSpell)
+				akTarget.RemoveSpell(BeeingFemaleSpell)
 			endif
 		Endif
-		Utility.WaitMenuMode(0.5) ;Throttle Process
+		Utility.WaitMenuMode(0.5)
 	Endif
-;;;;;;;;;
 EndFunction
-
-;/Bool Function ValidateActor(Actor akActor)
-	;Return (!akActor.IsChild() && akActor.GetRace() != ElderRace && akActor.GetRace() != ElderRaceVampire)
-	if akActor.IsChild()
-	else;!akActor.IsChild()
-		race r = akActor.GetRace()
-		if r == ElderRace
-		else;akActor.GetRace() != ElderRace
-			if r == ElderRaceVampire
-			else;akActor.GetRace() != ElderRaceVampire)
-				Return true
-			endif
-		endif
-	endif
-	Return false
-EndFunction/; 
 
 State Processing
 
@@ -311,7 +200,7 @@ State Processing
 			;;All equal conditions in the script do not need anymore		
 			FindActors.Start()
 			Utility.Wait(0.5)
-			Int iActorIdx = 7 ;FoundFemales.Length
+			Int iActorIdx = FoundFemales.Length
 				;debug.trace("BF: Checking " + iActorIdx + " males and females for BF spells")
 			While iActorIdx
 				iActorIdx -=1
@@ -341,5 +230,3 @@ State Processing
 	EndEvent
 
 EndState
-
-; 07.06.2019 Loverslab Tkc fix and code optimizations. Changes marked with " ;Tkc (Loverslab): optimization" comment. Rewrited for scan with quest aliases

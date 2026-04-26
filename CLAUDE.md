@@ -13,6 +13,10 @@ xmake f -m release && xmake        # -> dist/Core/skse/plugins/BeeingFemale.dll
 # Sources: dist/Core/source/scripts/*.psc -> dist/Core/scripts/*.pex
 ```
 
+## Important: CK-Filled Properties
+
+Script properties filled via the Creation Kit (CK) in the ESP/ESM must NOT be removed from `.psc` files even if unused in code. Removing them breaks the form binding. To clean up, you must also clear the property in the ESP. When in doubt, leave them as dead weight.
+
 ## Papyrus Language Notes
 
 ### Reserved keywords (case-insensitive, cannot be used as identifiers)
