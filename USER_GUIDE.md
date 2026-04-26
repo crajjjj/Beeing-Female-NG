@@ -146,12 +146,56 @@ After all children are delivered, the mother enters the **Replenish** phase (Sta
 ## Children
 
 Spawned children are interactive NPCs that can:
-- **Follow** you, **wait**, or **go home**
-- **Grow** over time (configurable growth duration and final size)
+- **Follow** you, **wait**, or **go home** via dialogue
+- **Grow** over time from baby to full size
 - **Learn spells** from spell books given to them
-- **Level up** as the player levels
+- **Level up** as the player levels (capped at player level or the configured max)
 
 Children inherit their race from the father (configurable per-race via addons) and are named randomly from the name database in `Data/BeeingFemale/Names/`.
+
+### Growth System
+
+Children start small and grow linearly to their final size over a configurable period.
+
+- **Starting scale**: small baby size (set per-race via addon, typically ~0.3--0.6)
+- **Final scale**: adult size (set per-race via addon, typically 1.0)
+- **Growth duration**: controlled by the MCM slider "Mature Time in Days" (default 50 days), scaled by the addon `MatureTimeScale` multiplier for the parent's race
+- Growth is checked every 5 in-game hours
+- Once fully grown, the child is registered with SexLab/BF if applicable and stops growing
+
+The growth formula is linear interpolation:
+
+```
+current_scale = starting_scale + ((final_scale - starting_scale) / growth_duration) * age_in_days
+```
+
+### Baby Items Growing to Children
+
+When the baby spawn mode is set to "Item/Actor" (mode 2), humanoid babies are spawned as inventory items (carried by the mother). For the **player character only**, these baby items will automatically convert into child actor NPCs once the growth time has elapsed. This does not apply to NPC mothers -- their baby items remain as items.
+
+### Child Commands
+
+Talk to a child to give orders:
+
+| Command | What It Does |
+|---------|-------------|
+| Follow me | Child follows you as a teammate |
+| Wait here | Child stays in place |
+| Go home | Child returns to their home location |
+| Stay close / Stay back | Adjusts follow distance |
+| Pick that up | Child loots a nearby container or item |
+| Sleep | Child goes to bed if one is nearby |
+
+### MCM Settings (Children Page)
+
+| Setting | Default | What It Does |
+|---------|---------|-------------|
+| Baby Spawn (Player) | Actor | How babies appear: none, actor, item/actor, or gem |
+| Baby Spawn (NPC) | Actor | Same for NPCs |
+| Mature Time | 50 days | How long until a child reaches full size |
+| Children May Cry | On | Children make crying sounds |
+| BabyTracker Tattoos | Off | SlaveTats tally marks for babies born |
+| Semen Circle Tattoos | Off | SlaveTats indicator when sperm is present |
 
 ---
 
