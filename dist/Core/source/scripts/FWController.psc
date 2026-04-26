@@ -1156,13 +1156,8 @@ function GiveBirth(actor Mother)
 		System.PlayPainSound(Mother,40)
 		System.DoDamage(Mother, 11 * DamageScale ,10)
 	endIf
-	; Raise the values
-	int NumBirth = StorageUtil.GetIntValue(Mother,"FW.NumBirth")
-	int NumBabys = StorageUtil.GetIntValue(Mother,"FW.NumBabys")
-	NumBirth+=1
-	NumBabys+=NumChilds
-	StorageUtil.SetIntValue(Mother,"FW.NumBirth",NumBirth)
-	StorageUtil.SetIntValue(Mother,"FW.NumBabys",NumBabys)
+	; Raise the birth count (baby count is incremented per live birth in the loop below)
+	StorageUtil.SetIntValue(Mother,"FW.NumBirth", StorageUtil.GetIntValue(Mother,"FW.NumBirth") + 1)
 
 	if(my_BirthPain)
 		System.ActorAddSpellOpt(Mother,Effect_VaginalBloodLow,false,true)
@@ -1231,6 +1226,7 @@ function GiveBirth(actor Mother)
 			endif
 			FW_log.WriteLog("FWController.GiveBirth: spawning child index " + NumChilds + ", father = " + ChildFather[NumChilds] + ", childFatherRace = " + childFatherRace + ", childFatherRaceCount = " + StorageUtil.FormListCount(Mother, "FW.ChildFatherRace"))
 			System.SpawnChild(Mother,ChildFather[NumChilds],childFatherRace)
+			StorageUtil.SetIntValue(Mother,"FW.NumBabys", StorageUtil.GetIntValue(Mother,"FW.NumBabys",0) + 1)
 		else
 			System.Message("You've born a dead child...", System.MSG_ALWAYS)
 			; Child is death >.<
@@ -1305,13 +1301,13 @@ function ApplyBabyTrackerTattoos(actor Mother)
 	if Game.GetModByName("SlaveTats.esp") == 255
 		return
 	endif
-	int births = StorageUtil.GetIntValue(Mother, "FW.NumBirth", 0)
-	if births <= 0
+	int babys = StorageUtil.GetIntValue(Mother, "FW.NumBabys", 0)
+	if babys <= 0
 		return
 	endif
 	RemoveBabyTrackerTattoos(Mother)
 	; Compose tattoos from available denominations: 12, 8, 4, 3, 2, 1
-	int remaining = births
+	int remaining = babys
 	if remaining >= 12
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby12", 0, true, true)
 		remaining -= 12
@@ -1360,29 +1356,48 @@ function ApplySemenCircleTattoo(actor Woman)
 	if Game.GetModByName("SlaveTats.esp") == 255
 		return
 	endif
-	; Remove both semen tattoos first
-	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
-	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
-	; Check if there is significant sperm
+	; Check if there is visible sperm (matches MCM info page criteria)
 	bool hasCum = false
+	float currentTime = GameDaysPassed.GetValue()
 	int sa = StorageUtil.FormListCount(Woman, "FW.SpermName")
 	while sa > 0
 		sa -= 1
-		if StorageUtil.FloatListGet(Woman, "FW.SpermAmount", sa) > 0.01
-			hasCum = true
-			sa = 0
+		if StorageUtil.FloatListGet(Woman, "FW.SpermAmount", sa) >= Sperm_Min_Amount_For_Impregnation
+			if StorageUtil.FormListGet(Woman, "FW.SpermName", sa) as Actor
+				if currentTime - StorageUtil.FloatListGet(Woman, "FW.SpermTime", sa) <= cfg.SpermDuration
+					hasCum = true
+					sa = 0
+				endif
+			endif
 		endif
 	endWhile
-	if !hasCum
+	; Determine desired tattoo: 0=none, 1=regular, 2=hearts
+	int desired = 0
+	if hasCum
+		int cycleState = StorageUtil.GetIntValue(Woman, "FW.CurrentState", 0)
+		if cycleState == 1
+			desired = 2
+		else
+			desired = 1
+		endif
+	endif
+	; Compare with current state to avoid unnecessary SlaveTats calls
+	int current = StorageUtil.GetIntValue(Woman, "FW.SemenTattooState", 0)
+	if desired == current
 		return
 	endif
-	; Hearts version during fertile states (ovulation=1), regular otherwise
-	int cycleState = StorageUtil.GetIntValue(Woman, "FW.CurrentState", 0)
-	if cycleState == 1
-		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", 0, true, true)
-	else
-		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_semen", 0, true, true)
+	; State changed — update tattoos
+	if current == 1
+		SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
+	elseif current == 2
+		SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
 	endif
+	if desired == 1
+		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_semen", 0, true, true)
+	elseif desired == 2
+		SlaveTats.simple_add_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", 0, true, true)
+	endif
+	StorageUtil.SetIntValue(Woman, "FW.SemenTattooState", desired)
 endFunction
 
 function RemoveSemenCircleTattoo(actor Woman)
@@ -1394,6 +1409,7 @@ function RemoveSemenCircleTattoo(actor Woman)
 	endif
 	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
 	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
+	StorageUtil.SetIntValue(Woman, "FW.SemenTattooState", 0)
 endFunction
 
 ; Forcing a Belly-Refresh for the given actor

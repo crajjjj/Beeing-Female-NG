@@ -409,6 +409,9 @@ event OnUpdateGameTime()
 	 endif
 	endif
 	OnUpdateFunction()
+	if IsPlayer
+		Controller.ApplySemenCircleTattoo(ActorRef)
+	endif
 	FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime("+ActorRef.GetLeveledActorBase().GetName()+") " + (Utility.GetCurrentRealTime() - startTime) + " sec")
 	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime end - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState + " percent=" + CurrentStatePercent)
 	Utility.WaitMenuMode(1)

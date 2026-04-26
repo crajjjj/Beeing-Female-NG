@@ -2042,10 +2042,12 @@ function InstantBornChilds(actor a)
 		return
 	endif
 	float BabyHealth = StorageUtil.GetFloatValue(a,"FW.UnbornHealth",100.0)
+	int spawnedCount = 0
 	while numChilds>0
 		numChilds-=1
 		float rndHealth=Utility.RandomFloat(1,25)
 		if BabyHealth>rndHealth
+			spawnedCount += 1
 			race tempFatherRace = none
 			if StorageUtil.FormListCount(a, "FW.ChildFatherRace") > numChilds
 				tempFatherRace = StorageUtil.FormListGet(a, "FW.ChildFatherRace", numChilds) as race
@@ -2056,6 +2058,8 @@ function InstantBornChilds(actor a)
 			; Totgeburt
 		endIf
 	endWhile
+	StorageUtil.SetIntValue(a, "FW.NumBirth", StorageUtil.GetIntValue(a,"FW.NumBirth",0) + 1)
+	StorageUtil.SetIntValue(a, "FW.NumBabys", StorageUtil.GetIntValue(a,"FW.NumBabys",0) + spawnedCount)
 	FWUtility.ClearChildFathers(a)
 	StorageUtil.SetIntValue(a,"FW.NumChilds",0)
 	StorageUtil.UnsetIntValue(a,"FW.Abortus")
@@ -2603,8 +2607,7 @@ endfunction
 ;--------------------------------------------------------------------------------
 
 function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
-	int BabysForTheActor = StorageUtil.GetIntValue(Mother,"FW.NumBabys",0)
-	StorageUtil.SetIntValue(Mother,"FW.NumBabys",BabysForTheActor + 1)
+	; FW.NumBabys is already incremented in GiveBirth/InstantBornChilds
 	;if Mother!=PlayerRef && cfg.NPCBornChild==false
 	bool isPlayerInvolved = (Mother == PlayerRef || Father == PlayerRef)
 	if !isPlayerInvolved && !cfg.NPCBornChild
