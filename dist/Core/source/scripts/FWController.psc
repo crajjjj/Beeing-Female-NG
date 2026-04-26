@@ -3288,7 +3288,7 @@ float function GetVirility(actor Male)
 		if LastSexTime<=0.0
 			virility = 1.0
 		else
-			virility = FWUtility.ClampFloat(GameDaysPassed.GetValue() - LastSexTime / (cfg.MaleVirilityRecovery * Manager.ActorMaleRecoveryScale(Male)), 0.02, 1.0)
+			virility = FWUtility.ClampFloat((GameDaysPassed.GetValue() - LastSexTime) / (cfg.MaleVirilityRecovery * Manager.ActorMaleRecoveryScale(Male)), 0.02, 1.0)
 		endif
 	else
 		virility = 1.0
