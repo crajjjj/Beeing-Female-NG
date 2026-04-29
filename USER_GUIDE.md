@@ -191,7 +191,7 @@ Children inherit their race from the father (configurable per-race via addons) a
 Children start small and grow linearly to their final size over a configurable period.
 
 - **Starting scale**: small baby size (set per-race via addon, typically ~0.3--0.6)
-- **Final scale**: adult size (set per-race via addon, typically 1.0)
+- **Final scale**: full size (set per-race via addon, typically 1.0)
 - **Growth duration**: controlled by the MCM slider "Mature Time in Days" (default 50 days), scaled by the addon `MatureTimeScale` multiplier for the parent's race
 - Growth is checked every 5 in-game hours
 - Once fully grown, the child is registered with SexLab/BF if applicable and stops growing
@@ -201,6 +201,18 @@ The growth formula is linear interpolation:
 ```
 current_scale = starting_scale + ((final_scale - starting_scale) / growth_duration) * age_in_days
 ```
+
+### Scale Growth vs. Model Appearance
+
+Growth in Beeing Female is **scale-based only** -- the child's actor model does not change during growth. What the child looks like depends on which actor base was used at birth:
+
+- **With a child model pack** (BFACCA_SE_Opt, BFASE_RSChildren_SE_Opt, or similar): the child is spawned using a proper child-race actor base from the pack. These packs are designed so that at full scale the child looks appropriately grown. Some packs provide staged models that swap appearance at growth milestones.
+
+- **Without a child model pack**: the mod falls back to using the parent's adult actor base scaled down small. As the child grows, the scale increases and at scale 1.0 they look like a normal adult NPC. This works but the child will look like a small adult during the growth period rather than an actual child.
+
+- **With the base BeeingFemale.esm fallback actors**: the ESP ships default child actor bases (child-race NPCs). These will always look like children regardless of scale -- reaching scale 1.0 means a normal-sized child, not an adult. They will **not** visually transform into adults.
+
+If you want children that visibly grow from child to adult appearance, install a child model addon pack. The recommended packs are listed on the mod page. Without one, the growth system only affects the actor's scale, not their visual model.
 
 ### Baby Items Growing to Children
 
