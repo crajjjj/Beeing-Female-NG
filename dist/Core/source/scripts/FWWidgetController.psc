@@ -47,6 +47,11 @@ function updateConfig()
 	endif
 endFunction
 
+Event OnPlayerLoadGame()
+	_shown = false
+	updateConfig()
+EndEvent
+
 
 
 function updatePositions()

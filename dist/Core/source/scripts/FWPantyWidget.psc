@@ -56,9 +56,14 @@ bool property Shown hidden
 
 	function set(bool value)
 		if value;/ == true/; && CFG_Enabled
-			ShowWidget()
+			if _shown
+			else
+				ShowWidget()
+			endif
 		else;if value == false ;Tkc (Loverslab) optimization
-			HideWidget()
+			if _shown
+				HideWidget()
+			endif
 		endif
 		_shown = value
 	endFunction
