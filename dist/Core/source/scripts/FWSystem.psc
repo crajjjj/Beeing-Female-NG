@@ -467,6 +467,9 @@ function SetImportantItems()
 	ModEnabled = Game.GetFormFromFile(0x1260D, "BeeingFemale.esm") as GlobalVariable
 	CloakingSpellEnabled = Game.GetFormFromFile(0x1DA6, "BeeingFemale.esm") as GlobalVariable
 	Progress = Game.GetFormFromFile(0x6590D, "BeeingFemale.esm") as FWProgressWidget
+	if Progress
+		Progress.hideWidget() ; clear stale progress bar from crash during NPC refresh
+	endif
 	StateWidget = Game.GetFormFromFile(0x17C43, "BeeingFemale.esm") as FWStateWidget
 	WidgetController = Game.GetFormFromFile(0x2BB48, "BeeingFemale.esm") as FWWidgetController
 	BabyHealthWidget = Game.GetFormFromFile(0x1972F, "BeeingFemale.esm") as FWBabyHealthWidget
