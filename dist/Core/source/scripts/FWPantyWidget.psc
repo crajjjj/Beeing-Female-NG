@@ -195,42 +195,26 @@ function UpdateContent()
 	HAnchor = CFG_HAnchor
 	VAnchor = CFG_VAnchor
 	
-	if System ;Tkc (Loverslab) optimization
-	else;if System==none
-		FW_log.WriteLog("FWPantyWidget::UpdateContent - System is none")
+	if !System
+		Shown = false
+		return
 	endif
-	if Sanitary_Napkin_Bloody ;Tkc (Loverslab) optimization
-	else;if System.Sanitary_Napkin_Bloody == none
-		FW_log.WriteLog("FWPantyWidget::UpdateContent - Sanitary_Napkin_Bloody is none")
-	endif
-	if Tampon_Bloody ;Tkc (Loverslab) optimization
-	else;if System.Tampon_Bloody == none
-		FW_log.WriteLog("FWPantyWidget::UpdateContent - Tampon_Bloody is none")
-	endif
-	if Sanitary_Napkin_Normal ;Tkc (Loverslab) optimization
-	else;if System.Sanitary_Napkin_Normal == none
-		FW_log.WriteLog("FWPantyWidget::UpdateContent - Sanitary_Napkin_Normal is none")
-	endif
-	if Tampon_Normal ;Tkc (Loverslab) optimization
-	else;if System.Tampon_Normal == none
-		FW_log.WriteLog("FWPantyWidget::UpdateContent - Tampon_Normal is none")
-	endif
-	
-	if System;/!=none/;
+
 	if System.Player && GlobalMenstruating.GetValue() As int == 1 ; Check if female player
-		if PlayerRef.GetWornForm(Sanitary_Napkin_Bloody.GetSlotMask()) == Sanitary_Napkin_Bloody
-			Icon = STATUS_BLOODY
-			Shown = true
-		elseif PlayerRef.GetWornForm(Tampon_Bloody.GetSlotMask())  == Tampon_Bloody
+		bool isBloody = false
+		if Sanitary_Napkin_Bloody && PlayerRef.GetWornForm(Sanitary_Napkin_Bloody.GetSlotMask()) == Sanitary_Napkin_Bloody
+			isBloody = true
+		elseif Tampon_Bloody && PlayerRef.GetWornForm(Tampon_Bloody.GetSlotMask()) == Tampon_Bloody
+			isBloody = true
+		endif
+		if isBloody
 			Icon = STATUS_BLOODY
 			Shown = true
 		elseif System.Player.currentState == 3 ; If menstruating
-			if PlayerRef.GetWornForm(Sanitary_Napkin_Normal.GetSlotMask()) == Sanitary_Napkin_Normal
-				; Wearing normal panties
+			if Sanitary_Napkin_Normal && PlayerRef.GetWornForm(Sanitary_Napkin_Normal.GetSlotMask()) == Sanitary_Napkin_Normal
 				Icon = STATUS_NORMAL
 				Shown = false
-			elseif PlayerRef.GetWornForm(Tampon_Normal.GetSlotMask()) == Tampon_Normal
-				; Wearing Tampon
+			elseif Tampon_Normal && PlayerRef.GetWornForm(Tampon_Normal.GetSlotMask()) == Tampon_Normal
 				Icon = STATUS_NORMAL
 				Shown = false
 			else
@@ -246,7 +230,6 @@ function UpdateContent()
 	else
 		Icon = STATUS_NORMAL
 		Shown = false
-	endif
 	endif
 endFunction
 
