@@ -2154,10 +2154,11 @@ state Luteal_State
 				if Controller.canBecomePMS(ActorRef)
 					System.Message("Cast PMS for "+ActorRef.GetLeveledActorBase().GetName(), System.MSG_Debug )
 					Manager.castCME(ActorRef,3,cfg.PMSEffects)
+					Controller.StartPMSArousalDebuff(ActorRef)
 					bHasPMS=true
 				endIf
 			endIf
-			
+
 			if(cfg.NPCHaveItems)
 				; Check for Tampons
 				;if !isPlayer && ActorRef.GetItemCount(System.Tampon_Normal)<=2  ;***Edit by Bane
@@ -2184,6 +2185,7 @@ state Luteal_State
 					bHasPMS=true
 					System.Message("Cast PMS for "+ActorRef.GetLeveledActorBase().GetName(), System.MSG_Debug )
 					Manager.castCME(ActorRef,3,cfg.PMSEffects)
+					Controller.StartPMSArousalDebuff(ActorRef)
 					System.Message("Casted", System.MSG_Debug )
 				endIf
 			endIf
@@ -2197,6 +2199,7 @@ state Luteal_State
 		; Remove PMS
 		Manager.RemoveCME(ActorRef,2) ; Lutheal Effects
 		Manager.removeCME(ActorRef,3) ; PMS Effects
+		Controller.StopPMSArousalDebuff(ActorRef)
 		bHasPMS=false
 	endFunction
 endState
@@ -2211,6 +2214,7 @@ state Menstruation_State
 		System.ActorAddSpellOpt(ActorRef,Effect_MenstruationCramps, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 		Manager.removeCME(ActorRef,3)
 		Manager.removeCME(ActorRef,2)
+		Controller.StopPMSArousalDebuff(ActorRef)
 		Manager.CastCME(ActorRef,4,cfg.PMSEffects)
 		bHasPMS=false
 		if IsPlayer ;Tkc (Loverslab): show widged when state was changed

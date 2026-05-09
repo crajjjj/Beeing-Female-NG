@@ -1344,6 +1344,45 @@ function StopOvulationArousal(actor Woman)
 	endif
 endFunction
 
+function StartPMSArousalDebuff(actor Woman)
+	if !cfg.PMSArousalDebuffEnabled || !Woman
+		return
+	endif
+	if !IsSlaPresent()
+		return
+	endif
+	; Flat negative effect that stays until cleared (functionId=0)
+	int handle = ModEvent.Create("slaSetArousalEffect")
+	if handle
+		ModEvent.PushForm(handle, Woman)
+		ModEvent.PushString(handle, "BF_PMS")
+		ModEvent.PushFloat(handle, 0.0 - cfg.PMSArousalPenalty)         ; initial delta = -penalty
+		ModEvent.PushInt(handle, 0)                                      ; functionId 0 = stays at value
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.Send(handle)
+	endif
+endFunction
+
+function StopPMSArousalDebuff(actor Woman)
+	if !Woman
+		return
+	endif
+	if !IsSlaPresent()
+		return
+	endif
+	int handle = ModEvent.Create("slaSetArousalEffect")
+	if handle
+		ModEvent.PushForm(handle, Woman)
+		ModEvent.PushString(handle, "BF_PMS")
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.PushInt(handle, 0)
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.Send(handle)
+	endif
+endFunction
+
 ; BabyTracker SlaveTats integration
 function ApplyBabyTrackerTattoos(actor Mother)
 	if !cfg.BabyTrackerTattoos || !Mother

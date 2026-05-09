@@ -75,6 +75,8 @@ float Property MenstrualCramps = 35.0 Auto Hidden
 bool  Property OvulationArousalEnabled = true Auto Hidden
 float Property OvulationArousalRate = 5.0 Auto Hidden
 float Property OvulationArousalCap = 100.0 Auto Hidden
+bool  Property PMSArousalDebuffEnabled = true Auto Hidden
+float Property PMSArousalPenalty = 30.0 Auto Hidden
 int   Property PMSEffects = 6 Auto Hidden
 float property irregulationChance = 9.0 auto hidden
 float Property ConceiveChance = 40.0 Auto Hidden
@@ -168,6 +170,8 @@ float MenstrualCrampsDef = 35.0
 bool  OvulationArousalEnabledDef = true
 float OvulationArousalRateDef = 5.0
 float OvulationArousalCapDef = 100.0
+bool  PMSArousalDebuffEnabledDef = true
+float PMSArousalPenaltyDef = 30.0
 int PMSEffectsDef = 6
 float irregulationChanceDef = 4.0
 float ConceiveChanceDef = 40.0
@@ -812,6 +816,8 @@ function LoadProfile(string File)
 	OvulationArousalEnabled = JsonUtil.GetIntValue(s, "CYCLE_OvulationArousal_Enabled", FWUtility.SwitchInt(OvulationArousalEnabled,1,0))==1
 	OvulationArousalRate = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
 	OvulationArousalCap = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
+	PMSArousalDebuffEnabled = JsonUtil.GetIntValue(s, "CYCLE_PMSArousalDebuff_Enabled", FWUtility.SwitchInt(PMSArousalDebuffEnabled,1,0))==1
+	PMSArousalPenalty = JsonUtil.GetFloatValue(s, "CYCLE_PMSArousalDebuff_Penalty", PMSArousalPenalty)
 	PMSEffects = JsonUtil.GetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	irregulationChance = JsonUtil.GetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
 	ConceiveChance = JsonUtil.GetFloatValue(s, "CYCLE_ConceiveChance_Player", ConceiveChance)
@@ -951,6 +957,8 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetIntValue(s, "CYCLE_OvulationArousal_Enabled", FWUtility.SwitchInt(OvulationArousalEnabled,1,0))
 	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
 	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
+	JsonUtil.SetIntValue(s, "CYCLE_PMSArousalDebuff_Enabled", FWUtility.SwitchInt(PMSArousalDebuffEnabled,1,0))
+	JsonUtil.SetFloatValue(s, "CYCLE_PMSArousalDebuff_Penalty", PMSArousalPenalty)
 	JsonUtil.SetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	JsonUtil.SetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
 	JsonUtil.SetFloatValue(s, "CYCLE_ConceiveChance_Player", ConceiveChance)
@@ -2374,6 +2382,8 @@ Event OnPageReset(string page)
 		AddToggleOptionST("ToggleOvulationArousal", "$FW_MENU_CYCLE_OvulationArousal", OvulationArousalEnabled)
 		AddSliderOptionST("SliderOvulationArousalRate", "$FW_MENU_CYCLE_OvulationArousalRate", OvulationArousalRate, "{1}/h", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		AddSliderOptionST("SliderOvulationArousalCap", "$FW_MENU_CYCLE_OvulationArousalCap", OvulationArousalCap, "{0}", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
+		AddToggleOptionST("TogglePMSArousalDebuff", "$FW_MENU_CYCLE_PMSArousalDebuff", PMSArousalDebuffEnabled)
+		AddSliderOptionST("SliderPMSArousalPenalty", "$FW_MENU_CYCLE_PMSArousalPenalty", PMSArousalPenalty, "-{0}", SwitchInt(PMSArousalDebuffEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		
 		; Right column
 		SetCursorPosition(1)
@@ -4985,6 +4995,47 @@ State SliderOvulationArousalCap
 
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CYCLE_OvulationArousalCap")
+	EndEvent
+EndState
+
+State TogglePMSArousalDebuff
+	Event OnSelectST()
+		PMSArousalDebuffEnabled = !PMSArousalDebuffEnabled
+		SetToggleOptionValueST(PMSArousalDebuffEnabled)
+		ForcePageReset()
+	EndEvent
+
+	Event OnDefaultST()
+		PMSArousalDebuffEnabled = PMSArousalDebuffEnabledDef
+		SetToggleOptionValueST(PMSArousalDebuffEnabled)
+		ForcePageReset()
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_PMSArousalDebuff")
+	EndEvent
+EndState
+
+State SliderPMSArousalPenalty
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(PMSArousalPenalty)
+		SetSliderDialogDefaultValue(PMSArousalPenaltyDef)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(1)
+	EndEvent
+
+	Event OnSliderAcceptST(float value)
+		PMSArousalPenalty = value
+		SetSliderOptionValueST(PMSArousalPenalty, "-{0}")
+	EndEvent
+
+	Event OnDefaultST()
+		PMSArousalPenalty = PMSArousalPenaltyDef
+		SetSliderOptionValueST(PMSArousalPenalty, "-{0}")
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_PMSArousalPenalty")
 	EndEvent
 EndState
 
