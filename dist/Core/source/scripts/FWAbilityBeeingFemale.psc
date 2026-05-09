@@ -209,10 +209,13 @@ Event OnPlayerLoadGame()
 		Self.UnregisterForModEvent("BeeingFemale")
 		Self.RegisterForModEvent("BeeingFemale", "BeeingFemale")
 		Self.RegisterForSleep()
+		; Always resync Papyrus state with FW.CurrentState on load — a previous
+		; session may have saved with state machine desynced (stale nextState,
+		; mismatched Self.GetState()). InitState() rebuilds it from currentState.
+		InitValues()
+		InitState()
 		if oldUpdateDelay>0
 			Self.RegisterForSingleUpdateGameTime(oldUpdateDelay)
-		else
-			InitState()
 		endif
 		getLastSeenNPCs()
 	 endif
@@ -496,6 +499,7 @@ function GetStorageVariable()
 	NumChilds = StorageUtil.GetIntValue(ActorRef,"FW.NumChilds",0)
 	AbortusTime = StorageUtil.GetFloatValue(ActorRef,"FW.AbortusTime",0.0)
 	abortus = StorageUtil.GetIntValue(ActorRef, "FW.Abortus",0)
+	RefreshNextState()
 endFunction
 
 function InitState()
@@ -614,14 +618,58 @@ function changeState(int NewState)
 		return
 	endif
 	FW_log.WriteLog("FWAbilityBeeingFemale.changeState: " + ActorRef + " state " + currentState + " -> " + NewState)
-	currentState=NewState
-	StorageUtil.SetIntValue(ActorRef,"FW.CurrentState",currentState)
-	StorageUtil.SetFloatValue(ActorRef,"FW.StateEnterTime", GameDaysPassed.GetValue())
-	StorageUtil.SetFloatValue(ActorRef,"FW.LastUpdate",GameDaysPassed.GetValue())
+	; Commit StateEnterTime BEFORE CurrentState so any re-entrant OnUpdateGameTime
+	; that observes the new currentState also sees the matching enter time.
+	float now = GameDaysPassed.GetValue()
+	StorageUtil.SetFloatValue(ActorRef,"FW.StateEnterTime", now)
+	StorageUtil.SetFloatValue(ActorRef,"FW.LastUpdate", now)
+	stateEnterTime = now
+	StorageUtil.SetIntValue(ActorRef,"FW.CurrentState",NewState)
+	currentState = NewState
+	RefreshNextState()
 	if System && System.Controller
 		System.Controller.UpdateParentFaction(ActorRef)
 	endif
 	InitState()
+endFunction
+
+; Recompute nextState purely from currentState. Mirrors the InitState lookup
+; table so a stale persisted nextState (e.g. 0 from a prior Menstruation cycle)
+; can't drive an out-of-band changeState into the wrong phase.
+function RefreshNextState()
+	if currentState < 5
+		if currentState < 2
+			if currentState == 0
+				nextState = 1
+			else
+				nextState = 2
+			endIf
+		else
+			if currentState < 4
+				if currentState == 2
+					nextState = 3
+				else
+					nextState = 0
+				endIf
+			else
+				nextState = 5
+			endIf
+		endIf
+	else
+		if currentState < 7
+			if currentState == 5
+				nextState = 6
+			else
+				nextState = 7
+			endIf
+		else
+			if currentState == 7
+				nextState = 8
+			else
+				nextState = 0
+			endIf
+		endIf
+	endIf
 endFunction
 
 function castStateSpell()
@@ -1960,8 +2008,6 @@ state Ovulation_State
 		else
 			System.ActorAddSpellOpt(ActorRef,Effect_Mittelschmerz, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 		endif
-
-		Controller.TickOvulationArousal(ActorRef, oldUpdateDelay * 24.0)
 
 		actor a = none
 		race abr = none

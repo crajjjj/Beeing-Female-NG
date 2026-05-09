@@ -4,11 +4,13 @@ Skyrim SE mod: female reproductive cycle simulation with pregnancy, birth, and c
 
 ## Build
 
+**Do NOT compile. The user compiles Papyrus scripts and the C++ plugin themselves — never invoke `PapyrusCompiler.exe`, `xmake`, or any build tool to verify changes.** Edit `.psc` / C++ sources, then stop. Verify correctness by reading the code, not by building.
+
 ```sh
-# C++ plugin (xmake 2.9.5+, MSVC v143)
+# C++ plugin (xmake 2.9.5+, MSVC v143)  -- user-run only
 xmake f -m release && xmake        # -> dist/Core/skse/plugins/BeeingFemale.dll
 
-# Papyrus scripts (Skyrim SE compiler)
+# Papyrus scripts (Skyrim SE compiler) -- user-run only
 # Project file: skyrimse.ppj
 # Sources: dist/Core/source/scripts/*.psc -> dist/Core/scripts/*.pex
 ```

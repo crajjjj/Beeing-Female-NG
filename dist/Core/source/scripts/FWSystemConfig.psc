@@ -76,6 +76,7 @@ bool  Property OvulationArousalEnabled = true Auto Hidden
 float Property OvulationArousalRate = 5.0 Auto Hidden
 float Property OvulationArousalCap = 100.0 Auto Hidden
 bool  Property PMSArousalDebuffEnabled = true Auto Hidden
+float Property PMSArousalRate = 5.0 Auto Hidden
 float Property PMSArousalPenalty = 30.0 Auto Hidden
 int   Property PMSEffects = 6 Auto Hidden
 float property irregulationChance = 9.0 auto hidden
@@ -171,6 +172,7 @@ bool  OvulationArousalEnabledDef = true
 float OvulationArousalRateDef = 5.0
 float OvulationArousalCapDef = 100.0
 bool  PMSArousalDebuffEnabledDef = true
+float PMSArousalRateDef = 5.0
 float PMSArousalPenaltyDef = 30.0
 int PMSEffectsDef = 6
 float irregulationChanceDef = 4.0
@@ -817,6 +819,7 @@ function LoadProfile(string File)
 	OvulationArousalRate = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
 	OvulationArousalCap = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
 	PMSArousalDebuffEnabled = JsonUtil.GetIntValue(s, "CYCLE_PMSArousalDebuff_Enabled", FWUtility.SwitchInt(PMSArousalDebuffEnabled,1,0))==1
+	PMSArousalRate = JsonUtil.GetFloatValue(s, "CYCLE_PMSArousalDebuff_Rate", PMSArousalRate)
 	PMSArousalPenalty = JsonUtil.GetFloatValue(s, "CYCLE_PMSArousalDebuff_Penalty", PMSArousalPenalty)
 	PMSEffects = JsonUtil.GetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	irregulationChance = JsonUtil.GetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
@@ -958,6 +961,7 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
 	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
 	JsonUtil.SetIntValue(s, "CYCLE_PMSArousalDebuff_Enabled", FWUtility.SwitchInt(PMSArousalDebuffEnabled,1,0))
+	JsonUtil.SetFloatValue(s, "CYCLE_PMSArousalDebuff_Rate", PMSArousalRate)
 	JsonUtil.SetFloatValue(s, "CYCLE_PMSArousalDebuff_Penalty", PMSArousalPenalty)
 	JsonUtil.SetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	JsonUtil.SetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
@@ -2383,6 +2387,7 @@ Event OnPageReset(string page)
 		AddSliderOptionST("SliderOvulationArousalRate", "$FW_MENU_CYCLE_OvulationArousalRate", OvulationArousalRate, "{1}/h", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		AddSliderOptionST("SliderOvulationArousalCap", "$FW_MENU_CYCLE_OvulationArousalCap", OvulationArousalCap, "{0}", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		AddToggleOptionST("TogglePMSArousalDebuff", "$FW_MENU_CYCLE_PMSArousalDebuff", PMSArousalDebuffEnabled)
+		AddSliderOptionST("SliderPMSArousalRate", "$FW_MENU_CYCLE_PMSArousalRate", PMSArousalRate, "-{1}/h", SwitchInt(PMSArousalDebuffEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		AddSliderOptionST("SliderPMSArousalPenalty", "$FW_MENU_CYCLE_PMSArousalPenalty", PMSArousalPenalty, "-{0}", SwitchInt(PMSArousalDebuffEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		
 		; Right column
@@ -5013,6 +5018,29 @@ State TogglePMSArousalDebuff
 
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CYCLE_PMSArousalDebuff")
+	EndEvent
+EndState
+
+State SliderPMSArousalRate
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(PMSArousalRate)
+		SetSliderDialogDefaultValue(PMSArousalRateDef)
+		SetSliderDialogRange(0, 50)
+		SetSliderDialogInterval(0.5)
+	EndEvent
+
+	Event OnSliderAcceptST(float value)
+		PMSArousalRate = value
+		SetSliderOptionValueST(PMSArousalRate, "-{1}/h")
+	EndEvent
+
+	Event OnDefaultST()
+		PMSArousalRate = PMSArousalRateDef
+		SetSliderOptionValueST(PMSArousalRate, "-{1}/h")
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_PMSArousalRate")
 	EndEvent
 EndState
 

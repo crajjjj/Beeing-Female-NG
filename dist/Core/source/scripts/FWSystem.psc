@@ -2198,7 +2198,7 @@ float function getStateDuration(int Step, actor woman)
 			if(my_LaborPainsDuration_num_count > 0)
 				my_LaborPainsDuration_scaled_by_men /= my_LaborPainsDuration_num_count
 			else
-				my_Trimster3Duration_scaled_by_men = 1.0
+				my_LaborPainsDuration_scaled_by_men = 1.0
 			endIf
 
 			if(my_Replanish_num_count > 0)
