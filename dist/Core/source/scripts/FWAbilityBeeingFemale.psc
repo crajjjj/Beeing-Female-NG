@@ -1961,6 +1961,8 @@ state Ovulation_State
 			System.ActorAddSpellOpt(ActorRef,Effect_Mittelschmerz, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 		endif
 
+		Controller.TickOvulationArousal(ActorRef, oldUpdateDelay * 24.0)
+
 		actor a = none
 		race abr = none
 		int c = StorageUtil.FormListCount(ActorRef, "FW.SpermName")

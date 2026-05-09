@@ -1293,7 +1293,18 @@ function GiveBirth(actor Mother)
 	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
 endFunction
 
-; SexLab Aroused integration: arousal effect that ramps up during ovulation
+; SexLab Aroused integration: supports SLA NG (slaSetArousalEffect ModEvent)
+; and OSL Aroused (OSLAroused_ModInterface.ModifyArousal native).
+bool function IsOslArousedPresent() global
+	if Game.GetModByName("OSLAroused.esp") != 255
+		return true
+	endif
+	if Game.GetModByName("OAroused.esp") != 255
+		return true
+	endif
+	return false
+endFunction
+
 bool function IsSlaPresent() global
 	if Game.GetModByName("SexLabAroused.esm") != 255
 		return true
@@ -1308,18 +1319,22 @@ function StartOvulationArousal(actor Woman)
 	if !cfg.OvulationArousalEnabled || !Woman
 		return
 	endif
+	if IsOslArousedPresent()
+		; OSL has no built-in linear effects per id - the cycle tick adds increments instead
+		return
+	endif
 	if !IsSlaPresent()
 		return
 	endif
-	; Linear effect: +rate per in-game hour, capped at OvulationArousalCap
+	; SLA NG: linear effect, +rate per in-game hour, capped at OvulationArousalCap
 	int handle = ModEvent.Create("slaSetArousalEffect")
 	if handle
 		ModEvent.PushForm(handle, Woman)
 		ModEvent.PushString(handle, "BF_Ovulation")
-		ModEvent.PushFloat(handle, 0.0)                                 ; initial delta
+		ModEvent.PushFloat(handle, 0.0)
 		ModEvent.PushInt(handle, 2)                                     ; functionId 2 = linear
 		ModEvent.PushFloat(handle, cfg.OvulationArousalRate * 24.0)     ; param: per game day
-		ModEvent.PushFloat(handle, cfg.OvulationArousalCap)             ; cap
+		ModEvent.PushFloat(handle, cfg.OvulationArousalCap)
 		ModEvent.Send(handle)
 	endif
 endFunction
@@ -1328,10 +1343,13 @@ function StopOvulationArousal(actor Woman)
 	if !Woman
 		return
 	endif
+	if IsOslArousedPresent()
+		; Nothing to revert - increments simulated natural arousal, OSL will decay
+		return
+	endif
 	if !IsSlaPresent()
 		return
 	endif
-	; Clear the effect (functionId=0, initial=0 removes it)
 	int handle = ModEvent.Create("slaSetArousalEffect")
 	if handle
 		ModEvent.PushForm(handle, Woman)
@@ -1344,19 +1362,45 @@ function StopOvulationArousal(actor Woman)
 	endif
 endFunction
 
+; Called periodically while in ovulation. Used by the OSL path to add incremental arousal.
+function TickOvulationArousal(actor Woman, float hoursElapsed)
+	if !cfg.OvulationArousalEnabled || !Woman || hoursElapsed <= 0.0
+		return
+	endif
+	if !IsOslArousedPresent()
+		return
+	endif
+	float current = OSLAroused_ModInterface.GetArousal(Woman)
+	if current >= cfg.OvulationArousalCap
+		return
+	endif
+	float delta = cfg.OvulationArousalRate * hoursElapsed
+	if current + delta > cfg.OvulationArousalCap
+		delta = cfg.OvulationArousalCap - current
+	endif
+	OSLAroused_ModInterface.ModifyArousal(Woman, delta, "BF Ovulation")
+endFunction
+
 function StartPMSArousalDebuff(actor Woman)
 	if !cfg.PMSArousalDebuffEnabled || !Woman
+		return
+	endif
+	if IsOslArousedPresent()
+		; Flat penalty applied once - track applied amount so Stop can reverse it
+		float penalty = cfg.PMSArousalPenalty
+		StorageUtil.SetFloatValue(Woman, "FW.PMSArousalApplied", penalty)
+		OSLAroused_ModInterface.ModifyArousal(Woman, 0.0 - penalty, "BF PMS")
 		return
 	endif
 	if !IsSlaPresent()
 		return
 	endif
-	; Flat negative effect that stays until cleared (functionId=0)
+	; SLA NG: flat negative effect that stays until cleared
 	int handle = ModEvent.Create("slaSetArousalEffect")
 	if handle
 		ModEvent.PushForm(handle, Woman)
 		ModEvent.PushString(handle, "BF_PMS")
-		ModEvent.PushFloat(handle, 0.0 - cfg.PMSArousalPenalty)         ; initial delta = -penalty
+		ModEvent.PushFloat(handle, 0.0 - cfg.PMSArousalPenalty)
 		ModEvent.PushInt(handle, 0)                                      ; functionId 0 = stays at value
 		ModEvent.PushFloat(handle, 0.0)
 		ModEvent.PushFloat(handle, 0.0)
@@ -1366,6 +1410,14 @@ endFunction
 
 function StopPMSArousalDebuff(actor Woman)
 	if !Woman
+		return
+	endif
+	if IsOslArousedPresent()
+		float applied = StorageUtil.GetFloatValue(Woman, "FW.PMSArousalApplied", 0.0)
+		if applied > 0.0
+			OSLAroused_ModInterface.ModifyArousal(Woman, applied, "BF PMS reverse")
+			StorageUtil.UnsetFloatValue(Woman, "FW.PMSArousalApplied")
+		endif
 		return
 	endif
 	if !IsSlaPresent()
