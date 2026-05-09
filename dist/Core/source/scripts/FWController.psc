@@ -1293,6 +1293,57 @@ function GiveBirth(actor Mother)
 	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
 endFunction
 
+; SexLab Aroused integration: arousal effect that ramps up during ovulation
+bool function IsSlaPresent() global
+	if Game.GetModByName("SexLabAroused.esm") != 255
+		return true
+	endif
+	if Game.GetModByName("SexLabAroused.esp") != 255
+		return true
+	endif
+	return false
+endFunction
+
+function StartOvulationArousal(actor Woman)
+	if !cfg.OvulationArousalEnabled || !Woman
+		return
+	endif
+	if !IsSlaPresent()
+		return
+	endif
+	; Linear effect: +rate per in-game hour, capped at OvulationArousalCap
+	int handle = ModEvent.Create("slaSetArousalEffect")
+	if handle
+		ModEvent.PushForm(handle, Woman)
+		ModEvent.PushString(handle, "BF_Ovulation")
+		ModEvent.PushFloat(handle, 0.0)                                 ; initial delta
+		ModEvent.PushInt(handle, 2)                                     ; functionId 2 = linear
+		ModEvent.PushFloat(handle, cfg.OvulationArousalRate * 24.0)     ; param: per game day
+		ModEvent.PushFloat(handle, cfg.OvulationArousalCap)             ; cap
+		ModEvent.Send(handle)
+	endif
+endFunction
+
+function StopOvulationArousal(actor Woman)
+	if !Woman
+		return
+	endif
+	if !IsSlaPresent()
+		return
+	endif
+	; Clear the effect (functionId=0, initial=0 removes it)
+	int handle = ModEvent.Create("slaSetArousalEffect")
+	if handle
+		ModEvent.PushForm(handle, Woman)
+		ModEvent.PushString(handle, "BF_Ovulation")
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.PushInt(handle, 0)
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.PushFloat(handle, 0.0)
+		ModEvent.Send(handle)
+	endif
+endFunction
+
 ; BabyTracker SlaveTats integration
 function ApplyBabyTrackerTattoos(actor Mother)
 	if !cfg.BabyTrackerTattoos || !Mother

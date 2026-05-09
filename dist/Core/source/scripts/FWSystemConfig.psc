@@ -72,6 +72,9 @@ int   Property LutealDuration = 5 Auto Hidden
 int   Property MenstrualDuration = 2 Auto Hidden
 float Property PMSChance = 25.0 Auto Hidden
 float Property MenstrualCramps = 35.0 Auto Hidden
+bool  Property OvulationArousalEnabled = true Auto Hidden
+float Property OvulationArousalRate = 5.0 Auto Hidden
+float Property OvulationArousalCap = 100.0 Auto Hidden
 int   Property PMSEffects = 6 Auto Hidden
 float property irregulationChance = 9.0 auto hidden
 float Property ConceiveChance = 40.0 Auto Hidden
@@ -162,6 +165,9 @@ int LutealDurationDef = 5;9
 int MenstrualDurationDef = 2;4
 float PMSChanceDef = 25.0
 float MenstrualCrampsDef = 35.0
+bool  OvulationArousalEnabledDef = true
+float OvulationArousalRateDef = 5.0
+float OvulationArousalCapDef = 100.0
 int PMSEffectsDef = 6
 float irregulationChanceDef = 4.0
 float ConceiveChanceDef = 40.0
@@ -803,6 +809,9 @@ function LoadProfile(string File)
 	MenstrualDuration = JsonUtil.GetIntValue(s, "CYCLE_MenstrualDuration", MenstrualDuration)
 	PMSChance = JsonUtil.GetFloatValue(s, "CYCLE_PMS_Chance", PMSChance)
 	MenstrualCramps = JsonUtil.GetFloatValue(s, "CYCLE_MenstrualCramps", MenstrualCramps)
+	OvulationArousalEnabled = JsonUtil.GetIntValue(s, "CYCLE_OvulationArousal_Enabled", FWUtility.SwitchInt(OvulationArousalEnabled,1,0))==1
+	OvulationArousalRate = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
+	OvulationArousalCap = JsonUtil.GetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
 	PMSEffects = JsonUtil.GetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	irregulationChance = JsonUtil.GetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
 	ConceiveChance = JsonUtil.GetFloatValue(s, "CYCLE_ConceiveChance_Player", ConceiveChance)
@@ -939,6 +948,9 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetIntValue(s, "CYCLE_MenstrualDuration", MenstrualDuration)
 	JsonUtil.SetFloatValue(s, "CYCLE_PMS_Chance", PMSChance)
 	JsonUtil.SetFloatValue(s, "CYCLE_MenstrualCramps", MenstrualCramps)
+	JsonUtil.SetIntValue(s, "CYCLE_OvulationArousal_Enabled", FWUtility.SwitchInt(OvulationArousalEnabled,1,0))
+	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Rate", OvulationArousalRate)
+	JsonUtil.SetFloatValue(s, "CYCLE_OvulationArousal_Cap", OvulationArousalCap)
 	JsonUtil.SetIntValue(s, "CYCLE_Num_PMS_Effects", PMSEffects)
 	JsonUtil.SetFloatValue(s, "CYCLE_IrregulationChance", irregulationChance)
 	JsonUtil.SetFloatValue(s, "CYCLE_ConceiveChance_Player", ConceiveChance)
@@ -2359,6 +2371,9 @@ Event OnPageReset(string page)
 		AddSliderOptionST("SliderPMSNoEffects", "$FW_MENU_CYCLE_PMSEffects", PMSEffects, "$FW_MENU_BASIC_Effects")
 		AddToggleOptionST("ToggleMenstrualBlood", "$FW_MENU_CYCLE_MenstrualBlood", GlobalMenstruating.GetValue() As int == 1)
 		AddSliderOptionST("SliderMenstrualCrampsChance", "$FW_MENU_CYCLE_MenstrualCramps", MenstrualCramps, "{1}%")
+		AddToggleOptionST("ToggleOvulationArousal", "$FW_MENU_CYCLE_OvulationArousal", OvulationArousalEnabled)
+		AddSliderOptionST("SliderOvulationArousalRate", "$FW_MENU_CYCLE_OvulationArousalRate", OvulationArousalRate, "{1}/h", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
+		AddSliderOptionST("SliderOvulationArousalCap", "$FW_MENU_CYCLE_OvulationArousalCap", OvulationArousalCap, "{0}", SwitchInt(OvulationArousalEnabled, OPTION_FLAG_NONE, OPTION_FLAG_DISABLED))
 		
 		; Right column
 		SetCursorPosition(1)
@@ -4893,19 +4908,83 @@ State SliderPMSChance
 		SetSliderDialogRange(0, 100)
 		SetSliderDialogInterval(0.5)
 	EndEvent
-	
+
 	Event OnSliderAcceptST(float value)
 		PMSChance = value
 		SetSliderOptionValueST(PMSChance, "{1}%")
 	EndEvent
-	
+
 	Event OnDefaultST()
 		PMSChance = PMSChanceDef
 		SetSliderOptionValueST(PMSChance, "{1}%")
 	EndEvent
-	
+
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CYCLE_PMSChance")
+	EndEvent
+EndState
+
+State ToggleOvulationArousal
+	Event OnSelectST()
+		OvulationArousalEnabled = !OvulationArousalEnabled
+		SetToggleOptionValueST(OvulationArousalEnabled)
+		ForcePageReset()
+	EndEvent
+
+	Event OnDefaultST()
+		OvulationArousalEnabled = OvulationArousalEnabledDef
+		SetToggleOptionValueST(OvulationArousalEnabled)
+		ForcePageReset()
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_OvulationArousal")
+	EndEvent
+EndState
+
+State SliderOvulationArousalRate
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(OvulationArousalRate)
+		SetSliderDialogDefaultValue(OvulationArousalRateDef)
+		SetSliderDialogRange(0, 50)
+		SetSliderDialogInterval(0.5)
+	EndEvent
+
+	Event OnSliderAcceptST(float value)
+		OvulationArousalRate = value
+		SetSliderOptionValueST(OvulationArousalRate, "{1}/h")
+	EndEvent
+
+	Event OnDefaultST()
+		OvulationArousalRate = OvulationArousalRateDef
+		SetSliderOptionValueST(OvulationArousalRate, "{1}/h")
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_OvulationArousalRate")
+	EndEvent
+EndState
+
+State SliderOvulationArousalCap
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(OvulationArousalCap)
+		SetSliderDialogDefaultValue(OvulationArousalCapDef)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogInterval(5)
+	EndEvent
+
+	Event OnSliderAcceptST(float value)
+		OvulationArousalCap = value
+		SetSliderOptionValueST(OvulationArousalCap, "{0}")
+	EndEvent
+
+	Event OnDefaultST()
+		OvulationArousalCap = OvulationArousalCapDef
+		SetSliderOptionValueST(OvulationArousalCap, "{0}")
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CYCLE_OvulationArousalCap")
 	EndEvent
 EndState
 
