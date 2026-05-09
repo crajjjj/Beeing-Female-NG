@@ -45,11 +45,12 @@ endFunction
 ; Ovulation arousal ramp
 ; ============================================================================
 ; Linear climb toward `cap` at `perDayDelta` per game day while ovulation is
-; active. SLA NG path uses functionId 2 (ramp). Legacy fallback applies a
-; one-shot bump of `perDayDelta` — direction preserved, magnitude approximate.
+; active. Both args MUST be positive (climbing up). SLA NG path uses
+; functionId 2 (ramp). Legacy fallback applies a one-shot bump of
+; `perDayDelta` — direction preserved, magnitude approximate.
 
 function StartOvulationRamp(Actor target, float perDayDelta, float cap) global
-	if !target
+	if !target || perDayDelta <= 0.0 || cap <= 0.0
 		return
 	endif
 	if SupportsEffectEvents()
@@ -69,20 +70,20 @@ endFunction
 ; ============================================================================
 ; PMS arousal debuff
 ; ============================================================================
-; Negative ramp during the menstruation phase: arousal drifts down at
-; `perDayDelta` per game day until it reaches `-maxPenalty`, then plateaus.
-; SLA NG path uses functionId 2 with negated parameters. Legacy fallback
-; applies a one-shot negative bump (no plateau).
+; Linear decline toward `floor` at `perDayDelta` per game day during the
+; menstruation phase. Both args MUST be negative (sagging down) — caller
+; performs the negation, function passes the values straight to SLA. SLA NG
+; path uses functionId 2 (ramp). Legacy fallback applies a one-shot bump.
 
-function StartPMSDebuff(Actor target, float perDayDelta, float maxPenalty) global
-	if !target || perDayDelta <= 0.0 || maxPenalty <= 0.0
+function StartPMSDebuff(Actor target, float perDayDelta, float floor) global
+	if !target || perDayDelta >= 0.0 || floor >= 0.0
 		return
 	endif
 	if SupportsEffectEvents()
-		_SendEffect(target, "BF_PMS", 0.0, 2, 0.0 - perDayDelta, 0.0 - maxPenalty)
+		_SendEffect(target, "BF_PMS", 0.0, 2, perDayDelta, floor)
 		return
 	endif
-	_ApplyFallback(target, "BF_PMS", 0.0 - perDayDelta)
+	_ApplyFallback(target, "BF_PMS", perDayDelta)
 endFunction
 
 function StopPMSDebuff(Actor target) global

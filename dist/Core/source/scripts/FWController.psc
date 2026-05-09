@@ -1314,7 +1314,7 @@ function StartPMSArousalDebuff(actor Woman)
 	if !cfg.PMSArousalDebuffEnabled || !Woman
 		return
 	endif
-	FWInterfaceArousal.StartPMSDebuff(Woman, cfg.PMSArousalRate * 24.0, cfg.PMSArousalPenalty)
+	FWInterfaceArousal.StartPMSDebuff(Woman, 0.0 - cfg.PMSArousalRate * 24.0, 0.0 - cfg.PMSArousalPenalty)
 endFunction
 
 function StopPMSArousalDebuff(actor Woman)
