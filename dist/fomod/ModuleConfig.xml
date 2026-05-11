@@ -10,8 +10,8 @@
             <optionalFileGroups order="Explicit">
                 <group name="Animation System" type="SelectExactlyOne"> 
                     <plugins order="Explicit"> 
-                        <plugin name="Open Animation Replacer"> 
-                            <description>Use Open Animation Replacer for labor animations (by Laethas). Recommended.</description>
+                        <plugin name="Open Animation Replacer">
+                            <description>Drives BF's labor animations through Open Animation Replacer (Laethas) conditions, so trimester / state changes can swap animation variants at runtime. Requires OAR. You still need to run FNIS, Pandora, or Nemesis after install - BF's custom animation events have to be registered in the unified behavior file. Recommended.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="OAR\meshes" destination="meshes" priority="0" /> 
@@ -20,8 +20,8 @@
                                 <type name="Optional"/> 
                             </typeDescriptor> 
                         </plugin>
-                        <plugin name="Traditional"> 
-                            <description>Traditional labor animations(run fnis/pandora/nemesis).</description>
+                        <plugin name="Traditional">
+                            <description>Uses BF's classic event-driven labor animation list without OAR. Run FNIS, Pandora, or Nemesis after install to register BF's custom animation events - otherwise labor falls back to vanilla idles.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <typeDescriptor> 
                                 <type name="Optional"/> 
@@ -31,8 +31,8 @@
                 </group>
                 <group name="Patches" type="SelectAny"> 
                     <plugins order="Explicit"> 
-                        <plugin name="Fertility Adventures Redux"> 
-                            <description>Patches Fertility Adventures Redux for BeeingFemale NG</description>
+                        <plugin name="Fertility Adventures Redux">
+                            <description>Wires Fertility Adventures Redux's pregnancy quests, child-support storylines, and announcement dialogue to BF NG's cycle events. FAR's tracked-pregnancy faction is driven by BF state changes (Conception / Labor / cycle ticks). Auto-detected when Fertility Adventures.esp is active.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="Patches\Fertility Adventures Redux" destination="" priority="0" /> 
@@ -51,8 +51,8 @@
 								</dependencyType> 
 							</typeDescriptor>  
                         </plugin>
-                        <plugin name="SPID item distribution"> 
-                            <description>Use SPID item distribution list for BeeingFemale objects. Recommended.</description>
+                        <plugin name="SPID item distribution">
+                            <description>Uses Spell Perk Item Distributor to seed BF's hygiene / contraception / pregnancy-test items into vendor and container loot tables. Requires powerofthree's Spell Perk Item Distributor. Recommended - without it, BF's items are quest-only and you have to console them in.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="Patches\SPID" destination="" priority="0" /> 
@@ -61,17 +61,37 @@
                                 <type name="Optional"/> 
                             </typeDescriptor> 
                         </plugin>
-                        <plugin name="P.A.I.A Expansion (Pregnancy and Inflation animations)"> 
-                            <description>Patches P.A.I.A Expansion to support BeeingFemale factions</description>
+                        <plugin name="P.A.I.A Expansion (Pregnancy and Inflation animations)">
+                            <description>Repoints P.A.I.A Expansion's idle/animation conditions onto BF's pregnancy faction so the trimester-aware idles, sit/sleep adjustments, and inflation poses play during BF pregnancy instead of P.A.I.A's own tracker. Mesh-only patch (no ESP changes).</description>
                             <image path="Fomod_resources\fw.jpg" />
-                            <files> 
-                                <folder source="Patches\PAIAExpansion\meshes" destination="meshes" priority="0" /> 
+                            <files>
+                                <folder source="Patches\PAIAExpansion\meshes" destination="meshes" priority="0" />
                             </files>
-                            <typeDescriptor> 
-                                <type name="Optional"/> 
-                            </typeDescriptor> 
+                            <typeDescriptor>
+                                <type name="Optional"/>
+                            </typeDescriptor>
                         </plugin>
-                    </plugins> 
+                        <plugin name="FMR-Immersive Effects">
+                            <description>Drops FMR-IE's hard dependency on Fertility Mode and reroutes its stretchmark / areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks and lactation spells onto BF NG's pregnancy progress. Overlays band smoothly across all three trimesters and fade out during recovery. Auto-detected when FMR- Immersive Effects.esp is active.</description>
+                            <image path="Fomod_resources\fw.jpg" />
+                            <files>
+                                <folder source="Patches\FMR-Immersive Effects" destination="" priority="0" />
+                            </files>
+                            <typeDescriptor>
+                                <dependencyType>
+                                    <defaultType name="Optional"/>
+                                    <patterns>
+                                        <pattern>
+                                            <dependencies operator="Or">
+                                                <fileDependency file="FMR- Immersive Effects.esp" state="Active"/>
+                                            </dependencies>
+                                            <type name="Optional"/>
+                                        </pattern>
+                                    </patterns>
+                                </dependencyType>
+                            </typeDescriptor>
+                        </plugin>
+                    </plugins>
                 </group>
             </optionalFileGroups> 
         </installStep>
@@ -80,7 +100,7 @@
 				<group name="Addons" type="SelectAny">
 					<plugins order="Explicit">
 						<plugin name="BeeingFemale_RS_ChildActors">
-							<description>Addon for BeeingFemale, which adds RSkyrimChildren child actors</description>
+							<description>Spawns BF-born children using RS Children Overhaul's actor templates instead of vanilla child meshes / textures, so BF babies match the look of every other child in your game. Requires RSkyrimChildren.esm (auto-detected).</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files>
                                 <folder source="Addon\BFARSC" destination="" priority="0" /> 
@@ -114,7 +134,7 @@
 				<group name="Sexlab/Ostim Explicit Addons" type="SelectAny">
 					<plugins order="Explicit">
                         <plugin name="BFACreatureChildActors"> 
-							<description>Addon for BeeingFemale, which adds creature child actors</description>
+							<description>Enables species-matched offspring from creature impregnations (dog -> pup, falmer -> falmer child, etc.) routed through SexLab or OStim scenes. Skip if you do not want creature pregnancy outcomes. Requires SexLab.esm or OStim.esp.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="Addon\BFACCA" destination="" priority="0" /> 
