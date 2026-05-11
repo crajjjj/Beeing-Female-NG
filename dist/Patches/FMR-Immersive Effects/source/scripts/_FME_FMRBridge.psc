@@ -170,6 +170,15 @@ Function RefreshActor(Actor mother)
         mother.AddSpell(OverlayUpdater, false)
     endIf
 
+    ; Skip random-effect rolls during active labor. ComputeRank pins labor
+    ; to 100, which would otherwise fall through the T3 band and let fetal
+    ; kicks, Braxton-Hicks, cravings, etc. fire while the actor is
+    ; mid-delivery. The overlay update above still runs so the rank-driven
+    ; visuals stay consistent.
+    if StorageUtil.GetIntValue(mother, "FW.CurrentState", -1) == 7
+        return
+    endIf
+
     ; Decide whether to fire a random pregnancy effect on the same cadence
     ; the original FMR-IE bridge used.
     Float now        = Utility.GetCurrentGameTime()
