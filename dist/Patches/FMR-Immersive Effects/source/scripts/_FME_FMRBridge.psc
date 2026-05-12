@@ -159,15 +159,18 @@ Function RefreshActor(Actor mother)
 
     SendStatusEvent(mother, rank)
 
+    ; Always kick the overlay refresh — including when rank == 0 — so the
+    ; overlay script's cleanup branches (elseif RCT <= 0) run and remove
+    ; stretchmark / areola textures when the cycle returns to non-pregnant.
+    ; Without this the textures linger at their last fade-out alpha after
+    ; recovery ends.
+    if (mother.Is3DLoaded() || mother == PlayerRef) && OverlayUpdater
+        mother.AddSpell(OverlayUpdater, false)
+    endIf
+
     if rank <= 0
         StorageUtil.UnsetFloatValue(mother, "FME.NextEffectTime")
         return
-    endIf
-
-    ; Kick the overlay refresh — FMR-IE's overlay script reads the faction
-    ; rank BF writes and draws the appropriate band.
-    if (mother.Is3DLoaded() || mother == PlayerRef) && OverlayUpdater
-        mother.AddSpell(OverlayUpdater, false)
     endIf
 
     ; Skip random-effect rolls during active labor. ComputeRank pins labor
@@ -412,6 +415,12 @@ Event OnBeeingFemaleStateChange(string eventName, string strArg, float numArg, F
         StorageUtil.UnsetFloatValue(m, "FME.NextEffectTime")
         StorageUtil.SetIntValue(m, "FME.Rank", 0)
         SendStatusEvent(m, 0)
+        ; Trigger an OverlayUpdater pass now so the stretchmark / areola
+        ; textures get cleaned up immediately rather than lingering until
+        ; the next 1.5h poll catches the rank=0 state.
+        if (m.Is3DLoaded() || m == PlayerRef) && OverlayUpdater
+            m.AddSpell(OverlayUpdater, false)
+        endIf
         return
     endIf
 

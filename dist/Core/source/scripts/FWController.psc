@@ -1334,29 +1334,23 @@ function ApplyBabyTrackerTattoos(actor Mother)
 		return
 	endif
 	RemoveBabyTrackerTattoos(Mother)
-	; Compose tattoos from available denominations: 12, 8, 4, 3, 2, 1
-	int remaining = babys
-	if remaining >= 12
+	; Apply the single largest denomination tattoo that does not exceed the
+	; baby count. Earlier versions composed multiple tattoos (e.g. 9 babies
+	; = _baby8 + _baby1) but the BabyTracker SlaveTats JSON puts all of the
+	; _babyN tattoos in the same body slot, so only the last-applied one
+	; ever rendered — which made high baby counts visually look like single
+	; ones. A tier display avoids the lie.
+	if babys >= 12
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby12", 0, true, true)
-		remaining -= 12
-	endif
-	if remaining >= 8
+	elseif babys >= 8
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby8", 0, true, true)
-		remaining -= 8
-	endif
-	if remaining >= 4
+	elseif babys >= 4
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby4", 0, true, true)
-		remaining -= 4
-	endif
-	if remaining >= 3
+	elseif babys >= 3
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby3", 0, true, true)
-		remaining -= 3
-	endif
-	if remaining >= 2
+	elseif babys >= 2
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby2", 0, true, true)
-		remaining -= 2
-	endif
-	if remaining >= 1
+	else
 		SlaveTats.simple_add_tattoo(Mother, "BabyTracker", "Babytracker_baby1", 0, true, true)
 	endif
 endFunction
