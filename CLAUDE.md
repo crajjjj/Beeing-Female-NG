@@ -15,6 +15,21 @@ xmake f -m release && xmake        # -> dist/Core/skse/plugins/BeeingFemale.dll
 # Sources: dist/Core/source/scripts/*.psc -> dist/Core/scripts/*.pex
 ```
 
+## Bumping the Version
+
+Three files must be updated together — always keep them in sync:
+
+1. **`dist/Core/BeeingFemale/Version/0 Beeing Female version.ini`** — primary version source read at runtime by `FWVersion.psc`:
+   - `BF_Version` — human-readable string shown in MCM (e.g. `3.4.2`)
+   - `BF_VersionInt` — integer form, digits only, no dots (e.g. `30402` for 3.4.2)
+   - `BF_VersionMCM` — increment only when MCM property layout changes (save-compat boundary)
+   - `BF_VersionNative` — increment only when the C++ plugin API changes
+   - `BF_VersionAnimation` — increment only when animation requirements change
+
+2. **`dist/fomod/info.xml`** — FOMOD installer version displayed in mod managers. Update `<Version>` to match `BF_Version`.
+
+For a normal bugfix release, only `BF_Version` and `BF_VersionInt` change. The other fields change only when their respective subsystems have breaking changes.
+
 ## Important: CK-Filled Properties
 
 Script properties filled via the Creation Kit (CK) in the ESP/ESM must NOT be removed from `.psc` files even if unused in code. Removing them breaks the form binding. To clean up, you must also clear the property in the ESP. When in doubt, leave them as dead weight.

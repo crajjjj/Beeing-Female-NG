@@ -197,6 +197,8 @@ event OnWidgetReset()
 	UpdateWidgetScale()
 	if cfg && cfg.WidgetAlwaysActive && CFG_Enabled
 		showWidget()
+	else
+		FadeTo(0, 0.0) ; parent.OnWidgetReset() restores alpha to _widgetAlpha=100; re-enforce hidden state
 	endIf
 endEvent
 

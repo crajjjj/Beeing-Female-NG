@@ -157,10 +157,10 @@ endProperty
 event OnWidgetLoad()
 	_bAboutToClose=true
 	_bAboutToShow = false
-	FadeTo(0.0,0.01)
 	_shown = false
 	parent.OnWidgetLoad()
 	OnWidgetReset()
+	FadeTo(0.0, 0.0) ; parent callbacks may restore alpha to _widgetAlpha=100; re-enforce hidden state
 endEvent
 
 function Set(string sJob="", int iPercent=-1, string sIcon="", bool bClose = false)
@@ -195,6 +195,9 @@ event OnWidgetReset()
 	UI.InvokeString(HUD_MENU, WidgetRoot + ".setPhase", lastMessage)
 	UI.InvokeString(HUD_MENU, WidgetRoot + ".setIcon", lastIcon)
 	UI.InvokeInt(HUD_MENU, WidgetRoot + ".setPercent", lastPercent)
+	if !_shown
+		FadeTo(0, 0.0) ; parent.OnWidgetReset() restores alpha to _widgetAlpha=100; re-enforce hidden state
+	endIf
 endEvent
 
 function showWidget()
