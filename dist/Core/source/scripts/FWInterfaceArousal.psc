@@ -64,6 +64,16 @@ function StopOvulationRamp(Actor target) global
 	if !target || !SupportsEffectEvents()
 		return
 	endif
+	; SLA NG only erases a dynamic effect when both function==0 AND value==0,
+	; and slaSetArousalEffect ignores initialValue==0. A bare Set with
+	; functionId=0 stops the ramp but leaves the accumulated value (up to
+	; cap=100) in the dynamic map, still contributing to total arousal
+	; forever. Mod first with limit=0 clamps the value down, then Set clears
+	; the function so the entry satisfies the removal predicate. The Mod
+	; modifier just has to overshoot any plausible accumulated value; SLA's
+	; clamp at limit=0 bounds the actual delta applied.
+	float clearOvershoot = 200.0
+	_SendMod(target, "BF_Ovulation", 0.0 - clearOvershoot, 0.0)
 	_SendEffect(target, "BF_Ovulation", 0.0, 0, 0.0, 0.0)
 endFunction
 
@@ -90,6 +100,10 @@ function StopPMSDebuff(Actor target) global
 	if !target || !SupportsEffectEvents()
 		return
 	endif
+	; Same removal trick as StopOvulationRamp, but value is negative — Mod with
+	; a large positive modifier and limit=0 clamps back up to 0 from the floor.
+	float clearOvershoot = 200.0
+	_SendMod(target, "BF_PMS", clearOvershoot, 0.0)
 	_SendEffect(target, "BF_PMS", 0.0, 0, 0.0, 0.0)
 endFunction
 
@@ -109,6 +123,20 @@ function _SendEffect(Actor target, string effectId, float value, int functionId,
 		ModEvent.PushInt(handle, functionId)
 		ModEvent.PushFloat(handle, param)
 		ModEvent.PushFloat(handle, threshold)
+		ModEvent.Send(handle)
+	endif
+endFunction
+
+function _SendMod(Actor target, string effectId, float modifier, float limit) global
+	if !IsPresent()
+		return
+	endif
+	int handle = ModEvent.Create("slaModArousalEffect")
+	if handle
+		ModEvent.PushForm(handle, target)
+		ModEvent.PushString(handle, effectId)
+		ModEvent.PushFloat(handle, modifier)
+		ModEvent.PushFloat(handle, limit)
 		ModEvent.Send(handle)
 	endif
 endFunction
