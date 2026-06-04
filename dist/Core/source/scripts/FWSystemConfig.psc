@@ -4545,10 +4545,15 @@ EndState
 State SliderBellyScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BellyMaxScale)
-		if VisualScaling == 4 || VisualScaling == 5
+		if VisualScaling == 4 ; SLIF: multiplicative bone scale, 7.5x reads as ~max realistic pregnancy
 			BellyMaxScaleDef = 7.5
 			SetSliderDialogDefaultValue(BellyMaxScaleDef)
 			SetSliderDialogRange(0, 10)
+			SetSliderDialogInterval(0.1)
+		elseif VisualScaling == 5 ; BodyMorph: NiOverride.SetBodyMorph slider, 1.0 = morph fully applied
+			BellyMaxScaleDef = 1.0
+			SetSliderDialogDefaultValue(BellyMaxScaleDef)
+			SetSliderDialogRange(0, 3)
 			SetSliderDialogInterval(0.1)
 		else
 			BellyMaxScaleDef = 4.2
@@ -4557,19 +4562,21 @@ State SliderBellyScaleMax
 			SetSliderDialogInterval(0.1)
 		endIf
 	EndEvent
-	
+
 	Event OnSliderAcceptST(float value)
 		BellyMaxScale = value
 		SetSliderOptionValueST(BellyMaxScale, "{1}")
-		
+
 		If System.Player
 			System.Player.SetBelly()
 		EndIf
 	EndEvent
-	
+
 	Event OnDefaultST()
-		if VisualScaling == 4 || VisualScaling == 5
+		if VisualScaling == 4
 			BellyMaxScaleDef = 7.5
+		elseif VisualScaling == 5
+			BellyMaxScaleDef = 1.0
 		else
 			BellyMaxScaleDef = 4.2
 		endIf
@@ -4589,10 +4596,15 @@ EndState
 State SliderBreastScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BreastsMaxScale)
-		if VisualScaling == 4 || VisualScaling == 5
+		if VisualScaling == 4 ; SLIF
 			BreastsMaxScaleDef = 10
 			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
 			SetSliderDialogRange(0, 20)
+			SetSliderDialogInterval(0.1)
+		elseif VisualScaling == 5 ; BodyMorph (BreastsSH / BreastsNewSH morphs, 1.0 = fully applied)
+			BreastsMaxScaleDef = 1.0
+			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
+			SetSliderDialogRange(0, 3)
 			SetSliderDialogInterval(0.1)
 		else
 			BreastsMaxScaleDef = 0.4
@@ -4602,20 +4614,22 @@ State SliderBreastScaleMax
 			;SetSliderDialogInterval(0.01)
 		endIf
 	EndEvent
-	
+
 	Event OnSliderAcceptST(float value)
 		BreastsMaxScale = value
 		SetSliderOptionValueST(BreastsMaxScale, "{1}")
 		;SetSliderOptionValueST(BreastsMaxScale, "{2}")
-		
+
 		If System.Player
 			System.Player.SetBelly()
 		EndIf
 	EndEvent
-	
+
 	Event OnDefaultST()
-		if VisualScaling == 4 || VisualScaling == 5
+		if VisualScaling == 4
 			BreastsMaxScaleDef = 10
+		elseif VisualScaling == 5
+			BreastsMaxScaleDef = 1.0
 		else
 			BreastsMaxScaleDef = 0.4
 		endIf

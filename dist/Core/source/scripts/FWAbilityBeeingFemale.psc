@@ -2363,13 +2363,27 @@ state PregnancyFirst_State
 	endEvent
 	
 	function onEnterState()
-		Manager.RemoveCME(ActorRef,4)
+		; Defensive sweep: each cycle state's onExitState only clears its own
+		; CME slot and its own hardcoded spell, so any effect that leaked past
+		; a prior transition would otherwise persist into pregnancy and remain
+		; visible in Active Effects.
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Vorwehen)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Mittelschmerz)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_MenstruationCramps)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Nachwehen)
+		ActorRef.DispelSpell(Effect_VaginalBloodLow)
+		ActorRef.DispelSpell(Effect_VaginalBloodHigh)
+		ActorRef.DispelSpell(Effect_VaginalBloodBig)
+		Controller.StopOvulationArousal(ActorRef)
+		Controller.StopPMSArousalDebuff(ActorRef)
+		Manager.RemoveCME(ActorRef)
 		Manager.CastCME(ActorRef,5,cfg.PMSEffects)
+		bHasPMS = false
 		if IsPlayer ;Tkc (Loverslab): show widged when state was changed
 			StateWidget.showTimed(ActorRef)
 		endif
 	endFunction
-	
+
 	function onExitState()
 		Manager.RemoveCME(ActorRef,5)
 	endFunction
