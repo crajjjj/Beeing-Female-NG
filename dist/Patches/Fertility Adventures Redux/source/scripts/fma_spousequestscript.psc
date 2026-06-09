@@ -29,13 +29,10 @@ EndFunction
 
 
 Function AddSperm(Actor akGiver, Actor akReciever)
-	int handle = ModEvent.Create("FertilityModeAddSperm")
-		if (handle)
-			ModEvent.PushForm(handle, akReciever as form)
-			ModEvent.PushString(handle, akGiver.GetDisplayName())
-			ModEvent.PushForm(handle, akGiver as form)
-			ModEvent.Send(handle)
-		endIf
+	; Use BF's native command channel so this works without OStim.
+	; The legacy FertilityModeAddSperm event is only handled by BFA_Ostim,
+	; which is only active when OStim is installed.
+	akReciever.SendModEvent("BeeingFemale", "AddSperm", akGiver.GetFormID() as float)
 EndFunction
 
 
