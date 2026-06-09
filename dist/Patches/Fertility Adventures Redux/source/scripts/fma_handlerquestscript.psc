@@ -87,11 +87,13 @@ function UpdateTrackedFemaleRank(Actor mother)
 	endif
 
 	; State IDs: 0 pre-ovulation, 1 ovulation, 2 luteal, 3 menstruation,
-	; 4/5/6 trimesters, 7 ovulation blocked, 8 recovery, 20 full-term pregnancy.
+	; 4/5/6 trimesters, 7 labor pains, 8 recovery, 20 full-term pregnancy.
 	; Rank formulas:
-	; - Pregnancy (4/5/6/20): ((now - LastConception) / PregnancyDuration) * 100, clamped 0..127
+	; - Pregnancy (4/5/6/20): ((now - LastConception) / PregnancyDuration) * 100, clamped 1..127
+	;   (min 1 so FA's temple test "rank <= 0 = not pregnant" reads correctly right after conception)
+	; - Labor (7): rank = 127 (still pregnant until baby is delivered)
 	; - Recovery (8): rank = -85 - recoveryProgress, where recoveryProgress is 0..36
-	; - Cycle (0/1/2/3/7): rank = (stateId * -10) - 5
+	; - Cycle (0/1/2/3): rank = (stateId * -10) - 5
 	int rank = 0
 	float now = Utility.GetCurrentGameTime()
 
@@ -102,13 +104,15 @@ function UpdateTrackedFemaleRank(Actor mother)
 			duration = 1.0
 		endif
 		int pct = (((now - lastConception) / duration) * 100.0) as int
-		if pct < 0
-			pct = 0
+		if pct < 1
+			pct = 1
 		endif
 		if pct > 127
 			pct = 127
 		endif
 		rank = pct
+	elseIf stateId == 7
+		rank = 127
 	elseIf stateId == 8
 		float stateEnter = StorageUtil.GetFloatValue(mother, "FW.StateEnterTime", 0.0)
 		float duration = GetBeeingFemaleStateDuration(8, mother)
@@ -123,7 +127,7 @@ function UpdateTrackedFemaleRank(Actor mother)
 			recoveryProgress = 36
 		endif
 		rank = -85 - recoveryProgress
-	elseIf (stateId == 0) || (stateId == 1) || (stateId == 2) || (stateId == 3) || (stateId == 7)
+	elseIf (stateId == 0) || (stateId == 1) || (stateId == 2) || (stateId == 3)
 		rank = (stateId * -10) - 5
 	else
 		rank = 0
@@ -195,7 +199,7 @@ event OnBeeingFemaleStateChange(string eventName, string strArg, float numArg, F
 	Actor target = sender as Actor
 	if target
 		int stateId = numArg as int
-		if (stateId == 4) || (stateId == 5) || (stateId == 6) || (stateId == 8) || (stateId == 20)
+		if (stateId == 4) || (stateId == 5) || (stateId == 6) || (stateId == 7) || (stateId == 8) || (stateId == 20)
 			UpdateTrackedFemaleRank(target)
 		endif
 	endif
