@@ -195,11 +195,13 @@ endEvent
 
 
 
+; BF sends "Update" on the "BeeingFemale" channel after every NPC ChangeState
+; (FWController.psc:1870), with numArg = the NPC's FormID. Refresh the rank
+; immediately rather than waiting for the 3-hour polling tick.
 event OnBeeingFemaleStateChange(string eventName, string strArg, float numArg, Form sender)
-	Actor target = sender as Actor
-	if target
-		int stateId = numArg as int
-		if (stateId == 4) || (stateId == 5) || (stateId == 6) || (stateId == 7) || (stateId == 8) || (stateId == 20)
+	if strArg == "Update"
+		Actor target = Game.GetForm(numArg as int) as Actor
+		if target
 			UpdateTrackedFemaleRank(target)
 		endif
 	endif
