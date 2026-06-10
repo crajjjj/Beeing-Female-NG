@@ -30,6 +30,12 @@ Three files must be updated together — always keep them in sync:
 
 For a normal bugfix release, only `BF_Version` and `BF_VersionInt` change. The other fields change only when their respective subsystems have breaking changes.
 
+## Documentation Site (MkDocs / GitHub Pages)
+
+The repo publishes a docs site to GitHub Pages via [.github/workflows/docs.yml](.github/workflows/docs.yml). Config: [mkdocs.yml](mkdocs.yml) (Material theme). Sources: [docs/index.md](docs/index.md) and [docs/user-guide.md](docs/user-guide.md).
+
+`docs/index.md` and `docs/user-guide.md` are committed **copies** of `README.md` and `USER_GUIDE.md`. When editing the root files, mirror the change into `docs/` (the only intentional diff is the User Guide link in `docs/index.md`, which points to `user-guide.md` instead of `USER_GUIDE.md`). The CI build runs `mkdocs build --strict`, so broken cross-page links will fail the deploy.
+
 ## Important: CK-Filled Properties
 
 Script properties filled via the Creation Kit (CK) in the ESP/ESM must NOT be removed from `.psc` files even if unused in code. Removing them breaks the form binding. To clean up, you must also clear the property in the ESP. When in doubt, leave them as dead weight.

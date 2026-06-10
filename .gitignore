@@ -1,5 +1,8 @@
 *.rar
 
+# MkDocs build output
+/site/
+
 # Created by https://www.toptal.com/developers/gitignore/api/clion,visualstudio,visualstudiocode,cmake
 # Edit at https://www.toptal.com/developers/gitignore?templates=clion,visualstudio,visualstudiocode,cmake
 
