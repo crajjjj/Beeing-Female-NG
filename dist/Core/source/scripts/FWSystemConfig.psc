@@ -2590,8 +2590,30 @@ Event OnPageReset(string page)
 			endif
 			ind+=1
 		endwhile
-		
-	
+
+		; Carried baby items (BabySpawn "item" mode) with growth status.
+		; Not stored in UI_Child, so clicking them is a no-op.
+		float babyDob = StorageUtil.GetFloatValue(PlayerRef, "FW.ChildArmor.dob", 0.0)
+		float matureHours = System.Manager.ActorCustomMatureTimeInHours(PlayerRef)
+		float hatchDuration = 0.0
+		if matureHours > 0.0
+			hatchDuration = (matureHours / 24.0) / 5.0
+		endif
+		ind = 0
+		while ind < c
+			Armor babyItem = StorageUtil.FormListGet(none, "FW.Babys", ind) as Armor
+			if babyItem && PlayerRef.GetItemCount(babyItem) > 0
+				if babyDob > 0.0
+					AddTextOption(babyItem.GetName(), GetTimeString((babyDob + hatchDuration) - GameDaysPassed.GetValue(), true, "$FW_MENU_OPTIONS_Overdue"))
+				else
+					; dob is set on first equip; until then growth has not started
+					AddTextOption(babyItem.GetName(), "$FW_MENU_OPTIONS_Paused")
+				endif
+			endif
+			ind += 1
+		endwhile
+
+
 	; List of AddOns
 	ElseIf page==Pages[FW_MENU_PAGE_AddOn]
 		PageResetJobID=22
@@ -3266,7 +3288,7 @@ Event OnPageReset(string page)
 		ElseIf System.Player;/!=none/;
 			PageResetJobID=33
 			; Left column
-			if((System.Player.currentState >= 4) && (System.Player.currentState < 40))
+			if((System.Player.currentState >= 4) && (System.Player.currentState < 40) && (System.Player.currentState != 8))
 				If System.Player.currentState<20
 					AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
 					AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
@@ -3283,6 +3305,11 @@ Event OnPageReset(string page)
 					AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_Yes")
 					AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
 				endIf
+			ElseIf System.Player.currentState == 8
+				; Replenish is post-birth recovery, not a pregnancy: no unborn rows,
+				; and no conception chance while the cycle is paused
+				AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_No")
+				AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))
 			Else
 				AddTextOption("$FW_MENU_INFO_Pregnant", "$FW_MENU_BASIC_No")
 				AddTextOption("$FW_MENU_INFO_CurrentState", getStateNameTranslated(System.Player.currentState))

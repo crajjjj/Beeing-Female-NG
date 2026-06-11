@@ -1,6 +1,15 @@
-﻿Scriptname FWBabyHealthWidget extends FWWidgetBase  
+﻿Scriptname FWBabyHealthWidget extends FWWidgetBase
 
 FWController property Controller auto
+
+; Cache for getRelativePregnancyChance — the function runs a multi-day cycle
+; simulation, so recompute only on phase change or at most once per game hour
+; (the chance ramps with time inside a state: egg travel, sperm decay).
+Actor lastChanceTarget
+int lastChanceStateID = -1
+float lastChanceStateEnterTime = -1.0
+int lastChanceHour = -1
+float lastChanceValue = 0.0
 
 bool function AllowToHide()
 	if Controller.GetFemaleState(Target)<4
@@ -36,7 +45,16 @@ function UpdateContent()
 		int stateID=Controller.GetFemaleState(Target)
 		if stateID<4
 			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setState",1) ; Set Cycle state
-			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setValue", Math.Floor(Controller.getRelativePregnancyChance(Target)))
+			float curStateEnter = StorageUtil.GetFloatValue(Target, "FW.StateEnterTime", -1.0)
+			int curHour = Math.Floor(Utility.GetCurrentGameTime() * 24.0)
+			if Target != lastChanceTarget || stateID != lastChanceStateID || curStateEnter != lastChanceStateEnterTime || curHour != lastChanceHour
+				lastChanceTarget = Target
+				lastChanceStateID = stateID
+				lastChanceStateEnterTime = curStateEnter
+				lastChanceHour = curHour
+				lastChanceValue = Controller.getRelativePregnancyChance(Target)
+			endif
+			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setValue", Math.Floor(lastChanceValue))
 		else
 			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setState",2) ; Set Pregnancy state
 			

@@ -436,9 +436,19 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 	FW_log.WriteLog("FWChildArmor: Update tick (Age=" + age + ", SizeDuration=" + sizeDuration + ")")
 	if age >= sizeDuration
 		FW_log.WriteLog("FWChildArmor: Baby transitioned to child")
-		System.SpawnChildActor(mother, father)
-		mother.UnequipItem(arm)
-		mother.RemoveItem(arm, 1, true)
+		Actor newChild = System.SpawnChildActor(mother, father)
+		if newChild
+			; Register like SpawnChild does, so the MCM Children tab lists the child
+			StorageUtil.FormListAdd(none, "FW.Babys", newChild)
+			; Removes one entry per hatched baby; twins keep their remaining entries
+			StorageUtil.FormListRemove(none, "FW.Babys", arm, false)
+			mother.UnequipItem(arm)
+			mother.RemoveItem(arm, 1, true)
+		else
+			; Spawn can fail (e.g. no child base for the race) - keep the item
+			; and its FW.Babys entry so the next tick can retry
+			FW_log.WriteLog("FWChildArmor: SpawnChildActor returned none, keeping baby item", 1)
+		endif
 		return
 	endif
 

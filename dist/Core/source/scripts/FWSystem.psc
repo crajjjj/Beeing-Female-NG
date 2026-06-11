@@ -712,7 +712,12 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 					else
 						FW_log.WriteLog("FWSystem: Adding IsCustomChildActor flag to the actor: " + myCustomChildActor)
 						StorageUtil.SetIntValue(myCustomChildActor, "FW.Child.IsCustomChildActor", 1)
-					endIf			
+					endIf
+				elseif (frm as Armor) && PlayerRef.GetItemCount(frm) > 0
+					; Baby item from SpawnChildItem still carried by the player - keep it,
+					; the growth loop in FWAbilityBeeingFemale scans FW.Babys for armor
+					; entries to hatch. Entries for armor the player no longer holds
+					; (NPC babys, already hatched) fall through and are purged.
 				else
 					StorageUtil.FormListRemoveAt(none, "FW.Babys", childCount)
 				endIf
@@ -755,7 +760,7 @@ event OnUpdate()
 			i-=1 ; To prevent endless loops
 			female = StorageUtil.FormListGet(none,"FW.SavedNPCs",curRefreshWoman) as actor
 			curRefreshWoman+=1
-			if curRefreshWoman> StorageUtil.FormListCount(none,"FW.SavedNPCs")
+			if curRefreshWoman>=StorageUtil.FormListCount(none,"FW.SavedNPCs")
 				curRefreshWoman=0
 			endif
 		endWhile

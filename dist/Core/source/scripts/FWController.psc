@@ -2271,26 +2271,29 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 	endwhile
 	if bSort ;Tkc (Loverslab) optimization
 	else;if bSort==false
-		int bi=1
-		int bj
-		int bc=actorr.length ; Count
-		bool bl=true ; Flag
-		actor ba ; Temp
-		float bf ; Temp
-		while bi<=bc && bl
-			bl=false
-			bj=0
-			while bj<bc - 1
-				if actorr[bj+1]>actorr[bj]
-					bf=actorr[bj]
-					actorr[bj]=actorr[bj+1]
-					actorr[bj+1]=bf
-					bl=true
-				endIf
-				bj+=1
+		; Skip the bubble-sort scaffolding entirely when there's nothing to compare.
+		if actorr.length > 1
+			int bi=1
+			int bj
+			int bc=actorr.length ; Count
+			bool bl=true ; Flag
+			actor ba ; Temp
+			float bf ; Temp
+			while bi<=bc && bl
+				bl=false
+				bj=0
+				while bj<bc - 1
+					if actorr[bj+1]>actorr[bj]
+						bf=actorr[bj]
+						actorr[bj]=actorr[bj+1]
+						actorr[bj+1]=bf
+						bl=true
+					endIf
+					bj+=1
+				endWhile
+				bi+=1
 			endWhile
-			bi+=1
-		endWhile
+		endif
 	endif
 	
 	return actorr
@@ -2697,26 +2700,29 @@ float[] function MyGetRelevantSpermFloatTimedForAnyPeriod(actor woman, float Tim
 	endwhile
 	if bSort ;Tkc (Loverslab) optimization
 	else;if bSort==false
-		int bi=1
-		int bj
-		int bc=actorr.length ; Count
-		bool bl=true ; Flag
-		actor ba ; Temp
-		float bf ; Temp
-		while bi<=bc && bl
-			bl=false
-			bj=0
-			while bj<bc - 1
-				if actorr[bj+1]>actorr[bj]
-					bf=actorr[bj]
-					actorr[bj]=actorr[bj+1]
-					actorr[bj+1]=bf
-					bl=true
-				endIf
-				bj+=1
+		; Skip the bubble-sort scaffolding entirely when there's nothing to compare.
+		if actorr.length > 1
+			int bi=1
+			int bj
+			int bc=actorr.length ; Count
+			bool bl=true ; Flag
+			actor ba ; Temp
+			float bf ; Temp
+			while bi<=bc && bl
+				bl=false
+				bj=0
+				while bj<bc - 1
+					if actorr[bj+1]>actorr[bj]
+						bf=actorr[bj]
+						actorr[bj]=actorr[bj+1]
+						actorr[bj+1]=bf
+						bl=true
+					endIf
+					bj+=1
+				endWhile
+				bi+=1
 			endWhile
-			bi+=1
-		endWhile
+		endif
 	endif
 	
 	return actorr
@@ -3126,12 +3132,20 @@ function UpdateParentFaction(actor ParentActor)
 		return
 	endif
 	int stateID = StorageUtil.GetIntValue(ParentActor, "FW.CurrentState", 0)
+	int newRank
 	if stateID == 8
-		ParentActor.SetFactionRank(System.ParentFaction, -1)
+		newRank = -1
 	elseif stateID >= 0
-		ParentActor.SetFactionRank(System.ParentFaction, stateID)
+		newRank = stateID
 	else
-		ParentActor.SetFactionRank(System.ParentFaction, -2)
+		newRank = -2
+	endif
+	; Skip the SetFactionRank call when the rank is already what we'd write —
+	; SetFactionRank triggers AI re-eval on the target, which is the expensive bit.
+	; Only reliable for ranks >= 0: GetFactionRank reports -2 for any non-member,
+	; so negative target ranks always get the unconditional write.
+	if newRank < 0 || ParentActor.GetFactionRank(System.ParentFaction) != newRank
+		ParentActor.SetFactionRank(System.ParentFaction, newRank)
 	endif
 endFunction
 
