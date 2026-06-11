@@ -713,6 +713,17 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 						FW_log.WriteLog("FWSystem: Adding IsCustomChildActor flag to the actor: " + myCustomChildActor)
 						StorageUtil.SetIntValue(myCustomChildActor, "FW.Child.IsCustomChildActor", 1)
 					endIf
+					; Grown-up adults from voiceless add-on bases (chargen presets):
+					; re-apply the INI voice every load - base mutations are not saved.
+					; FW.Child.VoiceType is only ever written at grow-up time, so it
+					; doubles as the grown-up check
+					VoiceType adultVoice = StorageUtil.GetFormValue(myCustomChildActor, "FW.Child.VoiceType", none) as VoiceType
+					if adultVoice
+						ActorBase grownBase = myCustomChildActor.GetLeveledActorBase()
+						if grownBase && grownBase.GetVoiceType() == none
+							grownBase.SetVoiceType(adultVoice)
+						endif
+					endif
 				elseif (frm as Armor) && PlayerRef.GetItemCount(frm) > 0
 					; Baby item from SpawnChildItem still carried by the player - keep it,
 					; the growth loop in FWAbilityBeeingFemale scans FW.Babys for armor
@@ -2877,6 +2888,250 @@ bool function ShouldAllowPCDialogue(Actor ParentActor, Race ParentRace)
 		return true
 	endif
 	return false
+endFunction
+
+;--------------------------------------------------------------------------------
+; Child to adult transition
+;--------------------------------------------------------------------------------
+; Called from the maturity endpoints (FWChildActor.UpdateSize and
+; FWDefaultCustomChildEffect.FinalizeMature) when Manager.ActorGrowUpToAdult is on.
+; Path A: the child already uses an adult-race base (the no-add-on default, born
+;         from a copied parent base) - graduate it in place, reuse everything.
+; Path B: the child uses a real child-race base - spawn an adult and replace it.
+Faction _PotentialMarriageFaction
+Form _GrownAdultTunic
+Form _GrownAdultShoes
+actor function GrowChildToAdult(Actor child)
+	if child == none
+		return none
+	endif
+	; Creature children are exempt: the scale ramp already brings them to full
+	; size, and the adult bookkeeping (follower/marriage factions, leaving the
+	; child order system) only makes sense for NPC-race actors
+	race childActorRace = child.GetRace()
+	if childActorRace && !childActorRace.HasKeywordString("ActorTypeNPC")
+		return none
+	endif
+	; Gave up after repeated failures (see AbortGrowUp) - permanently a grown child
+	if StorageUtil.GetIntValue(child, "FW.Child.GrowUpFailed", 0) == 1
+		return none
+	endif
+	; Re-entrancy guard: AdjustIntValue increments and returns in ONE external call,
+	; so two racing threads (OnUpdateGameTime + OnLoad / effect restart) cannot
+	; both observe the unclaimed state
+	if StorageUtil.AdjustIntValue(child, "FW.Child.GrownUp", 1) != 1
+		; Losing thread: pin the flag back to 1 - consumers test for exactly 1
+		StorageUtil.SetIntValue(child, "FW.Child.GrownUp", 1)
+		return none
+	endif
+
+	actor Mother = StorageUtil.GetFormValue(child, "FW.Child.Mother", none) as actor
+	actor Father = StorageUtil.GetFormValue(child, "FW.Child.Father", none) as actor
+	bool bIsPlayerChild = IsPlayerChild(Mother, Father)
+
+	if !child.IsChild()
+		; Path A: in-place graduation - the actor already has an adult base at
+		; full scale. Name, inventory, relationships and FW.Babys entry carry over.
+		if BYOHRelationshipAdoptableFaction && child.IsInFaction(BYOHRelationshipAdoptableFaction)
+			child.RemoveFromFaction(BYOHRelationshipAdoptableFaction)
+		endif
+		if BYOHRelationshipAdoptionFaction && child.IsInFaction(BYOHRelationshipAdoptionFaction)
+			child.RemoveFromFaction(BYOHRelationshipAdoptionFaction)
+		endif
+		ApplyAdultFactions(child, bIsPlayerChild)
+		child.EvaluatePackage()
+		FW_log.WriteLog("FWSystem - GrowChildToAdult: " + child + " graduated in place")
+		return child
+	endif
+
+	; Path B: replace the child-race actor with an adult
+	string childName = StorageUtil.GetStringValue(child, "FW.Child.Name", "")
+	float dob = StorageUtil.GetFloatValue(child, "FW.Child.DOB", 0.0)
+	int xflag = StorageUtil.GetIntValue(child, "FW.Child.Flag", 0)
+	; Sex/race come from the actor itself: custom (non-FWChildActor) children never
+	; get FW.Child.Flag or FW.Child.Race written, so the keys alone are not enough
+	int sex = child.GetLeveledActorBase().GetSex()
+	if sex < 0
+		sex = 0
+	endif
+	if Math.LogicalAnd(xflag, 4) == 4
+		sex = 1
+	endif
+	race childRace = StorageUtil.GetFormValue(child, "FW.Child.Race", none) as race
+	if childRace == none
+		childRace = child.GetRace()
+	endif
+	actor sameSexParent = Father
+	actor otherParent = Mother
+	if sex == 1
+		sameSexParent = Mother
+		otherParent = Father
+	endif
+	; Add-on lists and voice resolve against the same model parent the grow-up
+	; gate and the baby pipeline use (FW.Child.ParentActor, mother fallback)
+	actor cfgParent = StorageUtil.GetFormValue(child, "FW.Child.ParentActor", none) as actor
+	if cfgParent == none
+		cfgParent = Mother
+	endif
+
+	bool bFromAddOnList = true
+	ActorBase adultBase = Manager.GetAdultActor(cfgParent, childRace, sex, bIsPlayerChild)
+	if adultBase == none
+		bFromAddOnList = false
+		if sameSexParent
+			adultBase = sameSexParent.GetLeveledActorBase()
+		endif
+		if adultBase == none && otherParent
+			; Only accept the opposite-sex parent's base when its sex matches the child
+			ActorBase otherBase = otherParent.GetLeveledActorBase()
+			if otherBase && otherBase.GetSex() == sex
+				adultBase = otherBase
+			endif
+		endif
+	endif
+	if adultBase == none
+		AbortGrowUp(child)
+		FW_log.WriteLog("FWSystem - GrowChildToAdult: no adult base for " + child + ", keeping child", 1)
+		return none
+	endif
+
+	; Voiceless add-on bases (e.g. the vanilla chargen presets) get the INI voice.
+	; Base mutations don't persist in saves; OnGameLoad re-applies from FW.Child.VoiceType.
+	VoiceType adultVoice = none
+	if bFromAddOnList
+		adultVoice = Manager.GetAdultVoice(cfgParent, childRace, sex)
+		if adultVoice && adultBase.GetVoiceType() == none
+			adultBase.SetVoiceType(adultVoice)
+		endif
+	endif
+
+	actor adult = child.PlaceActorAtMe(adultBase)
+	if adult == none
+		AbortGrowUp(child)
+		FW_log.WriteLog("FWSystem - GrowChildToAdult: PlaceActorAtMe failed for " + child, 1)
+		return none
+	endif
+	adult.QueueNiNodeUpdate()
+	; Add-on bases may ship inside the forbidden factions - grown adults are eligible
+	Manager.AddToSLandBF(adult)
+
+	; Identity
+	string LastName = myGetLastName(Mother, Father, Math.LogicalAnd(xflag, 32) == 32)
+	if childName ; != ""
+		adult.SetDisplayName(childName + LastName, true) ; never SetName: the base is shared
+	endif
+	StorageUtil.SetFormValue(adult, "FW.Child.Mother", Mother)
+	StorageUtil.SetFormValue(adult, "FW.Child.Father", Father)
+	StorageUtil.SetStringValue(adult, "FW.Child.Name", childName)
+	StorageUtil.SetFloatValue(adult, "FW.Child.DOB", dob)
+	StorageUtil.SetFormValue(adult, "FW.Child.Race", childRace)
+	StorageUtil.SetIntValue(adult, "FW.Child.Flag", xflag)
+	StorageUtil.SetIntValue(adult, "FW.Child.IsCustomChildActor", 1)
+	StorageUtil.SetIntValue(adult, "FW.Child.GrownUp", 1)
+	if adultVoice
+		StorageUtil.SetFormValue(adult, "FW.Child.VoiceType", adultVoice)
+	endif
+
+	; Relationships
+	if Mother
+		adult.SetRelationshipRank(Mother, 2)
+		Mother.SetRelationshipRank(adult, 2)
+	endif
+	if Father
+		adult.SetRelationshipRank(Father, 2)
+		Father.SetRelationshipRank(adult, 2)
+	endif
+	adult.MakePlayerFriend()
+	ApplyAdultFactions(adult, bIsPlayerChild)
+
+	; Inventory; add-on bases like the chargen presets ship without an outfit
+	child.RemoveAllItems(adult, false, false)
+	if bFromAddOnList
+		if _GrownAdultTunic == none
+			_GrownAdultTunic = Game.GetFormFromFile(0x0003C9FE, "Skyrim.esm") ; Roughspun Tunic
+			_GrownAdultShoes = Game.GetFormFromFile(0x0003CA00, "Skyrim.esm") ; Footwraps
+		endif
+		if _GrownAdultTunic
+			adult.AddItem(_GrownAdultTunic, 1, true)
+			adult.EquipItem(_GrownAdultTunic, false, true)
+		endif
+		if _GrownAdultShoes
+			adult.AddItem(_GrownAdultShoes, 1, true)
+			adult.EquipItem(_GrownAdultShoes, false, true)
+		endif
+	endif
+
+	StorageUtil.FormListAdd(none, "FW.Babys", adult)
+
+	; Remove the child through its own cleanup path (also drops its FW.Babys entry)
+	FWChildActor fwchild = child as FWChildActor
+	ChildSettings.RemovePlayerChild(child)
+	if fwchild
+		fwchild.DeleteChild()
+	else
+		child.RemoveSpell(_BF_DefaultCustomChildSpell)
+		StorageUtil.UnsetIntValue(child, "FW.Child.DispelledCustomChildActor")
+		StorageUtil.FormListRemove(none, "FW.Babys", child)
+		child.Disable(true)
+		child.Delete()
+	endif
+
+	adult.EvaluatePackage()
+	FW_log.WriteLog("FWSystem - GrowChildToAdult: " + child + " grew into " + adult + " (base=" + adultBase + ")")
+	return adult
+endFunction
+
+; Follower/marriage faction state shared by both transition paths
+function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
+	if bIsPlayerChild
+		ChildSettings.AddPlayerChild(adult) ; dedupes internally
+		; Native follower framework: same faction set children receive at spawn
+		; (Current/Potential Follower slots), minus the HearthFires adoption slot
+		if ChildFollowerFaction
+			adult.SetFactionRank(ChildFollowerFaction, ChildFollowerFactionRank)
+		endif
+		if ChildFollowerFaction2
+			adult.SetFactionRank(ChildFollowerFaction2, ChildFollowerFactionRank2)
+		endif
+		if ChildFollowerFaction4
+			adult.SetFactionRank(ChildFollowerFaction4, ChildFollowerFactionRank4)
+		endif
+		if ChildFollowerFaction5
+			adult.SetFactionRank(ChildFollowerFaction5, ChildFollowerFactionRank5)
+		endif
+		adult.SetRelationshipRank(PlayerRef, 3)
+	endif
+	if _PotentialMarriageFaction == none
+		_PotentialMarriageFaction = Game.GetFormFromFile(0x00019809, "Skyrim.esm") as Faction
+	endif
+	if _PotentialMarriageFaction
+		if Manager.AdultMarriageAllowed()
+			adult.SetFactionRank(_PotentialMarriageFaction, 0)
+		elseif adult.IsInFaction(_PotentialMarriageFaction)
+			adult.RemoveFromFaction(_PotentialMarriageFaction)
+		endif
+	endif
+endFunction
+
+; Failure exit for GrowChildToAdult: re-arm the child so a later tick retries.
+; Capped: after 10 failed attempts the child permanently stays a grown child,
+; so a hopeless case (deleted parents, uncovered race) doesn't retry forever.
+function AbortGrowUp(Actor child)
+	StorageUtil.SetIntValue(child, "FW.Child.GrownUp", 0)
+	int attempts = StorageUtil.AdjustIntValue(child, "FW.Child.GrowUpAttempts", 1)
+	if attempts >= 10
+		StorageUtil.SetIntValue(child, "FW.Child.GrowUpFailed", 1)
+		FW_log.WriteLog("FWSystem - GrowChildToAdult: giving up on " + child + " after " + attempts + " attempts", 1)
+		return
+	endif
+	; FWChildActor.UpdateSize only reaches the maturity hook while StartGrowing is set
+	StorageUtil.SetIntValue(child, "FW.AddOn.StartGrowing", 1)
+	if !(child as FWChildActor) && !child.Is3DLoaded()
+		; The custom-child effect may have dispelled mid-transition while its
+		; OnEffectFinish saw GrownUp==1 and skipped this flag - restore it so
+		; FWCloaking recasts the growth spell when the child is met again
+		StorageUtil.SetIntValue(child, "FW.Child.DispelledCustomChildActor", 1)
+	endif
 endFunction
 
 actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = none)

@@ -76,7 +76,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 |---|---|----------|----------|---------|
 | 7.1 | P0 | Child spawned with correct parents | `Mother`/`Father` set, relationship ranks assigned, `FW.Babys` updated | FWChildActor |
 | 7.2 | P1 | Child growth over time | `UpdateSize()` interpolates from `_SmallSizeScale` to `modifiedFinalScale` over duration | FWChildActor |
-| 7.3 | P1 | Fully grown child | Growth flag cleared, `Manager.AddToSLandBF` called, scale stable | FWChildActor |
+| 7.3 | P1 | Fully grown child (grow-up toggle OFF) | Growth flag cleared, `Manager.AddToSLandBF` called, scale stable, actor stays a child — see §22 for toggle ON | FWChildActor |
 | 7.4 | P2 | Child perks from INI | `GivePerks()` iterates `ChildPerkFile[0..127]` without array overrun | FWChildActor |
 | 7.5 | P1 | Child deletion | State → `MarkForDelete` → disabled → removed from `FW.Babys` → `Delete()` | FWChildActor |
 | 7.6 | P2 | Child dialogue commands | Follow, wait, go home orders dispatch via `Order` setter | FWChildActor, FW_ChildDial* |
@@ -234,38 +234,62 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 21.4 | P2 | PMSSexHurt during SexLab P+ | Uses `HookStageStart`/`HookOrgasmStart` which P+ still sends — works with both legacy and P+ | BFA_AbilityEffectPMSSexHurt |
 | 21.5 | P2 | PMSSexHurt position check | Damage only for position index 0 (receiver); initiator takes no damage | BFA_AbilityEffectPMSSexHurt |
 
+## 22. Child → Adult Transition (Grow-Up)
+
+MCM "Children grow into adults" (Children page, default OFF) or add-on `GrowUpToAdult` keys. Path A = in-place graduation (`!IsChild()`, the no-add-on default); Path B = base-swap (child-race base from a BabyActor add-on).
+
+| # | P | Scenario | Expected | Scripts |
+|---|---|----------|----------|---------|
+| 22.1 | P0 | Toggle OFF (default) | Maturity behavior identical to pre-feature: final scale, no transition, no new factions — save-compat baseline | FWChildActor, FWSystem |
+| 22.2 | P0 | Path A in-place graduation | Same actor keeps name/inventory/relationships/orders; HearthFires adoption factions removed; native follower factions retained from spawn — vanilla "Follow me" works (voice permitting); still listed in MCM Children tab | FWSystem `GrowChildToAdult` |
+| 22.3 | P0 | Path B base-swap | Adult spawns at child's spot from AdultActor INI list (or same-sex parent fallback); name "X Dovahkiir", inventory, `FW.Child.*` keys transferred; gets the spawn-time native follower faction set (Current/Potential Follower, no adoption slot) — vanilla "Follow me" recruits them; child deleted via `DeleteChild`/MarkForDelete; `FW.Babys` holds adult, not child | FWSystem, FWChildActor |
+| 22.4 | P1 | Shipped "Default Adult Actors" INI | All 10 races resolve a race/sex-matched chargen preset: no dark face, roughspun tunic+footwraps equipped, INI voice applied, follower dialogue available; deleting the INI restores parent-base fallback | FWAddOnManager, Default Adult Actors.ini |
+| 22.5 | P1 | Voice survives save/reload | `FW.Child.VoiceType` re-applied to voiceless base by `OnGameLoad` FW.Babys walk on every load | FWSystem |
+| 22.6 | P1 | Custom (non-FWChildActor) child sex/race | Daughter grows into a FEMALE adult — sex/race derived from the actor base, not the absent `FW.Child.Flag`/`FW.Child.Race` keys | FWSystem `GrowChildToAdult` |
+| 22.7 | P1 | Transition failure retries | Parents unloaded + no add-on base at maturity → `AbortGrowUp` re-arms `StartGrowing`; FWChildActor retries next game-time tick, custom child retries on effect restart; after 10 failures `FW.Child.GrowUpFailed=1` and the child permanently stays a grown child (terminal, logged) | FWSystem, FWChildActor |
+| 22.8 | P1 | Re-entrancy at maturity | OnLoad + OnUpdateGameTime double-fire → `AdjustIntValue` guard yields exactly ONE adult; flag pinned back to 1 by the losing thread | FWSystem `GrowChildToAdult` |
+| 22.9 | P1 | Creature children exempt | Race without `ActorTypeNPC` → no transition ever: order spells keep working, no follower/marriage factions, scale ramp only | FWSystem `GrowChildToAdult` |
+| 22.10 | P1 | Grown adults: scene eligibility + retained commands | OStim scenes NOT force-stopped (`GrownUp` check); parent order powers still target grown adults of both paths: teleport orders (come here / go home / meet point) work via direct MoveTo, BF follow order only sets the teammate flag (no follow package — actual following via vanilla "Follow me"); BF command dialogue absent (child-race actor replaced; in-place graduates never had it); `OnUpdateGameTime` maintenance continues for in-place graduates, skipped only for the condemned Path B child (`MarkForDelete` state) | BFA_Ostim, FWSpellChildOrder, FWChildActor |
+| 22.11 | P2 | Marriage INI flag | `Global_AllowAdultMarriage` absent → adult has no PotentialMarriageFaction even when the parent base had it; `=1` in a global add-on INI → Mara dialogue appears (voice permitting; MaleKhajiit has no marriage lines) | FWSystem `ApplyAdultFactions` |
+| 22.12 | P2 | Add-on INI removal | Deleting/disabling an AdultActor INI → `ClearRaceAddOns` wipes `AdultActor_*`/`AdultActorVoice_*` lists and `GrowUpToAdult` on races at next refresh — no stale bases | FWAddOnManager |
+| 22.13 | P2 | Opposite-sex parent fallback | Used only when its base sex matches the child; mismatch → transition aborts, child stays (no cross-sex adults) | FWSystem `GrowChildToAdult` |
+| 22.14 | P2 | NPC×NPC parents | Transition fires off-screen; adult sandboxes on inherited/preset packages; not listed in player's Children tab | FWSystem |
+| 22.15 | P2 | Already-grown custom adult on cell load | `FinalizeMature` re-runs on effect restart → `GrownUp==1` early return: no re-transition, no repeated gate cost | FWDefaultCustomChildEffect |
+| 22.16 | P2 | Mod reset (`deleteChildren`) | Grown adults are BF-spawned and ARE deleted on reset/uninstall — intended; dissolves a marriage to one | FWSaveLoad |
+| 22.17 | P2 | MCM growth tracking | Children tab value column shows remaining time to maturity per child (FWChildActor: `SizeDuration`×scale; custom: mature-time slider), "Grown" at full size, empty for grown-up adults; baby items keep their hatch countdown | FWSystemConfig `GetChildGrowthStatus` |
+
 ---
 
-## 22. Known Bugs & Fragile Areas
+## 23. Known Bugs & Fragile Areas
 
 These are confirmed or high-confidence issues found during code inspection. Each should be triaged as fix-or-accept before release.
 
 | # | P | Issue | Location | Impact |
 |---|---|-------|----------|--------|
-| 22.1 | ~P1~ | ~~**PMS flag: comparison instead of assignment** — `bHasPMS==false` does not clear the flag~~ **FIXED** | FWAbilityBeeingFemale | 6 occurrences changed `==` to `=` |
-| 22.2 | ~P0~ | ~~**Virility operator precedence** — missing parentheses around subtraction~~ **FIXED** | FWController `GetVirility` | Added parens: `(GameDaysPassed - LastSexTime) / (recovery * scale)` |
-| 22.3 | P2 | **ProcessActor female branch missing cleanup** — male branch removes `BeeingFemaleSpell` on gender change, but female branch was missing `RemoveSpell(BeeingMaleSpell)` — **fixed** | FWPlayerAlias `ProcessActor` | Gender change male→female could leave both spells active |
-| 22.4 | P2 | **GiveBirth state write** — `FW.CurrentState = 8` and `UpdateParentFaction` are separate calls but consecutive native ops; as tight as Papyrus allows | FWController `GiveBirth` | Accepted — no meaningful fix possible |
-| 22.5 | ~P2~ | ~~**Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash~~ **FIXED** — timestamp-based staleness check clears flag after 0.25 game days (commit 4ecc49e) | FWController `GiveBirth` | Self-heals after stack dumps |
-| 22.6 | ~~ | ~~**PMSSexHurt missing P+ hook**~~ **NOT A BUG** — P+ still sends `HookStageStart`/`HookOrgasmStart`/`HookAnimationEnd` events; PMSSexHurt uses stage hooks, not cum events | BFA_AbilityEffectPMSSexHurt | Works with both legacy and P+ |
-| 22.7 | ~P2~ | ~~**`hasWillBecomePregnant()` implicit None return**~~ **FIXED** — added `return false` | FWSaveLoad | Function now returns false when actor is not pregnant |
-| 22.8 | ~~ | ~~**Bloody tampon/napkin equip gap**~~ **BY DESIGN** — bloody items are auto-equipped by cycle state machine which manages blood effects; no need to dispel on equip | FWPlayerAlias, FWAbilityBeeingFemale | Not a bug |
-| 22.9 | ~~ | ~~**Unequip tampon no effect reapply**~~ **BY DESIGN** — next cycle tick reapplies blood effects; widget updates immediately as visual cue | FWPlayerAlias | Not a bug |
-| 22.10 | P2 | **NPC children lost out of range** — `InstantBornChilds` only fires when `Is3DLoaded()` is true | FWAbilityBeeingFemale | NPCs completing pregnancy while player is away lose children silently |
-| 22.11 | ~P2~ | ~~**Child learnSpell AI freeze** — 50+ second `Utility.Wait()` with AI locks, no recovery on interruption~~ **MITIGATED** — OnLoad fix restores AI state | FWChildActor | Actor recovers on cell reload |
-| 22.12 | P2 | **Addon INI comma in mod name** — `required` split on `","` breaks parsing | FWAddOnManager | Addon with comma-containing dependency name silently skipped |
-| 22.13 | ~P2~ | ~~**Hardcoded scan alias count**~~ **FIXED** — now uses `FoundFemales.Length` | FWPlayerAlias | Dynamically matches quest alias count |
-| 22.14 | P2 | **Couple widget stale husband polling** — form goes None while key exists → infinite 5s re-poll | FWCoupleWidget | Wasted CPU cycles, potential log spam |
-| 22.15 | ~P1~ | ~~**Birth animations skipped when pain scale zero** — Birth_S2/S3 gated by `my_BirthPain`~~ **FIXED** — animations now gated only by `cfg.PlayAnimations` (commit 4ecc49e) | FWController `GiveBirth` | Low pain near shrines no longer suppresses delivery sequence |
-| 22.16 | ~P1~ | ~~**Father selection OOB** — `a[j+1]` accessed past array bounds with 2+ donors~~ **FIXED** — loop condition tightened + post-loop advancement (commit 479c2d8) | FWController `ActiveSpermImpregnationTimed` | Father selection no longer biased |
-| 22.17 | ~P1~ | ~~**Female baby list wrong counter** — 8 loops used `mCount` instead of `fCount`~~ **FIXED** (commit 530c34a) | FWBabyItemList | Female baby mesh/armor selection correct |
-| 22.18 | ~P1~ | ~~**Male baby armor wrong key** — `BabyMesh_Male` instead of `BabyArmor_Male`~~ **FIXED** (commit 530c34a) | FWAddOnManager `GetBabyArmor` | Male baby armor lookup correct |
-| 22.19 | ~P1~ | ~~**Creature fathers lost on unload** — sperm entries deleted when actor None, no race fallback~~ **FIXED** — `FW.SpermRace` mirror restored, None entries preserved until expired, `AddChildFather` stores race fallback (commit 3fe384d) | FWController, FWUtility | Creature race persists through unload |
-| 22.20 | ~P1~ | ~~**MCM cheat ignores fresh sperm** — washout delay blocks immediate force-impregnation~~ **FIXED** — cheat passes `bShowTravelingSperm=true` (commit 3fe384d) | FWSystemConfig | Cheat works immediately after insemination |
-| 22.21 | ~P1~ | ~~**Dead SexLab event registrations on System quest**~~ **FIXED** — removed orphaned registrations (commit e56921b) | FWSystemConfig | No handler existed on target script |
-| 22.22 | ~P2~ | ~~**SexLab anal cum double-roll** — `NoVaginalCumChance` rolled twice independently~~ **FIXED** — single roll reused (commit e56921b) | BFA_ssl `OrgasmSeparate` | Consistent anal conception chance |
-| 22.23 | ~P1~ | ~~**ContraceptionSpermKillTimed null crash** — `.GetRace()` on None actor~~ **FIXED** — null-safe fallback to global setting (commit 3fe384d) | FWController | No crash on unloaded creature donors |
+| 23.1 | ~P1~ | ~~**PMS flag: comparison instead of assignment** — `bHasPMS==false` does not clear the flag~~ **FIXED** | FWAbilityBeeingFemale | 6 occurrences changed `==` to `=` |
+| 23.2 | ~P0~ | ~~**Virility operator precedence** — missing parentheses around subtraction~~ **FIXED** | FWController `GetVirility` | Added parens: `(GameDaysPassed - LastSexTime) / (recovery * scale)` |
+| 23.3 | P2 | **ProcessActor female branch missing cleanup** — male branch removes `BeeingFemaleSpell` on gender change, but female branch was missing `RemoveSpell(BeeingMaleSpell)` — **fixed** | FWPlayerAlias `ProcessActor` | Gender change male→female could leave both spells active |
+| 23.4 | P2 | **GiveBirth state write** — `FW.CurrentState = 8` and `UpdateParentFaction` are separate calls but consecutive native ops; as tight as Papyrus allows | FWController `GiveBirth` | Accepted — no meaningful fix possible |
+| 23.5 | ~P2~ | ~~**Stale GivingBirth guard** — 0.25-day window may allow duplicate births on fast reload after crash~~ **FIXED** — timestamp-based staleness check clears flag after 0.25 game days (commit 4ecc49e) | FWController `GiveBirth` | Self-heals after stack dumps |
+| 23.6 | ~~ | ~~**PMSSexHurt missing P+ hook**~~ **NOT A BUG** — P+ still sends `HookStageStart`/`HookOrgasmStart`/`HookAnimationEnd` events; PMSSexHurt uses stage hooks, not cum events | BFA_AbilityEffectPMSSexHurt | Works with both legacy and P+ |
+| 23.7 | ~P2~ | ~~**`hasWillBecomePregnant()` implicit None return**~~ **FIXED** — added `return false` | FWSaveLoad | Function now returns false when actor is not pregnant |
+| 23.8 | ~~ | ~~**Bloody tampon/napkin equip gap**~~ **BY DESIGN** — bloody items are auto-equipped by cycle state machine which manages blood effects; no need to dispel on equip | FWPlayerAlias, FWAbilityBeeingFemale | Not a bug |
+| 23.9 | ~~ | ~~**Unequip tampon no effect reapply**~~ **BY DESIGN** — next cycle tick reapplies blood effects; widget updates immediately as visual cue | FWPlayerAlias | Not a bug |
+| 23.10 | P2 | **NPC children lost out of range** — `InstantBornChilds` only fires when `Is3DLoaded()` is true | FWAbilityBeeingFemale | NPCs completing pregnancy while player is away lose children silently |
+| 23.11 | ~P2~ | ~~**Child learnSpell AI freeze** — 50+ second `Utility.Wait()` with AI locks, no recovery on interruption~~ **MITIGATED** — OnLoad fix restores AI state | FWChildActor | Actor recovers on cell reload |
+| 23.12 | P2 | **Addon INI comma in mod name** — `required` split on `","` breaks parsing | FWAddOnManager | Addon with comma-containing dependency name silently skipped |
+| 23.13 | ~P2~ | ~~**Hardcoded scan alias count**~~ **FIXED** — now uses `FoundFemales.Length` | FWPlayerAlias | Dynamically matches quest alias count |
+| 23.14 | P2 | **Couple widget stale husband polling** — form goes None while key exists → infinite 5s re-poll | FWCoupleWidget | Wasted CPU cycles, potential log spam |
+| 23.15 | ~P1~ | ~~**Birth animations skipped when pain scale zero** — Birth_S2/S3 gated by `my_BirthPain`~~ **FIXED** — animations now gated only by `cfg.PlayAnimations` (commit 4ecc49e) | FWController `GiveBirth` | Low pain near shrines no longer suppresses delivery sequence |
+| 23.16 | ~P1~ | ~~**Father selection OOB** — `a[j+1]` accessed past array bounds with 2+ donors~~ **FIXED** — loop condition tightened + post-loop advancement (commit 479c2d8) | FWController `ActiveSpermImpregnationTimed` | Father selection no longer biased |
+| 23.17 | ~P1~ | ~~**Female baby list wrong counter** — 8 loops used `mCount` instead of `fCount`~~ **FIXED** (commit 530c34a) | FWBabyItemList | Female baby mesh/armor selection correct |
+| 23.18 | ~P1~ | ~~**Male baby armor wrong key** — `BabyMesh_Male` instead of `BabyArmor_Male`~~ **FIXED** (commit 530c34a) | FWAddOnManager `GetBabyArmor` | Male baby armor lookup correct |
+| 23.19 | ~P1~ | ~~**Creature fathers lost on unload** — sperm entries deleted when actor None, no race fallback~~ **FIXED** — `FW.SpermRace` mirror restored, None entries preserved until expired, `AddChildFather` stores race fallback (commit 3fe384d) | FWController, FWUtility | Creature race persists through unload |
+| 23.20 | ~P1~ | ~~**MCM cheat ignores fresh sperm** — washout delay blocks immediate force-impregnation~~ **FIXED** — cheat passes `bShowTravelingSperm=true` (commit 3fe384d) | FWSystemConfig | Cheat works immediately after insemination |
+| 23.21 | ~P1~ | ~~**Dead SexLab event registrations on System quest**~~ **FIXED** — removed orphaned registrations (commit e56921b) | FWSystemConfig | No handler existed on target script |
+| 23.22 | ~P2~ | ~~**SexLab anal cum double-roll** — `NoVaginalCumChance` rolled twice independently~~ **FIXED** — single roll reused (commit e56921b) | BFA_ssl `OrgasmSeparate` | Consistent anal conception chance |
+| 23.23 | ~P1~ | ~~**ContraceptionSpermKillTimed null crash** — `.GetRace()` on None actor~~ **FIXED** — null-safe fallback to global setting (commit 3fe384d) | FWController | No crash on unloaded creature donors |
 
 ---
 
-*Last updated: 2026-04-26*
+*Last updated: 2026-06-11*

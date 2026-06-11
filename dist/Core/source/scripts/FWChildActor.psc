@@ -806,6 +806,12 @@ Event OnUpdateGameTime()
 			
 			StorageUtil.SetFloatValue(self,"FW.Child.LastUpdate",GameDaysPassed.GetValue())
 			UpdateSize()
+			if GetState() == "MarkForDelete"
+				; UpdateSize just replaced this child with an adult (Path B):
+				; don't refresh stats or re-add the factions DeleteChild stripped.
+				; In-place graduates (Path A) keep full child maintenance and orders.
+				return
+			endif
 			UpdateStats()
 			RefreshFactions()
 		endif
@@ -845,11 +851,14 @@ function UpdateSize()
 				If Age >= modifiedSizeDuration
 	;				SetScale(1.0)
 					SetScale(modifiedFinalScale)
-					
+
 					Manager.AddToSLandBF(self)
-					
+
 					StorageUtil.SetIntValue(self, "FW.AddOn.StartGrowing", 0)
 					FW_log.WriteLog("FWChildActor - UpdateSize : " + self + " is fully grown! Current scale is " + GetScale())
+					if Manager.ActorGrowUpToAdult(ParentActor)
+						System.GrowChildToAdult(self as Actor)
+					endif
 				elseif Age < 0.0
 					SetScale(_SmallSizeScale)
 
@@ -862,11 +871,14 @@ function UpdateSize()
 				endIf
 			else
 				SetScale(modifiedFinalScale)
-				
+
 				Manager.AddToSLandBF(self)
-				
+
 				StorageUtil.SetIntValue(self, "FW.AddOn.StartGrowing", 0)
 				FW_log.WriteLog("FWChildActor - UpdateSize : " + self + " is fully grown! Current scale is " + GetScale())
+				if Manager.ActorGrowUpToAdult(ParentActor)
+					System.GrowChildToAdult(self as Actor)
+				endif
 			endIf
 		endif
 	endIf

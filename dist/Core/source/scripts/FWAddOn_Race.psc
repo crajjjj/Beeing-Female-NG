@@ -9,6 +9,10 @@ MiscObject property BabyMesh_Male auto hidden
 Armor property BabyArmor_Male auto
 ActorBase property BabyActor_Male auto
 ActorBase property BabyActor_MalePlayer auto
+ActorBase property AdultActor_Female auto
+ActorBase property AdultActor_FemalePlayer auto
+ActorBase property AdultActor_Male auto
+ActorBase property AdultActor_MalePlayer auto
 bool property Female_Force_This_Baby = false auto
 Bool Property DisablePregnancy = false Auto
 float property Duration_01_Follicular = 1.0 auto

@@ -62,7 +62,8 @@ Event OStimStart(String EventName, String sceneId, Float index, Form Sender)
 	while i > 0
 		i -= 1
 		Actor a = actors[i]
-		if a && StorageUtil.FormListHas(none, "FW.Babys", a)
+		if a && StorageUtil.FormListHas(none, "FW.Babys", a) && StorageUtil.GetIntValue(a, "FW.Child.GrownUp", 0) != 1
+			; Grown-up children stay in FW.Babys but are eligible adults
 			OStim.ForceStop()
 			return
 		endif

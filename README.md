@@ -44,19 +44,6 @@ dist/Core/skse/plugins
 
 ## Changes
 
-- Migrated from legacy SKSE/CommonLibSSE to CommonLibSSE-NG.
-- Switched build system to xmake (no VS solution required).
-- Updated plugin entry point to `SKSEPluginLoad` with NG logging/serialization.
-- Papyrus native registration updated to NG signatures; scripts unchanged.
-- Added a player damage cap in `dist/Core/source/scripts/FWSystem.psc` so difficulties below 4 cannot reduce health below 1 HP.
-- Removed FNIS/OAR gating so animation playback is no longer forced off when FNIS is missing.
-- Labor pains duration can be tuned via `Global_Duration_09_LaborPains` in `dist/Core/BeeingFemale/AddOn/Global Settings.ini`.
-- Integrated fixes from BeeingFemaleSE Opt by aliceqwer3141 and Beeing Female SE 2.8.1 Patch V14d by Bane Master and Garkin.
-- Modified the SexLab add-on and added an OStim add-on.
-- Bathing in Skyrim Renewed addon added.
-- ChildItems grow to kids if growth is enabled after growthtime. (for player as mother only)
-- Parent faction repurposed for tracked female actor state tracking
-
   Changelog:
 	https://github.com/crajjjj/Beeing-Female-NG/releases
 
@@ -220,12 +207,14 @@ Beeing Female NG ships an INI-driven add-on framework that lets external mods ex
 - `race`: per-race tuning (durations, scales, pregnancy chance, protected/PC dialogue, custom baby actors/items).
 - `actor`: per-actor overrides (same knobs as race, but scoped to a single actor).
 - `cme`: cycle magic effect lists for each stage (Always/Sometimes).
+- `global`: global defaults and `Global_*` settings (see `Global Settings.ini`); only one global add-on may be active at a time.
 
 ### Capabilities
 
 - Global/default tunables for cycle timings, pregnancy chance, belly/breast scaling, pain, multiple births, and baby spawn pacing.
 - Per-race or per-actor overrides (pregnancy scales, duration multipliers, protected child flags, etc.).
 - Custom baby actor/item/armor selection for parent race/actor (with fallback behavior).
+- Custom adult actor/voice selection for the grow-up feature (`AdultActor_*` -- see "Adult Actor Add-ons" below).
 - Integration hooks via misc add-ons (SexLab/OStim/Bathing in Skyrim).
 - Add-on event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffectApply`, camera start/stop.
 
@@ -297,6 +286,7 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
 - `BeeingFemale` (SendModEvent): command-style event; sender must be an Actor (typically the female).
   - `AddContraception` (numArg = %): add contraception to the sender; values > 0 only.
   - `AddSperm` (numArg = donor FormID): add sperm from the donor to the sender; donor must resolve to an Actor.
+  - `AddSpermImpregnate` (numArg = donor FormID): like `AddSperm`, but also runs an immediate impregnation attempt.
   - `WashOutSperm` (numArg = %): wash out a percentage of stored sperm on the sender; strength scales the configured washout chances (higher % increases the effective washout chance for that call).
   - `ChangeState` (numArg = 0..8): force a cycle state by index; only valid for female actors.
     - `0` Follicular, `1` Ovulating, `2` Luteal, `3` Menstruating
@@ -401,6 +391,8 @@ Beeing Female NG stores most runtime state in StorageUtil values. The most impor
 - `FW.Flags` (Int, per-actor: mother): bit flags for cycle options (e.g., can become pregnant/PMS).
 - `FW.NumChilds` (Int, per-actor: mother): number of unborn children.
 - `FW.ChildFather` (FormList, stored on mother): list of fathers (one entry per child, matching `FW.NumChilds`).
+- `FW.ChildFatherRace` (FormList, stored on mother): each father's race, recorded at conception -- fallback when the father actor has unloaded (creature fathers).
+- `FW.ChildFatherStr` (StringList, stored on mother): string identifier per father, used by the UI when the actor cannot be resolved.
 - `FW.UnbornHealth` (Float, per-actor: mother): unborn baby health (0-100).
 - `FW.LastConception` (Float, per-actor: mother): game time of last conception.
 - `FW.Abortus` (Int, per-actor: mother): abortus state flag (0 none, 1 imminent, 2 incipient, 3 incomplete, 4 complete, 5 missed abortion, 6 miscarriage/stillbirth).
@@ -410,12 +402,28 @@ Beeing Female NG stores most runtime state in StorageUtil values. The most impor
 - `FW.SpermName` (FormList, per-actor: mother): list of sperm donors (actors).
 - `FW.SpermAmount` (FloatList, per-actor: mother): sperm amounts for each donor.
 - `FW.SpermTime` (FloatList, per-actor: mother): timestamps for each donor entry.
+- `FW.SpermRace` (FormList, per-actor: mother): each donor's race, recorded at `AddSperm` time -- persists when the donor actor unloads, so sperm entries with a `None` actor stay valid.
 - `FW.LastSeenNPCs` (FormList, stored on mother): recent nearby NPCs cached for partner selection/impregnation logic.
 - `FW.LastSeenNPCsTime` (FloatList, stored on mother): timestamps aligned with `FW.LastSeenNPCs` entries (same index).
 - `FW.Babys` (FormList, global): active child actor forms tracked by the system.
 - `FW.BornChildFather` (FormList, per-actor: mother): list of fathers for born children.
 - `FW.BornChildTime` (FloatList, per-actor: mother): timestamps for born children.
 - `FW.LastBornChildTime` (Float, per-actor: mother/father): last birth time for a parent.
+
+Born children (entries in `FW.Babys`) carry their own per-actor keys:
+
+- `FW.Child.Mother` / `FW.Child.Father` (Form): the child's parents.
+- `FW.Child.Name` (String): first name (display name also carries the last name).
+- `FW.Child.DOB` / `FW.Child.DOD` (Float): birth/death timestamps in game days.
+- `FW.Child.Race` (Form): the child's intended race (may differ from the spawned base's race).
+- `FW.Child.ParentActor` (Form): the parent whose add-on configuration drives growth settings.
+- `FW.Child.IsCustomChildActor` (Int): `1` for plain-actor children (copies of a parent base, no `FWChildActor` script).
+- `FW.Child.Order` (Int): current order for plain-actor children (set by the parent order powers).
+- `FW.AddOn.StartGrowing` (Int, on the child): armed at spawn, cleared when growth completes.
+- `FW.Child.GrownUp` (Int): `1` once the child has transitioned into an adult (grow-up feature).
+- `FW.Child.GrowUpAttempts` / `FW.Child.GrowUpFailed` (Int): transition retry bookkeeping; after 10 failed attempts `GrowUpFailed=1` and the child permanently stays a grown child.
+- `FW.Child.VoiceType` (Form): voice assigned to an add-on adult base at transition; re-applied on every game load (base mutations do not persist in saves).
+- `FW.Child.Stat*` / `FW.Child.Perks` / `FW.Child.PerksLevel`: persisted stats and perk picks for `FWChildActor` children.
 
 StorageUtil access examples:
 
@@ -469,3 +477,31 @@ Use an actor add-on INI to customize pregnancy/cycle behavior for specific actor
 5) Edit the per-actor settings you need (durations, pain scales, pregnancy chance, etc.).
 
 After saving the INI, enable the add-on in the BeeingFemale MCM if it is not enabled by default.
+
+### Adult Actor Add-ons (Grow-Up Feature)
+
+When **"Children grow into adults"** is enabled (MCM Children page), a child that finishes growing transitions into a real adult NPC. The adult's actor base is resolved from add-on INI lists, using the same mechanics and INI format as the `BabyActor_*` keys. The keys can be declared per race, per actor, or globally (resolution order: actor add-on, then race add-on, then global; if no list provides a base, the adult is spawned as a copy of the same-sex parent's base).
+
+| Key | Meaning |
+|-----|---------|
+| `AdultActor_Male` / `AdultActor_Female` | Comma-separated `PluginName:FormID` list of adult ActorBases. One entry is picked at random per transition, so longer lists give more variety. |
+| `AdultActor_MalePlayer` / `AdultActor_FemalePlayer` | Optional dedicated lists for the player's own children; checked before the generic lists. |
+| `AdultActorVoice_Male` / `AdultActorVoice_Female` | VoiceType (`PluginName:FormID`) applied to resolved bases that ship without a voice (such as the vanilla chargen presets). Bases that already have a voice keep it. Pick a follower-capable voice if you want the adult recruitable. |
+| `GrowUpToAdult` | Per-race/per-actor opt-in (`=1`); also available as `Global_GrowUpToAdult` in a global add-on INI. ORed with the MCM toggle, so an add-on can enable the transition for its race even when the global toggle is off. |
+| `Global_AllowAdultMarriage` | Global add-on INI only (`=1`): grown adults join the vanilla marriage pool (voice permitting). Off by default; no MCM equivalent. |
+
+The shipped `dist/Core/BeeingFemale/AddOn/Default Adult Actors.ini` is the reference example: it maps all 10 vanilla races (including vampire variants) to Skyrim's own chargen preset NPCs with race-fitting voices. Delete or disable it to fall back to parent-base copies.
+
+#### Shipping adult NPCs with their own dialogue ("Mom"/"Dad" lines)
+
+BF's spoken parent-child greetings come from the HearthFires adoption dialogue, which only exists for child voice types -- grown adults lose them. An add-on plugin can bring them back, because `AdultActor_*` bases resolve from **any** installed plugin, including one that also contains dialogue:
+
+1) Create a plugin with your adult ActorBases (custom faces, or duplicates of vanilla presets).
+2) Add a faction to the plugin and put it in each base's faction list -- actors spawned from the base inherit it, so your dialogue can be conditioned on `GetInFaction` with no scripting. (Conditioning on a custom VoiceType assigned to your bases works too; BF never overrides a voice the base already has.)
+3) Add dialogue topics conditioned on that faction. Useful extra conditions:
+   - `GetRelationshipRank >= 3` toward the player -- BF sets rank 3 on the player's grown children at transition, so only *your* children greet you as a parent.
+   - `GetPCIsSex` -- picks "Mom" vs "Dad" lines for the player.
+4) Reference the bases from an `AdultActor_*` INI (`AdultActor_Female=YourPlugin.esp:FormID,...`). When your plugin is not installed the forms resolve to none and the normal fallback applies, so the INI is safe to ship.
+5) Voice the lines, or leave them silent with subtitles (players can use Fuz Ro D-oh for readable timing).
+
+Everything else -- spawning, follower factions, relationships, persistence across saves -- is handled by BF at transition time.

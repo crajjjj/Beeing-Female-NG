@@ -195,6 +195,7 @@ Children start small and grow linearly to their final size over a configurable p
 - **Growth duration**: controlled by the MCM slider "Mature Time in Days" (default 50 days), scaled by the addon `MatureTimeScale` multiplier for the parent's race
 - Growth is checked every 5 in-game hours
 - Once fully grown, the child is registered with SexLab/BF if applicable and stops growing
+- **Tracking**: the MCM Children tab shows each child's remaining time to maturity next to their name ("Grown" once they reach full size), and the child's info window shows their age in days
 
 The growth formula is linear interpolation:
 
@@ -210,9 +211,34 @@ Growth in Beeing Female is **scale-based only** -- the child's actor model does 
 
 - **Without a child model pack**: the mod falls back to using the parent's adult actor base scaled down small. As the child grows, the scale increases and at scale 1.0 they look like a normal adult NPC. This works but the child will look like a small adult during the growth period rather than an actual child.
 
-- **With the base BeeingFemale.esm fallback actors**: the ESP ships default child actor bases (child-race NPCs). These will always look like children regardless of scale -- reaching scale 1.0 means a normal-sized child, not an adult. They will **not** visually transform into adults.
+- **With the base BeeingFemale.esm fallback actors**: the ESP ships default child actor bases (child-race NPCs). These will always look like children regardless of scale -- reaching scale 1.0 means a normal-sized child, not an adult. On their own they will **not** visually transform into adults -- for that, see "Growing Into Adults" below.
 
-If you want children that visibly grow from child to adult appearance, install a child model addon pack. The recommended packs are listed on the mod page. Without one, the growth system only affects the actor's scale, not their visual model.
+If you want children that visibly grow from child to adult appearance, install a child model addon pack and/or enable the grow-up feature described below. Without either, the growth system only affects the actor's scale, not their visual model.
+
+### Growing Into Adults
+
+With **"Children grow into adults"** enabled on the MCM Children page (off by default), a child that finishes growing becomes a real adult NPC instead of staying a child forever. What happens at that moment depends on what the child looks like:
+
+- **Children using an adult-race base** (the "small adult" fallback case above) simply graduate in place: the same actor keeps their name, inventory, and relationships. They stop being adoptable, and player children become potential followers.
+- **Children using a real child-race model** (child model packs) are replaced by a new adult NPC at the same spot. Their name, inventory, and family relationships carry over; the child actor is removed.
+
+Where the adult's appearance comes from:
+
+- The shipped **"Default Adult Actors"** add-on (`Data/BeeingFemale/AddOn/Default Adult Actors.ini`) gives each of the 10 vanilla races 10 adult faces per sex, taken from Skyrim's own character-creation presets, with a race-fitting voice. Delete or disable that INI and the adult will instead be spawned as a copy of their same-sex parent.
+- Add-on authors can supply their own adult bases and voices with `AdultActor_Male/Female` and `AdultActorVoice_Male/Female` keys in race or actor add-on INIs -- same format as the existing `BabyActor_*` keys, resolving from any installed plugin.
+
+What grown adults can and cannot do:
+
+- The primary way to manage a grown adult is the **native follower system**: they receive the same Current/Potential Follower factions children get at spawn, so the standard "Follow me" dialogue works (with a follower-capable voice -- all the default-INI voices are), and follower frameworks like NFF/EFF/AFT treat them like any other NPC.
+- The BF child command **dialogue** does not carry over: it belongs to the child-race actors, which are replaced at transition (and "small adult" children never had it in the first place). The parent **"order children" powers** still target grown adults of both kinds, but only the teleport orders (come here, go home, meet point) do anything meaningful -- the BF follow order merely marks the adult as a combat teammate, the same limited handling plain-actor children always had. To actually have a grown adult follow you, recruit them with the normal "Follow me" dialogue.
+- They no longer count as children for scene-blocking integrations.
+- They are **not marriage candidates** unless you set `Global_AllowAdultMarriage=1` in a global add-on INI.
+
+Notes:
+
+- Only children that finish growing **after** the toggle is enabled transition; already-grown children stay as they are.
+- Creature children never transition -- they simply reach full size and keep responding to child commands as before.
+- If the transition cannot complete (for example, both parents are unavailable and no adult base is configured for the race), the child stays fully grown and the mod retries on later updates -- up to 10 attempts (roughly two game days). After that it gives up and the child permanently remains a fully grown child.
 
 ### Baby Items Growing to Children
 
@@ -238,6 +264,7 @@ Talk to a child to give orders:
 | Baby Spawn (Player) | Actor | How babies appear: none, actor, item/actor, or gem |
 | Baby Spawn (NPC) | Actor | Same for NPCs |
 | Mature Time | 50 days | How long until a child reaches full size |
+| Children grow into adults | Off | At full size, children become real adult NPCs (see "Growing Into Adults") |
 | Children May Cry | On | Children make crying sounds |
 | BabyTracker Tattoos | Off | SlaveTats tally marks for babies born |
 | Semen Circle Tattoos | Off | SlaveTats indicator when sperm is present |

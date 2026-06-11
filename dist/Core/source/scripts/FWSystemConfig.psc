@@ -116,6 +116,7 @@ bool  Property NPCBornChild = true Auto Hidden
 bool  Property NPCHaveItems = false Auto Hidden
 ; Children
 bool property ChildrenMayCry = true auto hidden
+bool property ChildrenGrowUpToAdult = false auto hidden
 bool property BabyTrackerTattoos = false auto hidden
 bool property SemenCircleTattoos = false auto hidden
 ; Impregnation
@@ -221,6 +222,7 @@ bool NPCHaveItemsDef = false
 ;bool NPCHaveItemsDef = true
 ; Children
 bool ChildrenMayCryDef = true
+bool ChildrenGrowUpToAdultDef = false
 bool BabyTrackerTattoosDef = false
 bool SemenCircleTattoosDef = false
 ; Impregnate
@@ -734,6 +736,7 @@ bool function IsProfile(string File)
 		bool tmpNPCMenstrualNoTalk = JsonUtil.GetIntValue(s, "NPC_MenstrualNoTalk", FWUtility.SwitchInt(NPCMenstrualNoTalk,1,0))==1
 		bool tmpNPCBornChild = JsonUtil.GetIntValue(s, "NPC_BornChild", FWUtility.SwitchInt(NPCBornChild,1,0))==1
 		bool tmpChildrenMayCry = JsonUtil.GetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))==1
+		bool tmpChildrenGrowUpToAdult = JsonUtil.GetIntValue(s, "CHILDREN_GrowUpToAdult", FWUtility.SwitchInt(ChildrenGrowUpToAdult,1,0))==1
 		bool tmpBabyTrackerTattoos = JsonUtil.GetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))==1
 		bool tmpUpdateIntervalEnabled = JsonUtil.GetIntValue(s, "SYSTEM_UpdateIntervalEnabled", FWUtility.SwitchInt(UpdateIntervalEnabled,1,0))==1
 		bContinue=false
@@ -744,6 +747,7 @@ bool function IsProfile(string File)
 			tmpNPCMenstrualNoTalk==NPCMenstrualNoTalk && \
 			tmpNPCBornChild==NPCBornChild && \
 			tmpChildrenMayCry==ChildrenMayCry && \
+			tmpChildrenGrowUpToAdult==ChildrenGrowUpToAdult && \
 			tmpUpdateIntervalEnabled==UpdateIntervalEnabled
 				bContinue=true
 		endif
@@ -866,6 +870,7 @@ function LoadProfile(string File)
 	
 	; Children
 	ChildrenMayCry = JsonUtil.GetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))==1
+	ChildrenGrowUpToAdult = JsonUtil.GetIntValue(s, "CHILDREN_GrowUpToAdult", FWUtility.SwitchInt(ChildrenGrowUpToAdult,1,0))==1
 	BabyTrackerTattoos = JsonUtil.GetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))==1
 	SemenCircleTattoos = JsonUtil.GetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))==1
 
@@ -1008,6 +1013,7 @@ string function SaveProfile(string FileName="")
 	
 	; Children
 	JsonUtil.SetIntValue(s, "CHILDREN_MayCry", FWUtility.SwitchInt(ChildrenMayCry,1,0))
+	JsonUtil.SetIntValue(s, "CHILDREN_GrowUpToAdult", FWUtility.SwitchInt(ChildrenGrowUpToAdult,1,0))
 	JsonUtil.SetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))
 	JsonUtil.SetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))
 	
@@ -1829,6 +1835,34 @@ string function getNumberOfChilds()
 	endIf
 endFunction
 
+; Growth status for the MCM Children tab: time until maturity while growing,
+; "Grown" once full size is reached, empty for grown-up adults
+string function GetChildGrowthStatus(Actor child)
+	if StorageUtil.GetIntValue(child, "FW.Child.GrownUp", 0) == 1
+		return ""
+	endif
+	float dob = StorageUtil.GetFloatValue(child, "FW.Child.DOB", -1.0)
+	if dob < 0
+		return ""
+	endif
+	float age = GameDaysPassed.GetValue() - dob
+	actor parentActor = StorageUtil.GetFormValue(child, "FW.Child.ParentActor", none) as actor
+	if !parentActor
+		parentActor = StorageUtil.GetFormValue(child, "FW.Child.Mother", none) as actor
+	endif
+	float durationDays
+	FWChildActor fwc = child as FWChildActor
+	if fwc
+		durationDays = fwc.SizeDuration * System.Manager.ActorMatureTimeScale(parentActor)
+	else
+		durationDays = System.Manager.ActorCustomMatureTimeInHours(parentActor) / 24.0
+	endif
+	if durationDays <= 0.0 || age >= durationDays
+		return "$FW_MENU_CHILDREN_Grown"
+	endif
+	return GetTimeString(durationDays - age, true)
+endFunction
+
 string function getRemainingTime(bool mayBeZero = true)
 	string signed = ""
 	float xtime
@@ -2561,6 +2595,7 @@ Event OnPageReset(string page)
 		SetCursorPosition(0)
 		AddHeaderOption("$FW_MENU_CHILDREN_Settings")
 		AddToggleOptionST("ToggleBabyMayCry","$FW_MENU_CHILDREN_MayCry", ChildrenMayCry, OPTION_FLAG_NONE)
+		AddToggleOptionST("ToggleChildrenGrowUp","$FW_MENU_CHILDREN_GrowUpToAdult", ChildrenGrowUpToAdult, OPTION_FLAG_NONE)
 		AddToggleOptionST("ToggleBabyTrackerTattoos","$FW_MENU_CHILDREN_BabyTrackerTattoos", BabyTrackerTattoos, OPTION_FLAG_NONE)
 		AddToggleOptionST("ToggleSemenCircleTattoos","$FW_MENU_CHILDREN_SemenCircleTattoos", SemenCircleTattoos, OPTION_FLAG_NONE)
 		AddTextOptionST("RefreshTattoos", "$FW_MENU_CHILDREN_RefreshTattoos", "")
@@ -2580,11 +2615,11 @@ Event OnPageReset(string page)
 				FWChildActor FWChildca = ca as FWChildActor
 				if(FWChildca)
 					If((FWChildca as FWChildActorPlayer);/!=none/; || StorageUtil.GetFormValue(FWChildca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(FWChildca, "FW.Child.Father", none) == player)
-						UI_Child[n] = AddTextOption(GetActorDisplayNameOrBase(FWChildca), "")
+						UI_Child[n] = AddTextOption(GetActorDisplayNameOrBase(FWChildca), GetChildGrowthStatus(ca))
 						n+=1
 					endIf
 				elseIf((StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player) || (StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player))
-					UI_Child[n] = AddTextOption(GetActorDisplayNameOrBase(ca), "")
+					UI_Child[n] = AddTextOption(GetActorDisplayNameOrBase(ca), GetChildGrowthStatus(ca))
 					n += 1
 				endif
 			endif
@@ -6855,6 +6890,22 @@ state ToggleBabyMayCry
 	
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CHILDREN_ChildrenMayCry")
+	EndEvent
+endstate
+
+state ToggleChildrenGrowUp
+	Event OnSelectST()
+		ChildrenGrowUpToAdult = (! ChildrenGrowUpToAdult)
+		SetToggleOptionValueST(ChildrenGrowUpToAdult)
+	EndEvent
+
+	Event OnDefaultST()
+		ChildrenGrowUpToAdult = ChildrenGrowUpToAdultDef
+		SetToggleOptionValueST(ChildrenGrowUpToAdult)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_GrowUpToAdult")
 	EndEvent
 endstate
 

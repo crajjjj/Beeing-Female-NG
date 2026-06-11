@@ -135,13 +135,29 @@ Event OnUpdateGameTime()
 endEvent
 
 Function FinalizeMature()
-;	FW_log.WriteLog("FWDefaultCustomChildEffect: Finished mature process. Removing...")	
+;	FW_log.WriteLog("FWDefaultCustomChildEffect: Finished mature process. Removing...")
 	TargetActor.SetScale(finalScale)
 	BF_AddOnManager.AddToSLandBF(TargetActor)
+	if StorageUtil.GetIntValue(TargetActor, "FW.Child.GrownUp", 0) == 1
+		; Already graduated - FinalizeMature re-runs on every effect restart
+		return
+	endif
+	actor ParentActor = StorageUtil.GetFormValue(TargetActor, "FW.Child.ParentActor", none) as actor
+	if ParentActor
+	else
+		ParentActor = StorageUtil.GetFormValue(TargetActor, "FW.Child.Mother", none) as actor
+	endIf
+	if BF_AddOnManager.ActorGrowUpToAdult(ParentActor)
+		BF_AddOnManager.System.GrowChildToAdult(TargetActor)
+	endif
 endFunction
 
 Event OnEffectFinish(Actor akTarget, Actor akCaster)
 	if !TargetActor
+		return
+	endif
+	if StorageUtil.GetIntValue(TargetActor, "FW.Child.GrownUp", 0) == 1
+		; The child just grew into an adult and is being deleted - no recast
 		return
 	endif
 	if TargetActor.IsDead()
