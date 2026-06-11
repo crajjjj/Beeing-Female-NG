@@ -3286,7 +3286,7 @@ Actor[] function getFemalesWithSpermFrom(actor Male, int max=128)
 					if StorageUtil.FloatListGet(female,"FW.SpermTime",sperm_index)+SpermDuration>CurTime
 						; Found - Exit while and add this sperm
 						sperm_index=0
-						res[curRes]
+						res[curRes]=female
 						curRes+=1
 						if curRes>=max
 							c=0
@@ -3316,7 +3316,8 @@ Actor[] function getFemalesImpregnatedFrom(actor Male, int max=128)
 			Data.Update(female)
 			int female_state= StorageUtil.GetIntValue(female,"FW.CurrentState",0)
 			if female_state>3 && female_state<8
-				if StorageUtil.FormListFind(female, "FW.ChildFather", Male)
+				; FormListFind returns an index: 0 (first father) is a valid hit
+				if StorageUtil.FormListFind(female, "FW.ChildFather", Male) >= 0
 					res[curRes]=female
 					curRes+=1
 					if curRes>=max
