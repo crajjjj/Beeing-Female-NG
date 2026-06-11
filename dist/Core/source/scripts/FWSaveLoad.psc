@@ -446,6 +446,7 @@ function Delete(actor Woman) global
 	StorageUtil.UnsetIntValue(Woman,"FW.NumChilds")
 	FWUtility.ClearChildFathers(Woman)
 	FWUtility.ClearSpermMirror(Woman)
+	FWUtility.ClearBabyItemIdentity(Woman)
 	StorageUtil.UnsetIntValue(Woman,"FW.Flags")
 	StorageUtil.UnsetFloatValue(Woman,"FW.PainLevel")
 	StorageUtil.UnsetFloatValue(Woman,"FW.Contraception")
@@ -453,7 +454,7 @@ function Delete(actor Woman) global
 	StorageUtil.UnsetIntValue(Woman,"FW.NumBirth")
 	StorageUtil.UnsetIntValue(Woman,"FW.NumBabys")
 	StorageUtil.UnsetFloatValue(Woman,"FW.PauseTime")
-	
+
 	StorageUtil.FormListRemove(none,"FW.SavedNPCs",Woman)
 endFunction
 
@@ -474,6 +475,7 @@ function ResetNpcData(bool bPlayer=false) global
 			StorageUtil.UnsetIntValue(Woman,"FW.NumChilds")
 			FWUtility.ClearChildFathers(Woman)
 			FWUtility.ClearSpermMirror(Woman)
+			FWUtility.ClearBabyItemIdentity(Woman)
 			StorageUtil.UnsetIntValue(Woman,"FW.Flags")
 			StorageUtil.UnsetFloatValue(Woman,"FW.PainLevel")
 			StorageUtil.UnsetFloatValue(Woman,"FW.Contraception")
@@ -490,20 +492,29 @@ function ResetNpcData(bool bPlayer=false) global
 endFunction
 
 function deleteChildren() global
+	Actor player = Game.GetPlayer()
 	int c = StorageUtil.FormListCount(none,"FW.Babys")
 	while c>0
 		c-=1
 		FWChildActor baby1 = StorageUtil.FormListGet(none, "FW.Babys",c) as FWChildActor
 		FWChildItem baby2 = StorageUtil.FormListGet(none, "FW.Babys",c) as FWChildItem
 		Actor baby3 = StorageUtil.FormListGet(none, "FW.Babys",c) as Actor
+		Armor baby4 = StorageUtil.FormListGet(none, "FW.Babys",c) as Armor
 		if baby1 != none
 			baby1.Delete()
 		elseif baby2 != none
 			baby2.Delete()
 		elseif baby3 != none
 			baby3.Delete()
+		elseif baby4 != none
+			; Item-mode babies are stored as the armor BASE form - none of the
+			; casts above match, so without this they survived a mod reset
+			player.RemoveItem(baby4, player.GetItemCount(baby4), true)
+			StorageUtil.FormListRemoveAt(none, "FW.Babys", c)
 		endif
 	endwhile
+	; Birth-time identity entries for the player's baby items
+	FWUtility.ClearBabyItemIdentity(player)
 endFunction
 
 function Upgrade(int oldVersion, int newVersion)

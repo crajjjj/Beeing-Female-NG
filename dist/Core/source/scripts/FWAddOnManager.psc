@@ -4454,7 +4454,9 @@ endFunction
 ; Get CustomMatureTimeInHours
 float Function ActorCustomMatureTimeInHours(actor a)
 	float DefaultMatureTimeInHours = 24 * (BFOpt_MatureTimeInDays.GetValue())
-	float myCustomMatureTimeInHours
+	; -1 = "no override found" so unset paths (a == none, race == none) fall
+	; through to the default instead of returning 0 (= mature instantly)
+	float myCustomMatureTimeInHours = -1.0
 	if a
 		if(StorageUtil.GetIntValue(a, "FW.AddOn.DisableMatureTime", 0) == 0)
 			myCustomMatureTimeInHours = DefaultMatureTimeInHours * StorageUtil.GetFloatValue(a, "FW.AddOn.MatureTimeScale", -1)

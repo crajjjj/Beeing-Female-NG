@@ -104,7 +104,7 @@ bool property CanWearWeapons = false auto
 ; Flags
 ;---------------------------
 ;  1 IsVampire
-;  2 Hair from Mother
+;  2 Hair from Father (all consumers read bit 2 as father's hair color)
 ;  4 IsFemale
 ;  8 Eyes from Mother
 ; 16 Nose from Mother
@@ -160,7 +160,7 @@ actor property Mother hidden
 		endif
 		if _Mother!=none
 			SetRelationshipRank(_Mother, ChildSettings.ParentRelationShipLevel)
-			_Mother.SetRelationshipRank(_Mother,ChildSettings.ParentRelationShipLevel)
+			_Mother.SetRelationshipRank(self,ChildSettings.ParentRelationShipLevel)
 		endif
 		
 		;if _Father!=PlayerRef && _Mother!=PlayerRef && _Father!=none && Mother!=none
@@ -734,7 +734,9 @@ function InitChild()
 	;	endif
 	;endif
 	
-	Order = StorageUtil.GetIntValue(self,"FW.Child.Order", 0)
+	; Default 31 (follow & play) matches the OnLoad AV default - previously this
+	; used 0, leaving the property at "wait" while the AV said "follow & play"
+	Order = StorageUtil.GetIntValue(self,"FW.Child.Order", 31)
 	
 	;self.SetActorOwner(Mother.GetLeveledActorBase())
 	RefreshFactions()
@@ -788,7 +790,7 @@ Event OnDeath(Actor akKiller)
 	StorageUtil.SetFloatValue(self, "FW.Child.DOD", GameDaysPassed.GetValue())
 	StorageUtil.SetFloatValue(self,"FW.Child.LastUpdate",GameDaysPassed.GetValue())
 
-	StorageUtil.GetIntValue(self, "FW.AddOn.StartGrowing", 0)
+	;StorageUtil.GetIntValue(self, "FW.AddOn.StartGrowing", 0)
 	StorageUtil.UnsetIntValue(self, "FW.AddOn.StartGrowing")
 
 	UnregisterForUpdate()
@@ -929,7 +931,7 @@ int Function GetRelationshipRank(Actor akOther)
 		if akOther.GetRelationshipRank(self)!=ChildSettings.ParentRelationShipLevel
 			akOther.SetRelationshipRank(self,ChildSettings.ParentRelationShipLevel)
 		endif
-		return 2
+		return ChildSettings.ParentRelationShipLevel
 	else
 		return parent.GetRelationshipRank(akOther)
 	endif
@@ -1368,18 +1370,12 @@ Function ForceActorValue(string asValueName, float afNewValue)
 endFunction
 
 float Function GetActorValue(string asValueName)
-	if asValueName!="Comprehension"
+	; Mirror of SetActorValue/ModActorValue: special stats live in StorageUtil,
+	; everything else (WaitingForPlayer, the order AV, ...) is a real engine AV
+	if IsSpecialAV(asValueName)
 		return StorageUtil.GetFloatValue(self, "FW.Child.Stat"+asValueName, 0)
-	elseif asValueName!="SkillPoints"
-		return StorageUtil.GetFloatValue(self, "FW.Child.Stat"+asValueName, 0)
-	elseif asValueName!="PerkPoints"
-		return StorageUtil.GetFloatValue(self, "FW.Child.Stat"+asValueName, 0)
-	;elseif IsSpecialAV(asValueName)
-		;return StorageUtil.GetFloatValue(self, "FW.Child.Stat"+asValueName, parent.GetBaseActorValue(asValueName))
 	endif
-	if asValueName!="Comprehension" && asValueName!="SkillPoints" && asValueName!="PerkPoints" && asValueName!="Experience"
-		return parent.GetActorValue(asValueName)
-	endif
+	return parent.GetActorValue(asValueName)
 endFunction
 
 float Function GetActorValuePercentage(string asValueName)

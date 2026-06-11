@@ -82,7 +82,11 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 7.6 | P2 | Child dialogue commands | Follow, wait, go home orders dispatch via `Order` setter | FWChildActor, FW_ChildDial* |
 | 7.7 | P2 | Race inheritance from father | Child race matches father where addon permits | FWChildActor |
 | 7.8 | P0 | Save/reload with active children | `InitChild()` restores StorageUtil values, name, factions, scale | FWChildActor |
-| 7.9 | P2 | Delete all children (`deleteChildren`) | All three types (FWChildActor, FWChildItem, plain Actor) removed, no FormList orphans | FWSaveLoad |
+| 7.9 | P2 | Delete all children (`deleteChildren`) | All four entry types removed (FWChildActor, FWChildItem, plain Actor, **armor base** for item babies); player's carried baby items removed; `FW.BabyItem*` identity lists cleared; no FormList orphans | FWSaveLoad |
+| 7.10 | P1 | Baby item hatches into the SAME baby | Item born as "Sofie (girl)" hatches into a girl named Sofie; race context (incl. creature father race) carried from birth via mother-keyed `FW.BabyItem*` lists; item sex roll uses configurable `ResolveChildGender`, not a fixed 53% | FWSystem, FWAbilityBeeingFemale |
+| 7.11 | P1 | Twin baby items (shared armor base) | Two `FW.Babys` entries + two identity entries; each hatch consumes one identity FIFO (birth order); both children get distinct recorded names/sexes; per-baby DOB (no shared `FW.ChildArmor.dob` last-writer-wins) | FWAbilityBeeingFemale, FWUtility |
+| 7.12 | P1 | Legacy baby item (born pre-3.5.1) | No `FW.BabyItemArmor` entry → hatch falls back to shared `FW.ChildArmor.*` keys (old behavior: re-rolled name/sex); no errors, item still hatches | FWAbilityBeeingFemale |
+| 7.13 | P2 | MCM baby item rows | Children tab shows the recorded baby name + per-baby countdown from birth-time DOB; legacy items show armor name + shared dob ("Paused" until first equip) | FWSystemConfig |
 
 ## 8. NPC Scanning & Spell Application
 
@@ -252,7 +256,7 @@ MCM "Children grow into adults" (Children page, default OFF) or add-on `GrowUpTo
 | 22.10 | P1 | Grown adults: scene eligibility + retained commands | OStim scenes NOT force-stopped (`GrownUp` check); parent order powers still target grown adults of both paths: teleport orders (come here / go home / meet point) work via direct MoveTo, BF follow order only sets the teammate flag (no follow package — actual following via vanilla "Follow me"); BF command dialogue absent (child-race actor replaced; in-place graduates never had it); `OnUpdateGameTime` maintenance continues for in-place graduates, skipped only for the condemned Path B child (`MarkForDelete` state) | BFA_Ostim, FWSpellChildOrder, FWChildActor |
 | 22.11 | P2 | Marriage INI flag | `Global_AllowAdultMarriage` absent → adult has no PotentialMarriageFaction even when the parent base had it; `=1` in a global add-on INI → Mara dialogue appears (voice permitting; MaleKhajiit has no marriage lines) | FWSystem `ApplyAdultFactions` |
 | 22.12 | P2 | Add-on INI removal | Deleting/disabling an AdultActor INI → `ClearRaceAddOns` wipes `AdultActor_*`/`AdultActorVoice_*` lists and `GrowUpToAdult` on races at next refresh — no stale bases | FWAddOnManager |
-| 22.13 | P2 | Opposite-sex parent fallback | Used only when its base sex matches the child; mismatch → transition aborts, child stays (no cross-sex adults) | FWSystem `GrowChildToAdult` |
+| 22.13 | P2 | Parent-base fallback gates | Same/opposite-sex parent base used only if it is NOT the player and NOT unique (`IsUnique`) — no player clones, no second Lydia; opposite-sex parent additionally requires matching base sex; all rejected → abort/retry, child stays | FWSystem `GrowChildToAdult` |
 | 22.14 | P2 | NPC×NPC parents | Transition fires off-screen; adult sandboxes on inherited/preset packages; not listed in player's Children tab | FWSystem |
 | 22.15 | P2 | Already-grown custom adult on cell load | `FinalizeMature` re-runs on effect restart → `GrownUp==1` early return: no re-transition, no repeated gate cost | FWDefaultCustomChildEffect |
 | 22.16 | P2 | Mod reset (`deleteChildren`) | Grown adults are BF-spawned and ARE deleted on reset/uninstall — intended; dissolves a marriage to one | FWSaveLoad |

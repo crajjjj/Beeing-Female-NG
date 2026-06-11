@@ -154,7 +154,7 @@ float property SizeDuration = 30.0 auto
 
 ; Flags
 ;  1 IsVampire
-;  2 Hair from Mother
+;  2 Hair from Father (all consumers read bit 2 as father's hair color)
 ;  4 IsFemale
 ;  8 Eyes from Mother
 ; 16 Nose from Mother
@@ -262,13 +262,26 @@ endFunction
 ; EndFunction
 
 function Delete()
+	; Drop the birth-time identity entry recorded on the mother
+	actor m = StorageUtil.GetFormValue(self, "FW.Child.Mother", none) as Actor
+	Form myBase = GetBaseObject()
+	if m && myBase
+		int idx = StorageUtil.FormListFind(m, "FW.BabyItemArmor", myBase)
+		if idx >= 0
+			FWUtility.RemoveBabyItemIdentityAt(m, idx)
+		endif
+	endif
 	StorageUtil.UnsetFloatValue(self,"FW.Child.LastUpdate")
 	StorageUtil.UnsetFormValue(self, "FW.Child.Father")
 	StorageUtil.UnsetFormValue(self, "FW.Child.Mother")
 	StorageUtil.UnsetStringValue(self, "FW.Child.Name")
 	StorageUtil.UnsetIntValue(self, "FW.Child.Flag")
 	StorageUtil.UnsetIntValue(self, "FW.Child.GrownToActor")
-	StorageUtil.FormListRemove(none, "FW.Babys", self)
+	; FW.Babys stores the armor BASE form, not this reference - removing self
+	; never matched anything. Remove one base entry (twins keep theirs).
+	if myBase
+		StorageUtil.FormListRemove(none, "FW.Babys", myBase, false)
+	endif
 endFunction
 
 string Function GetLastName()

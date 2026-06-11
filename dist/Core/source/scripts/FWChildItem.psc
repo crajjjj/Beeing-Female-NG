@@ -40,7 +40,7 @@ float property SizeDuration = 30.0 auto
 
 ; Flags
 ;  1 IsVampire
-;  2 Hair from Mother
+;  2 Hair from Father (all consumers read bit 2 as father's hair color)
 ;  4 IsFemale
 ;  8 Eyes from Mother
 ; 16 Nose from Mother
@@ -100,13 +100,15 @@ Event OnLoad()
 		iSex=0
 	endif
 	name = StorageUtil.GetStringValue(self,"FW.Child.Name","")
-	if Math.LogicalAnd(flag,2)==2
-		HairColor = _Father.GetLeveledActorBase().GetHairColor()
-	else
-		HairColor = _Mother.GetLeveledActorBase().GetHairColor()
-	endif
+	; Load the parents BEFORE reading their hair - previously these two lines
+	; ran after the hair block, so a fresh instance dereferenced None
 	_Father = StorageUtil.GetFormValue(self,"FW.Child.Father",none) as Actor
 	_Mother = StorageUtil.GetFormValue(self,"FW.Child.Mother",none) as Actor
+	if Math.LogicalAnd(flag,2)==2 && _Father
+		HairColor = _Father.GetLeveledActorBase().GetHairColor()
+	elseif _Mother
+		HairColor = _Mother.GetLeveledActorBase().GetHairColor()
+	endif
 	RegisterForSingleUpdateGameTime(5)
 	OnUpdateGameTime()
 EndEvent

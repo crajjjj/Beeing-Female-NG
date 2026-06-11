@@ -224,7 +224,7 @@ With **"Children grow into adults"** enabled on the MCM Children page (off by de
 
 Where the adult's appearance comes from:
 
-- The shipped **"Default Adult Actors"** add-on (`Data/BeeingFemale/AddOn/Default Adult Actors.ini`) gives each of the 10 vanilla races 10 adult faces per sex, taken from Skyrim's own character-creation presets, with a race-fitting voice. Delete or disable that INI and the adult will instead be spawned as a copy of their same-sex parent.
+- The shipped **"Default Adult Actors"** add-on (`Data/BeeingFemale/AddOn/Default Adult Actors.ini`) gives each of the 10 vanilla races 10 adult faces per sex, taken from Skyrim's own character-creation presets, with a race-fitting voice. Delete or disable that INI and the adult will instead be spawned as a copy of their same-sex parent -- but only when that parent uses a generic actor base. The player and unique NPCs (named followers, spouses) are never cloned; if no usable base remains, the transition is skipped and the child stays a grown child (add an `AdultActor_*` INI entry for the race to cover this).
 - Add-on authors can supply their own adult bases and voices with `AdultActor_Male/Female` and `AdultActorVoice_Male/Female` keys in race or actor add-on INIs -- same format as the existing `BabyActor_*` keys, resolving from any installed plugin.
 
 What grown adults can and cannot do:
@@ -243,6 +243,8 @@ Notes:
 ### Baby Items Growing to Children
 
 When the baby spawn mode is set to "Item/Actor" (mode 2), humanoid babies are spawned as inventory items (carried by the mother). For the **player character only**, these baby items will automatically convert into child actor NPCs once the growth time has elapsed. This does not apply to NPC mothers -- their baby items remain as items.
+
+The baby's identity is fixed at birth: the name and sex announced when the baby is born are the ones the hatched child will have, and the growth clock starts at birth, not when you first equip the item. Twins hatch in birth order, each with their own name and timer. (Baby items born in older versions of the mod predate this tracking -- they still hatch, but with a newly rolled name and sex, the old behavior.)
 
 ### Child Commands
 

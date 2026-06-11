@@ -202,6 +202,56 @@ function ClearChildFathers(actor Mother) global
 	StorageUtil.FormListClear(Mother, "FW.ChildFatherRace")
 endFunction
 
+; Baby-item identity lists (FW.BabyItem*) - written at birth in ChildItemSetup,
+; consumed FIFO when an item hatches. Parallel lists; always modify together.
+function AddBabyItemIdentity(actor Mother, Form ArmorBase, string BabyName, int Sex, race ParentRace, actor Father) global
+	if !Mother || !ArmorBase
+		return
+	endif
+	StorageUtil.FormListAdd(Mother, "FW.BabyItemArmor", ArmorBase)
+	StorageUtil.StringListAdd(Mother, "FW.BabyItemName", BabyName)
+	StorageUtil.IntListAdd(Mother, "FW.BabyItemSex", Sex)
+	StorageUtil.FormListAdd(Mother, "FW.BabyItemRace", ParentRace)
+	StorageUtil.FormListAdd(Mother, "FW.BabyItemFather", Father)
+	StorageUtil.FloatListAdd(Mother, "FW.BabyItemDOB", Utility.GetCurrentGameTime())
+endFunction
+
+function RemoveBabyItemIdentityAt(actor Mother, int Index) global
+	if !Mother
+		return
+	endif
+	if StorageUtil.FormListCount(Mother, "FW.BabyItemArmor") > Index
+		StorageUtil.FormListRemoveAt(Mother, "FW.BabyItemArmor", Index)
+	endif
+	if StorageUtil.StringListCount(Mother, "FW.BabyItemName") > Index
+		StorageUtil.StringListRemoveAt(Mother, "FW.BabyItemName", Index)
+	endif
+	if StorageUtil.IntListCount(Mother, "FW.BabyItemSex") > Index
+		StorageUtil.IntListRemoveAt(Mother, "FW.BabyItemSex", Index)
+	endif
+	if StorageUtil.FormListCount(Mother, "FW.BabyItemRace") > Index
+		StorageUtil.FormListRemoveAt(Mother, "FW.BabyItemRace", Index)
+	endif
+	if StorageUtil.FormListCount(Mother, "FW.BabyItemFather") > Index
+		StorageUtil.FormListRemoveAt(Mother, "FW.BabyItemFather", Index)
+	endif
+	if StorageUtil.FloatListCount(Mother, "FW.BabyItemDOB") > Index
+		StorageUtil.FloatListRemoveAt(Mother, "FW.BabyItemDOB", Index)
+	endif
+endFunction
+
+function ClearBabyItemIdentity(actor Mother) global
+	if !Mother
+		return
+	endif
+	StorageUtil.FormListClear(Mother, "FW.BabyItemArmor")
+	StorageUtil.StringListClear(Mother, "FW.BabyItemName")
+	StorageUtil.IntListClear(Mother, "FW.BabyItemSex")
+	StorageUtil.FormListClear(Mother, "FW.BabyItemRace")
+	StorageUtil.FormListClear(Mother, "FW.BabyItemFather")
+	StorageUtil.FloatListClear(Mother, "FW.BabyItemDOB")
+endFunction
+
 race function GetLastChildFatherRace(actor Mother) global
 	if !Mother
 		return none

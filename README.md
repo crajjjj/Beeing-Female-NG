@@ -425,6 +425,13 @@ Born children (entries in `FW.Babys`) carry their own per-actor keys:
 - `FW.Child.VoiceType` (Form): voice assigned to an add-on adult base at transition; re-applied on every game load (base mutations do not persist in saves).
 - `FW.Child.Stat*` / `FW.Child.Perks` / `FW.Child.PerksLevel`: persisted stats and perk picks for `FWChildActor` children.
 
+Baby items (BabySpawn "item" mode) record each baby's identity on the **mother** in parallel lists, written at birth and consumed FIFO when the item hatches (inventory references do not survive saves, so identity is never keyed on the placed item):
+
+- `FW.BabyItemArmor` (FormList): the armor base form, used to match items to entries.
+- `FW.BabyItemName` (StringList) / `FW.BabyItemSex` (IntList): the name and sex announced at birth -- the hatched child keeps them.
+- `FW.BabyItemRace` (FormList): race context resolved at birth (preserves creature father race across unloads).
+- `FW.BabyItemFather` (FormList) / `FW.BabyItemDOB` (FloatList): per-baby father and birth timestamp.
+
 StorageUtil access examples:
 
 ```papyrus
@@ -480,7 +487,7 @@ After saving the INI, enable the add-on in the BeeingFemale MCM if it is not ena
 
 ### Adult Actor Add-ons (Grow-Up Feature)
 
-When **"Children grow into adults"** is enabled (MCM Children page), a child that finishes growing transitions into a real adult NPC. The adult's actor base is resolved from add-on INI lists, using the same mechanics and INI format as the `BabyActor_*` keys. The keys can be declared per race, per actor, or globally (resolution order: actor add-on, then race add-on, then global; if no list provides a base, the adult is spawned as a copy of the same-sex parent's base).
+When **"Children grow into adults"** is enabled (MCM Children page), a child that finishes growing transitions into a real adult NPC. The adult's actor base is resolved from add-on INI lists, using the same mechanics and INI format as the `BabyActor_*` keys. The keys can be declared per race, per actor, or globally (resolution order: actor add-on, then race add-on, then global; if no list provides a base, the adult is spawned as a copy of the same-sex parent's base -- generic bases only: the player's base and unique NPC bases are never cloned, and with no usable base the transition aborts and retries).
 
 | Key | Meaning |
 |-----|---------|

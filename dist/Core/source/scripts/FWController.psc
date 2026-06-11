@@ -988,6 +988,11 @@ function GiveBirth(actor Mother)
 		StorageUtil.FormListRemove(none, "FW.GivingBirth", Mother)
 	endif
 
+	; Claim the birth right after the guard check - the ModEvent calls below
+	; unlock the script, so a second trigger must hit the guard above first
+	StorageUtil.FormListAdd(none,"FW.GivingBirth", Mother) ;Tkc (Loverslab): Mother added to the GivingBirth list to detect her when is giving birth by papyrus condition or from esp
+	StorageUtil.SetFloatValue(Mother, "FW.GivingBirthTime", GameDaysPassed.GetValue())
+
 	int laborEvent = ModEvent.Create("BeeingFemaleLabor")
 	if laborEvent
 		actor Father0 = none 
@@ -1010,10 +1015,7 @@ function GiveBirth(actor Mother)
 		ModEvent.PushForm(laborEvent, Father2)
 		ModEvent.Send(laborEvent)
 	endif
-	
-	StorageUtil.FormListAdd(none,"FW.GivingBirth", Mother) ;Tkc (Loverslab): Mother added to the GivingBirth list to detect her when is giving birth by papyrus condition or from esp
-	StorageUtil.SetFloatValue(Mother, "FW.GivingBirthTime", GameDaysPassed.GetValue())
-	
+
 	Manager.OnGiveBirthStart(Mother)
 	Mother.EvaluatePackage()
 	float UnbornHealth=StorageUtil.GetFloatValue(Mother,"FW.UnbornHealth",100.0)

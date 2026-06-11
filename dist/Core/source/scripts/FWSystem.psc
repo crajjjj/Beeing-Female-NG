@@ -729,6 +729,8 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 					; the growth loop in FWAbilityBeeingFemale scans FW.Babys for armor
 					; entries to hatch. Entries for armor the player no longer holds
 					; (NPC babys, already hatched) fall through and are purged.
+					; Intentional: NPC mothers' baby items never hatch, so dropping
+					; their entries here is by design, not data loss.
 				else
 					StorageUtil.FormListRemoveAt(none, "FW.Babys", childCount)
 				endIf
@@ -2056,7 +2058,7 @@ endFunction
 
 ; Spawn the childs / adding them to the inventory
 function InstantBornChilds(actor a)
-	int numChilds = StorageUtil.GetIntValue(a,"FW.NumChilds",numChilds)
+	int numChilds = StorageUtil.GetIntValue(a,"FW.NumChilds",0)
 	if numChilds==0
 		return
 	endif
@@ -2064,8 +2066,9 @@ function InstantBornChilds(actor a)
 	int spawnedCount = 0
 	while numChilds>0
 		numChilds-=1
-		float rndHealth=Utility.RandomFloat(1,25)
-		if BabyHealth>rndHealth
+		; Same stillbirth roll and abortus gate as the on-screen GiveBirth path
+		float rndHealth=Utility.RandomFloat(0.0,35.0)
+		if BabyHealth>rndHealth || cfg.abortus==false
 			spawnedCount += 1
 			race tempFatherRace = none
 			if StorageUtil.FormListCount(a, "FW.ChildFatherRace") > numChilds
@@ -2659,18 +2662,12 @@ function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
 			endIf
 		else
 			if spawnSetting == 2
-				if isPlayerInvolved
-					if fatherIsCreature
-						Baby = SpawnChildActor(Mother, Father, FatherRace)
-					else
-						Baby = SpawnChildItem(Mother, Father, FatherRace)
-					endif
+				if fatherIsCreature
+					; Creature babys have no item form - spawn the actor directly,
+					; for NPC mothers too (their items would never hatch anyway)
+					Baby = SpawnChildActor(Mother, Father, FatherRace)
 				else
-					if fatherIsCreature
-						return
-					else
-						Baby = SpawnChildItem(Mother, Father, FatherRace)
-					endif
+					Baby = SpawnChildItem(Mother, Father, FatherRace)
 				endif
 			elseif spawnSetting == 3 && BabyGem;/!=none/; ;Tkc (Loverslab): optimization
 				Mother.AddItem(BabyGem)
@@ -2694,13 +2691,8 @@ function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
 endFunction
 
 Armor function SpawnChildItem(Actor Mother, Actor Father, Race FatherRace = none)
-;	Int gender = Utility.RandomInt(0, 100)
-	Int gender = Utility.RandomInt(0, 99)
-	if gender < 53
-		gender=0
-	else
-		gender=1
-	endif
+	; Same configurable roll as actor babies (was a hardcoded 53% boy chance)
+	Int gender = ResolveChildGender(Father)
 	Form[] armorResult = BabyItemList.getBabyArmor(Mother, Father, gender, FatherRace)
 	Armor mo = armorResult[0] as Armor
 	race itemParentRace = armorResult[2] as Race
@@ -2779,6 +2771,15 @@ ObjectReference function ChildItemSetup(Form frm, int gender=-1, Actor Mother=no
 		endif
 	endif
 	string childName = getRandomChildName(gender)
+	; Record the baby's identity on the mother. The placed reference does not
+	; survive saves reliably and FW.Babys only holds the armor BASE form, so
+	; these mother-keyed parallel lists are what the hatch reads back (FIFO for
+	; twins sharing a base). Consumed in ProcessBabyItemTransitionToChild.
+	; Only when the item actually got placed - an orphan entry would shift FIFO.
+	if Mother && frm && obj
+		FWUtility.AddBabyItemIdentity(Mother, frm, childName, gender, ParentRace, Father)
+		FW_log.WriteLog("FWSystem::ChildItemSetup recorded baby identity '" + childName + "' (sex=" + gender + ", race=" + ParentRace + ") entry " + StorageUtil.FormListCount(Mother, "FW.BabyItemArmor") + " for " + Mother)
+	endif
 	if obj2;/!=none/; ;Tkc (Loverslab): optimization
 		if Mother ;Tkc (Loverslab): optimization
 		else;if Mother==none
@@ -2978,15 +2979,31 @@ actor function GrowChildToAdult(Actor child)
 	ActorBase adultBase = Manager.GetAdultActor(cfgParent, childRace, sex, bIsPlayerChild)
 	if adultBase == none
 		bFromAddOnList = false
-		if sameSexParent
-			adultBase = sameSexParent.GetLeveledActorBase()
+		; Fallback gate: never clone the player's base or a unique NPC's base -
+		; a second actor on a unique base confuses quest aliases and follower
+		; frameworks. Generic shared bases are safe (the engine clones those
+		; routinely). Rejected parents fall through to AbortGrowUp's retry path;
+		; the AdultActor_* INI keys are the supported way to cover those races.
+		if sameSexParent && sameSexParent != PlayerRef
+			ActorBase sameBase = sameSexParent.GetLeveledActorBase()
+			if sameBase && !sameBase.IsUnique()
+				adultBase = sameBase
+			elseif sameBase
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: same-sex parent base " + sameBase + " is unique - not cloning")
+			endif
+		elseif sameSexParent
+			FW_log.WriteLog("FWSystem - GrowChildToAdult: same-sex parent is the player - not cloning")
 		endif
-		if adultBase == none && otherParent
+		if adultBase == none && otherParent && otherParent != PlayerRef
 			; Only accept the opposite-sex parent's base when its sex matches the child
 			ActorBase otherBase = otherParent.GetLeveledActorBase()
-			if otherBase && otherBase.GetSex() == sex
+			if otherBase && !otherBase.IsUnique() && otherBase.GetSex() == sex
 				adultBase = otherBase
+			elseif otherBase
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent base " + otherBase + " rejected (unique or sex mismatch)")
 			endif
+		elseif adultBase == none && otherParent
+			FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent is the player - not cloning")
 		endif
 	endif
 	if adultBase == none
@@ -3124,6 +3141,7 @@ function AbortGrowUp(Actor child)
 		FW_log.WriteLog("FWSystem - GrowChildToAdult: giving up on " + child + " after " + attempts + " attempts", 1)
 		return
 	endif
+	FW_log.WriteLog("FWSystem - GrowChildToAdult: attempt " + attempts + "/10 failed for " + child + " - re-arming for retry")
 	; FWChildActor.UpdateSize only reaches the maturity hook while StartGrowing is set
 	StorageUtil.SetIntValue(child, "FW.AddOn.StartGrowing", 1)
 	if !(child as FWChildActor) && !child.Is3DLoaded()
@@ -3134,7 +3152,9 @@ function AbortGrowUp(Actor child)
 	endif
 endFunction
 
-actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = none)
+; gender / childName: optional overrides used when a baby item hatches, so the
+; child keeps the sex and name the item was born with. -1 / "" = roll as usual.
+actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = none, int gender = -1, string childName = "")
 	Mother = SanitizeMotherActor(Mother)
 	Father = SanitizeFatherActor(Father)
 	if Mother == none
@@ -3145,9 +3165,9 @@ actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = non
 
 
 	; Decide who will determine the baby actor model
-;	Int gender = Utility.RandomInt(0, 99)
-;	if gender < 53
-	int gender = ResolveChildGender(Father)
+	if gender == -1
+		gender = ResolveChildGender(Father)
+	endif
 	Form[] babyResult = BabyItemList.getBabyActorNew(Mother, Father, gender, FatherRace)
 	ActorBase newChildBase = babyResult[0] as ActorBase
 	Actor ParentActor = babyResult[1] as Actor
@@ -3167,8 +3187,10 @@ actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = non
 	; Create new Child
 	newChild = Mother.PlaceActorAtMe(newChildBase)
 	if newChild;/!=none/; ;Tkc (Loverslab): optimization
-		string childName = getRandomChildName(gender)
-		
+		if childName == ""
+			childName = getRandomChildName(gender)
+		endif
+
 		newChild.MoveTo(Mother, 50, 50, 10)
 		newChild.QueueNiNodeUpdate()
 		newChild.MakePlayerFriend()

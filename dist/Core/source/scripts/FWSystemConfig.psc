@@ -2638,11 +2638,23 @@ Event OnPageReset(string page)
 		while ind < c
 			Armor babyItem = StorageUtil.FormListGet(none, "FW.Babys", ind) as Armor
 			if babyItem && PlayerRef.GetItemCount(babyItem) > 0
-				if babyDob > 0.0
-					AddTextOption(babyItem.GetName(), GetTimeString((babyDob + hatchDuration) - GameDaysPassed.GetValue(), true, "$FW_MENU_OPTIONS_Overdue"))
+				; Per-baby identity recorded at birth; legacy items fall back to
+				; the shared equip-time dob and the armor's generic name
+				float itemDob = babyDob
+				string itemName = babyItem.GetName()
+				int itemIdx = StorageUtil.FormListFind(PlayerRef, "FW.BabyItemArmor", babyItem)
+				if itemIdx >= 0
+					itemDob = StorageUtil.FloatListGet(PlayerRef, "FW.BabyItemDOB", itemIdx)
+					string recordedName = StorageUtil.StringListGet(PlayerRef, "FW.BabyItemName", itemIdx)
+					if recordedName != ""
+						itemName = recordedName
+					endif
+				endif
+				if itemDob > 0.0
+					AddTextOption(itemName, GetTimeString((itemDob + hatchDuration) - GameDaysPassed.GetValue(), true, "$FW_MENU_OPTIONS_Overdue"))
 				else
-					; dob is set on first equip; until then growth has not started
-					AddTextOption(babyItem.GetName(), "$FW_MENU_OPTIONS_Paused")
+					; legacy dob is set on first equip; until then growth has not started
+					AddTextOption(itemName, "$FW_MENU_OPTIONS_Paused")
 				endif
 			endif
 			ind += 1

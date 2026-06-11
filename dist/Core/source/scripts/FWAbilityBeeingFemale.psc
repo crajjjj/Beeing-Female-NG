@@ -376,10 +376,6 @@ event OnUpdateGameTime()
 		int babyitemCount = StorageUtil.FormListCount(none,"FW.Babys")
 		FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - player babyitemCount: " + babyitemCount)
 		
-		float dob = StorageUtil.GetFloatValue(PlayerRef,"FW.ChildArmor.dob",0)
-		Actor f = StorageUtil.GetFormValue(PlayerRef,"FW.ChildArmor.Father",none) as Actor
-		Actor m = StorageUtil.GetFormValue(PlayerRef,"FW.ChildArmor.Mother",none) as Actor
-
 		while babyitemCount > 0
 			babyitemCount -= 1
 			Form formarm = StorageUtil.FormListGet(none,"FW.Babys", babyitemCount)
@@ -388,10 +384,27 @@ event OnUpdateGameTime()
 				FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - armor entry in FW.Babys " + childArmor.GetName())
 			EndIf
 			
+			; Intentional: baby items hatch into child actors for the PLAYER only.
+			; NPC mothers' baby items stay items forever (and are purged from
+			; FW.Babys on game load when the player does not carry them).
 			if childArmor && PlayerRef.IsEquipped(childArmor)
-				if m && m == PlayerRef
+				int idx = StorageUtil.FormListFind(PlayerRef, "FW.BabyItemArmor", childArmor)
+				if idx >= 0
+					; Identity recorded at birth - per-baby dob/father (FIFO for twins)
 					FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - player child: " + childArmor.GetName())
-					ProcessBabyItemTransitionToChild(m,f,SizeDuration,childArmor,dob)
+					Actor itemFather = StorageUtil.FormListGet(PlayerRef, "FW.BabyItemFather", idx) as Actor
+					float itemDob = StorageUtil.FloatListGet(PlayerRef, "FW.BabyItemDOB", idx)
+					ProcessBabyItemTransitionToChild(PlayerRef, itemFather, SizeDuration, childArmor, itemDob, idx)
+				else
+					; Legacy item born before identity tracking - shared-key fallback.
+					; Reads live here so the common paths pay nothing for them.
+					Actor m = StorageUtil.GetFormValue(PlayerRef,"FW.ChildArmor.Mother",none) as Actor
+					if m && m == PlayerRef
+						FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - player child (legacy): " + childArmor.GetName())
+						Actor f = StorageUtil.GetFormValue(PlayerRef,"FW.ChildArmor.Father",none) as Actor
+						float dob = StorageUtil.GetFloatValue(PlayerRef,"FW.ChildArmor.dob",0)
+						ProcessBabyItemTransitionToChild(m,f,SizeDuration,childArmor,dob)
+					endif
 				endif
 			endif
 		endwhile
@@ -423,7 +436,7 @@ event OnUpdateGameTime()
 	EndIf
 endEvent
 
-Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeDuration, Armor arm, float dob)
+Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeDuration, Armor arm, float dob, int identityIdx = -1)
 	if dob == 0.0
 		FW_log.WriteLog("FWChildArmor: ProcessBabyItemTransitionToChild: DOB is 0")
 		return
@@ -436,8 +449,21 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 	FW_log.WriteLog("FWChildArmor: Update tick (Age=" + age + ", SizeDuration=" + sizeDuration + ")")
 	if age >= sizeDuration
 		FW_log.WriteLog("FWChildArmor: Baby transitioned to child")
-		Actor newChild = System.SpawnChildActor(mother, father)
+		; Use the identity recorded at birth so the child that hatches is the
+		; same baby that was announced: name, sex and race context carry over.
+		int gender = -1
+		string babyName = ""
+		race babyRace = none
+		if identityIdx >= 0
+			gender = StorageUtil.IntListGet(mother, "FW.BabyItemSex", identityIdx)
+			babyName = StorageUtil.StringListGet(mother, "FW.BabyItemName", identityIdx)
+			babyRace = StorageUtil.FormListGet(mother, "FW.BabyItemRace", identityIdx) as Race
+		endif
+		Actor newChild = System.SpawnChildActor(mother, father, babyRace, gender, babyName)
 		if newChild
+			if identityIdx >= 0
+				FWUtility.RemoveBabyItemIdentityAt(mother, identityIdx)
+			endif
 			; Register like SpawnChild does, so the MCM Children tab lists the child
 			StorageUtil.FormListAdd(none, "FW.Babys", newChild)
 			; Removes one entry per hatched baby; twins keep their remaining entries
@@ -445,8 +471,8 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 			mother.UnequipItem(arm)
 			mother.RemoveItem(arm, 1, true)
 		else
-			; Spawn can fail (e.g. no child base for the race) - keep the item
-			; and its FW.Babys entry so the next tick can retry
+			; Spawn can fail (e.g. no child base for the race) - keep the item,
+			; its FW.Babys entry and its identity entry so the next tick can retry
 			FW_log.WriteLog("FWChildArmor: SpawnChildActor returned none, keeping baby item", 1)
 		endif
 		return
