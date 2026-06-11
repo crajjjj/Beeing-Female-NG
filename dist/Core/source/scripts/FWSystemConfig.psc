@@ -2192,7 +2192,15 @@ function ResetConfigArrays()
 endFunction
 
 ; EVENTS
+; Session cache: IsAddOnActive does uncached disk INI reads, so resolve these
+; once per MCM open instead of twice on every page flip. Refreshed when a misc
+; add-on is toggled on the AddOn page.
+bool bSSLAddOnActive = false
+bool bOstimAddOnActive = false
+
 event OnConfigOpen()
+	bSSLAddOnActive = Manager.IsAddOnActive("BF_SSL")
+	bOstimAddOnActive = Manager.IsAddOnActive("BF_Ostim")
 	bTestPerkRan=false
 	bTestPerkMode=false
 	selectedPerk=-1
@@ -2203,6 +2211,13 @@ event OnConfigOpen()
 		perkTestResultText[i]=""
 		i+=1
 	endWhile
+endEvent
+
+event OnConfigClose()
+	; Kill the page-reset watchdog: the loading/disabled screens return early
+	; from OnPageReset, skipping its trailing UnregisterForUpdate - without
+	; this, closing the MCM during those screens leaves a 10s tick running
+	UnregisterForUpdate()
 endEvent
 
 Event OnConfigInit()
@@ -2236,7 +2251,7 @@ Event OnPageReset(string page)
 	int LoadingStateChildSettings = FWUtility.SwitchInt(ChildSettings==none, 255, ChildSettings.LoadingState)
 	int LoadingStateManager = FWUtility.SwitchInt(Manager==none, 255, Manager.LoadingState)
 	
-	if (System.LoadState>0 || UpdateStateSystem>0 || LoadingStateChildSettings>0 || LoadingStateManager>0 || PageResetJobID>0) && bForceMenu==false
+	if (LoadingStateSystem>0 || UpdateStateSystem>0 || LoadingStateChildSettings>0 || LoadingStateManager>0 || PageResetJobID>0) && bForceMenu==false
 		SetTitleText("Beeing Female v" + FWVersion.GetVersionString();/ + GetBanePatchVersion()/;) ;Tkc (LOverslab): now version can be easy changed in BeeingFemale\Version\BF_version.ini
 		AddTextOption("Beeing Female is loading...","")
 		AddTextOption("Loading Code:",FWUtility.Hex(LoadingStateSystem,2) + " " + FWUtility.Hex(UpdateStateSystem,2) + " " + FWUtility.Hex(LoadingStateChildSettings,2) + " " + FWUtility.Hex(LoadingStateManager,2) + " " + FWUtility.Hex(PageResetJobID,2))
@@ -2280,9 +2295,10 @@ Event OnPageReset(string page)
 	
 	
 	; the bSSL Variable defines if SexLab Framework is active or not
-	bool bSSL = Manager.IsAddOnActive("BF_SSL")
+	; (session-cached in OnConfigOpen - avoids 2 disk INI reads per page flip)
+	bool bSSL = bSSLAddOnActive
 	int iOptionBSSL = OPTION_FLAG_NONE
-	bool bOstimAddOn = Manager.IsAddOnActive("BF_Ostim")
+	bool bOstimAddOn = bOstimAddOnActive
 	int iOptionBOstim = OPTION_FLAG_NONE
 	PageResetJobID=4
 	bool bPlayerAllowed = System.IsValidateActor(PlayerRef, true) > 0
@@ -4060,6 +4076,9 @@ Event OnOptionSelect(int option)
 						i=0
 					endif
 				endWhile
+				; A misc add-on changed - refresh the session-cached flags
+				bSSLAddOnActive = Manager.IsAddOnActive("BF_SSL")
+				bOstimAddOnActive = Manager.IsAddOnActive("BF_Ostim")
 			endif
 			AddOnActiveGlobal = -1
 
