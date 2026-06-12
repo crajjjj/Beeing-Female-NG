@@ -71,6 +71,16 @@
                                 <type name="Optional"/>
                             </typeDescriptor>
                         </plugin>
+                        <plugin name="P.A.I.A base (Pregnancy and Inflation animations)">
+                            <description>Adds the Beeing Female OAR submod the base P.A.I.A is missing: its author reserved priority 91044062 for Beeing Female but only shipped the legacy DAR condition, so BF pregnancies play no P.A.I.A idle. With this patch the pregnant idle plays from the 2nd trimester of a BF pregnancy. Requires P.A.I.A (SE / OAR variant); mesh-only patch (one config.json, no ESP changes).</description>
+                            <image path="Fomod_resources\fw.jpg" />
+                            <files>
+                                <folder source="Patches\PAIA\Meshes" destination="meshes" priority="0" />
+                            </files>
+                            <typeDescriptor>
+                                <type name="Optional"/>
+                            </typeDescriptor>
+                        </plugin>
                         <plugin name="FMR-Immersive Effects">
                             <description>Drops FMR-IE's hard dependency on Fertility Mode and reroutes its stretchmark / areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks and lactation spells onto BF NG's pregnancy progress. Overlays band smoothly across all three trimesters and fade out during recovery. Auto-detected when FMR- Immersive Effects.esp is active.</description>
                             <image path="Fomod_resources\fw.jpg" />

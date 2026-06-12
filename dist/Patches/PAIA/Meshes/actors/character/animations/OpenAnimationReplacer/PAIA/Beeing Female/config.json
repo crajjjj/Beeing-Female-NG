@@ -1,0 +1,37 @@
+{
+    "name": "Beeing Female",
+    "description": "Implements checks for Beeing Female NG pregnancy.",
+    "priority": 91044062,
+    "overrideAnimationsFolder": "PAIA Idle",
+    "conditions": [
+        {
+            "condition": "HasKeyword",
+            "requiredVersion": "1.0.0.0",
+            "disabled": true,
+            "Keyword": {
+                "editorID": "PlayerKeyword"
+            }
+        },
+        {
+            "condition": "IsFemale",
+            "requiredVersion": "1.0.0.0"
+        },
+        {
+            "condition": "IsChild",
+            "requiredVersion": "1.0.0.0",
+            "negated": true
+        },
+        {
+            "condition": "FactionRank",
+            "requiredVersion": "1.0.0.0",
+            "Faction": {
+                "pluginName": "BeeingFemale.esm",
+                "formID": "8448"
+            },
+            "Comparison": ">=",
+            "Numeric value": {
+                "value": 5.0
+            }
+        }
+    ]
+}

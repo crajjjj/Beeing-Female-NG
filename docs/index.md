@@ -230,6 +230,20 @@ Beeing Female NG ships an INI-driven add-on framework that lets external mods ex
 - OStim: optional integration via `dist/Core/source/scripts/BFA_Ostim.psc` that listens for OStim orgasm events and applies sperm/impregnation logic when a male and female pair have vaginal sex (supports OStim API 23+ with NG thread events when available).
 - SexLab: optional integration via `dist/Core/source/scripts/BFA_ssl.psc` and `dist/Core/source/scripts/BFA_AbilityEffectPMSSexHurt.psc` that hooks orgasm and stage events to apply sperm/impregnation logic and PMS sex-hurt effects; also uses the SexLab AnimatingFaction and optionally Devious Devices keywords when present. Recognises hentairim tags now and is more precise
 
+## Bundled Optional Patches
+
+`dist/Patches/` ships compatibility patches exposed as optional FOMOD components (`dist/fomod/ModuleConfig.xml`):
+
+| Patch | What it does |
+|-------|--------------|
+| `SPID` | Spell Perk Item Distributor INI seeding BF's hygiene / contraception / pregnancy-test items into vendor and container loot. |
+| `Fertility Adventures Redux` | Wires FAR's pregnancy quests, child-support storylines, and announcement dialogue to BF NG cycle events (Conception / Labor / state ticks) instead of Fertility Mode. |
+| `PAIA` | Adds the Beeing Female OAR submod the base P.A.I.A is missing (the author reserved priority 91044062 for it but only shipped a legacy DAR condition). Pregnant idle plays at `ParentFaction` rank >= 5 (2nd trimester onward). Mesh-only. |
+| `PAIAExpansion` | Repoints P.A.I.A Expansion's OAR conditions onto BF's `ParentFaction` so trimester idles, sit/sleep adjustments, and inflation poses follow BF pregnancies. Mesh-only. |
+| `FMR-Immersive Effects` | Drops FMR-IE's hard `Fertility Mode.esm` master; a replacement bridge script derives FMR's 0..115 pregnancy rank from BF state and drives the overlays / random pregnancy effects from it. See the patch folder's README for the full design and build steps. |
+
+Patches that integrate via the add-on framework (RS Children child actors, creature child actors) live in the FOMOD as well but install into `BeeingFemale/AddOn/`.
+
 
 ### Reading State and Sperm Info
 

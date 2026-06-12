@@ -390,6 +390,18 @@ Uses OStim's Fertility Mode compatibility event to add sperm on orgasm. Requires
 
 Bathing triggers sperm wash-out using the configured fluid wash-out chance.
 
+### Optional Patches (FOMOD Installer)
+
+The installer offers ready-made patches that hook other mods to Beeing Female. Select them only when you use the mod in question:
+
+- **SPID item distribution** -- seeds BF's tampons, contraception, and pregnancy-test items into vendors and loot via Spell Perk Item Distributor. Strongly recommended; without it BF items have to be consoled in.
+- **Fertility Adventures Redux** -- wires FAR's pregnancy quests, child-support storylines, and announcement dialogue to BF cycle events instead of Fertility Mode.
+- **P.A.I.A** (base) -- adds the Beeing Female detection the base P.A.I.A animation mod is missing, so the pregnant idle plays from the 2nd trimester of a BF pregnancy. Requires the SE/OAR variant of P.A.I.A.
+- **P.A.I.A Expansion** -- repoints the Expansion's trimester-aware idles, sit/sleep adjustments, and inflation poses onto BF's pregnancy tracking.
+- **FMR-Immersive Effects** -- removes FMR-IE's Fertility Mode requirement and drives its stretchmark/areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks, and lactation effects from BF pregnancy progress, including a gradual fade-out during recovery.
+- **RS Children child actors** -- BF-born children use RS Children Overhaul's look, matching other children in your game.
+- **Creature child actors** -- species-matched offspring from creature impregnations (dog pup, falmer child, and so on).
+
 ---
 
 ## MCM Pages at a Glance
