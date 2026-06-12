@@ -1835,11 +1835,105 @@ string function getNumberOfChilds()
 	endIf
 endFunction
 
+; Grow-now selector (Children page): parallel arrays rebuilt when the menu
+; dialog opens; GrowSelected indexes into them until the page changes
+Form[] GrowTargets
+int[] GrowTargetIdents
+string[] GrowTargetLabels
+int GrowTargetCount = 0
+int GrowSelected = -1
+
+; Identity-list index for the (occurrence+1)-th FW.Babys entry of this armor
+; base - FormListFind only returns the first match, twins need their own
+int function FindBabyItemIdentAt(Form armorBase, int occurrence)
+	int c = StorageUtil.FormListCount(PlayerRef, "FW.BabyItemArmor")
+	int i = 0
+	int seen = 0
+	while i < c
+		if StorageUtil.FormListGet(PlayerRef, "FW.BabyItemArmor", i) == armorBase
+			if seen == occurrence
+				return i
+			endif
+			seen += 1
+		endif
+		i += 1
+	endwhile
+	return -1
+endFunction
+
+; Fill the selector arrays: the player's not-yet-grown NPC-race children plus
+; carried baby items (with their recorded names). Menu dialogs do not
+; translate $keys, so status text is only appended when it is plain text.
+function BuildGrowTargets()
+	GrowTargets = new Form[128]
+	GrowTargetIdents = new int[128]
+	GrowTargetLabels = new string[128]
+	GrowTargetCount = 0
+	actor player = PlayerRef
+	int c = StorageUtil.FormListCount(none, "FW.Babys")
+	int ind = 0
+	while ind < c && GrowTargetCount < 128
+		Form frm = StorageUtil.FormListGet(none, "FW.Babys", ind)
+		actor ca = frm as Actor
+		if ca
+			if !ca.IsDead() && StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) != 1 && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
+				if StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player
+					race car = ca.GetRace()
+					if car && car.HasKeywordString("ActorTypeNPC")
+						string st = GetChildGrowthStatus(ca)
+						if StringUtil.Find(st, "$") == 0
+							st = ""
+						endif
+						string lbl = GetActorDisplayNameOrBase(ca)
+						if st != ""
+							lbl = lbl + " - " + st
+						endif
+						GrowTargets[GrowTargetCount] = ca
+						GrowTargetIdents[GrowTargetCount] = -1
+						GrowTargetLabels[GrowTargetCount] = lbl
+						GrowTargetCount += 1
+					endif
+				endif
+			endif
+		else
+			Armor babyItem = frm as Armor
+			if babyItem && player.GetItemCount(babyItem) > 0
+				; occurrence = how many rows of this base are already listed
+				int occ = 0
+				int k = 0
+				while k < GrowTargetCount
+					if GrowTargets[k] == babyItem
+						occ += 1
+					endif
+					k += 1
+				endwhile
+				int identIdx = FindBabyItemIdentAt(babyItem, occ)
+				string itemLbl = babyItem.GetName()
+				if identIdx >= 0
+					string recName = StorageUtil.StringListGet(player, "FW.BabyItemName", identIdx)
+					if recName != ""
+						itemLbl = recName
+					endif
+				endif
+				GrowTargets[GrowTargetCount] = babyItem
+				GrowTargetIdents[GrowTargetCount] = identIdx
+				GrowTargetLabels[GrowTargetCount] = itemLbl
+				GrowTargetCount += 1
+			endif
+		endif
+		ind += 1
+	endwhile
+endFunction
+
 ; Growth status for the MCM Children tab: time until maturity while growing,
-; "Grown" once full size is reached, empty for grown-up adults
+; "Grown" once full size is reached; grown-up adults show their whereabouts
 string function GetChildGrowthStatus(Actor child)
 	if StorageUtil.GetIntValue(child, "FW.Child.GrownUp", 0) == 1
-		return ""
+		Location adultLoc = child.GetCurrentLocation()
+		if adultLoc && adultLoc.GetName() != ""
+			return adultLoc.GetName()
+		endif
+		return "$FW_MENU_CHILDREN_Grown"
 	endif
 	float dob = StorageUtil.GetFloatValue(child, "FW.Child.DOB", -1.0)
 	if dob < 0
@@ -1861,6 +1955,35 @@ string function GetChildGrowthStatus(Actor child)
 		return "$FW_MENU_CHILDREN_Grown"
 	endif
 	return GetTimeString(durationDays - age, true)
+endFunction
+
+; Cheat-page helper: transition every child that has ALREADY finished growing.
+; The automatic hook only covers children that finish growing while the
+; feature is on; this catches the ones that matured before it was enabled.
+; GrowChildToAdult re-checks its own guards (re-entrancy, creature, failed).
+int function GrowUpGrownChildrenNow()
+	int grownCount = 0
+	int c = StorageUtil.FormListCount(none, "FW.Babys")
+	while c > 0
+		c -= 1
+		actor ca = StorageUtil.FormListGet(none, "FW.Babys", c) as actor
+		if ca && !ca.IsDead() && StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) != 1 && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
+			; Reuse the tab's status logic as the "fully grown" predicate
+			if GetChildGrowthStatus(ca) == "$FW_MENU_CHILDREN_Grown"
+				actor growParent = StorageUtil.GetFormValue(ca, "FW.Child.ParentActor", none) as actor
+				if !growParent
+					growParent = StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) as actor
+				endif
+				; Same gate as the automatic path - honors GrowUpToAdult = -1 blocks
+				if System.Manager.ActorGrowUpToAdult(growParent)
+					if System.GrowChildToAdult(ca)
+						grownCount += 1
+					endif
+				endif
+			endif
+		endif
+	endwhile
+	return grownCount
 endFunction
 
 string function getRemainingTime(bool mayBeZero = true)
@@ -2218,6 +2341,11 @@ event OnConfigClose()
 	; from OnPageReset, skipping its trailing UnregisterForUpdate - without
 	; this, closing the MCM during those screens leaves a 10s tick running
 	UnregisterForUpdate()
+	; Drop the grow-now selection: outside the menu the game clock runs, and a
+	; natural hatch shifts the FW.BabyItem* identity lists - a selection kept
+	; across MCM sessions could act on the wrong twin's identity entry
+	GrowSelected = -1
+	GrowTargetCount = 0
 endEvent
 
 Event OnConfigInit()
@@ -2280,6 +2408,10 @@ Event OnPageReset(string page)
 		bTestPerkMode=false
 	endif
 	PageResetJobID=2
+	; Reset the grow-now selection when leaving the Children page
+	if page != Pages[FW_MENU_PAGE_Children]
+		GrowSelected = -1
+	endif
 	; Reset AddOn Selection properties, when not in Debug-Page
 	if page != Pages[FW_MENU_PAGE_AddOn]
 		AddOnActiveGlobal = -1
@@ -2615,6 +2747,18 @@ Event OnPageReset(string page)
 		AddToggleOptionST("ToggleBabyTrackerTattoos","$FW_MENU_CHILDREN_BabyTrackerTattoos", BabyTrackerTattoos, OPTION_FLAG_NONE)
 		AddToggleOptionST("ToggleSemenCircleTattoos","$FW_MENU_CHILDREN_SemenCircleTattoos", SemenCircleTattoos, OPTION_FLAG_NONE)
 		AddTextOptionST("RefreshTattoos", "$FW_MENU_CHILDREN_RefreshTattoos", "")
+
+		; Pick one child / carried baby item and grow or hatch it immediately
+		string growSelLabel = "$FW_MENU_OPTIONS_None"
+		if GrowSelected >= 0 && GrowSelected < GrowTargetCount
+			growSelLabel = GrowTargetLabels[GrowSelected]
+		endif
+		AddMenuOptionST("MenuGrowTarget", "$FW_MENU_CHILDREN_GrowTarget", growSelLabel)
+		if GrowSelected >= 0 && GrowSelected < GrowTargetCount
+			AddTextOptionST("TextGrowSelected", "$FW_MENU_CHILDREN_GrowSelected", "", OPTION_FLAG_NONE)
+		else
+			AddTextOptionST("TextGrowSelected", "$FW_MENU_CHILDREN_GrowSelected", "", OPTION_FLAG_DISABLED)
+		endif
 
 		SetCursorPosition(1)
 		AddHeaderOption("$FW_MENU_CHILDREN_YourChildren")
@@ -3482,6 +3626,7 @@ Event OnPageReset(string page)
 			AddTextOptionST("TextUpdateAll", "$FW_MENU_CHEAT_UpdateAll", "$FW_MENU_OPTIONS_Refresh")
 			AddTextOptionST("TextResetNPCs", "$FW_MENU_CHEAT_ResetNPC", "$FW_MENU_OPTIONS_Reset")
 			AddTextOptionST("TextNoSavedNPCs", "$FW_MENU_CHEAT_SavedNPC", StorageUtil.FormListCount(none, "FW.SavedNPCs"))
+			AddTextOptionST("TextGrowUpChildren", "$FW_MENU_CHEAT_GrowUpNow", "")
 		
 		
 			If (Messages <= System.MSG_Debug)
@@ -5722,6 +5867,110 @@ state TextAutoCouplesImport
 		SetInfoText("$FW_MENUTXT_CHEAT_AutoCouplesImport")
 	EndEvent
 endState
+
+state MenuGrowTarget
+	Event OnMenuOpenST()
+		BuildGrowTargets()
+		if GrowTargetCount > 0
+			string[] opts = FWUtility.StringArray(GrowTargetCount)
+			int i = 0
+			while i < GrowTargetCount
+				opts[i] = GrowTargetLabels[i]
+				i += 1
+			endWhile
+			SetMenuDialogOptions(opts)
+		else
+			string[] optsEmpty = new string[1]
+			optsEmpty[0] = "$FW_MENU_OPTIONS_None"
+			SetMenuDialogOptions(optsEmpty)
+		endif
+		SetMenuDialogStartIndex(0)
+	EndEvent
+
+	Event OnMenuAcceptST(int index)
+		if index >= 0 && index < GrowTargetCount
+			GrowSelected = index
+			SetMenuOptionValueST(GrowTargetLabels[index])
+		else
+			GrowSelected = -1
+			SetMenuOptionValueST("$FW_MENU_OPTIONS_None")
+		endif
+		ForcePageReset()
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_GrowTarget")
+	EndEvent
+endstate
+
+state TextGrowSelected
+	Event OnSelectST()
+		if GrowSelected < 0 || GrowSelected >= GrowTargetCount
+			return
+		endif
+		string targetLabel = GrowTargetLabels[GrowSelected]
+		if !ShowMessage(targetLabel + "?", true, "$FW_MENU_CHILDREN_GrowSelected")
+			return
+		endif
+		Form target = GrowTargets[GrowSelected]
+		int identIdx = GrowTargetIdents[GrowSelected]
+		GrowSelected = -1
+		actor childTarget = target as Actor
+		if childTarget
+			; Capture done above (targetLabel) - Path B deletes the child actor
+			if System.ForceGrowChildToAdult(childTarget)
+				Debug.Notification(targetLabel + " has grown into an adult")
+			else
+				Debug.Notification(targetLabel + " could not grow up (see BeeingFemale log)")
+			endif
+		else
+			Armor itemTarget = target as Armor
+			if itemTarget && System.Player
+				actor itemFather
+				float itemDob
+				if identIdx >= 0
+					itemFather = StorageUtil.FormListGet(PlayerRef, "FW.BabyItemFather", identIdx) as Actor
+					itemDob = StorageUtil.FloatListGet(PlayerRef, "FW.BabyItemDOB", identIdx)
+				else
+					; Legacy item born before identity tracking
+					itemFather = StorageUtil.GetFormValue(PlayerRef, "FW.ChildArmor.Father", none) as Actor
+					itemDob = StorageUtil.GetFloatValue(PlayerRef, "FW.ChildArmor.dob", 0.0)
+				endif
+				if itemDob <= 0.0
+					; Never-equipped legacy item has no dob; any positive value
+					; passes the hatch function's guard since duration is 0
+					itemDob = GameDaysPassed.GetValue()
+				endif
+				; sizeDuration 0 -> age >= duration, so the normal hatch path
+				; runs now: spawns the recorded baby, consumes the identity
+				; entry, removes the item
+				System.Player.ProcessBabyItemTransitionToChild(PlayerRef, itemFather, 0.0, itemTarget, itemDob, identIdx)
+				Debug.Notification(targetLabel + " hatched")
+			elseif itemTarget
+				Debug.Notification("BeeingFemale is not tracking the player yet - cannot hatch")
+			endif
+		endif
+		ForcePageReset()
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_GrowSelected")
+	EndEvent
+endstate
+
+state TextGrowUpChildren
+	Event OnSelectST()
+		SetOptionFlagsST(OPTION_FLAG_DISABLED)
+		int grownCount = GrowUpGrownChildrenNow()
+		Debug.Notification(grownCount + " children grew into adults")
+		SetOptionFlagsST(OPTION_FLAG_NONE)
+		ForcePageReset()
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHEAT_GrowUpNow")
+	EndEvent
+endstate
 
 state TextUpdateAll
 	Event OnSelectST()

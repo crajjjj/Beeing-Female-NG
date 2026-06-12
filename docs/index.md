@@ -508,7 +508,8 @@ When **"Children grow into adults"** is enabled (MCM Children page), a child tha
 | `AdultActor_Male` / `AdultActor_Female` | Comma-separated `PluginName:FormID` list of adult ActorBases. One entry is picked at random per transition, so longer lists give more variety. |
 | `AdultActor_MalePlayer` / `AdultActor_FemalePlayer` | Optional dedicated lists for the player's own children; checked before the generic lists. |
 | `AdultActorVoice_Male` / `AdultActorVoice_Female` | VoiceType (`PluginName:FormID`) applied to resolved bases that ship without a voice (such as the vanilla chargen presets). Bases that already have a voice keep it. Pick a follower-capable voice if you want the adult recruitable. |
-| `GrowUpToAdult` | Per-race/per-actor opt-in (`=1`); also available as `Global_GrowUpToAdult` in a global add-on INI. ORed with the MCM toggle, so an add-on can enable the transition for its race even when the global toggle is off. |
+| `AdultOutfit_Male` / `AdultOutfit_Female` | Outfit (`PluginName:FormID`) applied to adults spawned from add-on bases (entry 0; actor -> race -> global). Without it those adults get the roughspun-tunic fallback. Parent-base copies keep their base's own outfit. |
+| `GrowUpToAdult` | Per-race/per-actor explicit override: `1` = always grow (even with the MCM toggle off), `-1` = never grow (even with it on). `Global_GrowUpToAdult` in a global add-on INI enables the feature globally. Legacy `GrowUpToAdult=true` still reads as `1`. |
 | `Global_AllowAdultMarriage` | Global add-on INI only (`=1`): grown adults join the vanilla marriage pool (voice permitting). Off by default; no MCM equivalent. |
 
 The shipped `dist/Core/BeeingFemale/AddOn/Default Adult Actors.ini` is the reference example: it maps all 10 vanilla races (including vampire variants) to Skyrim's own chargen preset NPCs with race-fitting voices. Delete or disable it to fall back to parent-base copies.

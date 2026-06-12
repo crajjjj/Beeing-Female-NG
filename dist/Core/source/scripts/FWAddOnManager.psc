@@ -446,6 +446,8 @@ function RefreshAddOnH(int type=127)
 							AddGlobalAddOnArrayToList(n, "Global_AdultActor_MalePlayer")
 							AddGlobalAddOnArrayToList(n, "Global_AdultActorVoice_Female")
 							AddGlobalAddOnArrayToList(n, "Global_AdultActorVoice_Male")
+							AddGlobalAddOnArrayToList(n, "Global_AdultOutfit_Female")
+							AddGlobalAddOnArrayToList(n, "Global_AdultOutfit_Male")
 							if(FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_MixWithCopyActorBase", false))
 								trace("FWAddOnManager - RefreshAddOnH : AddOn file name = " + n + ", loading data. Activating FW.AddOn.Global_MixWithCopyActorBase and reading Global_ProbChildActorBorn...")
 								
@@ -1266,6 +1268,8 @@ function AddRaceAddOn(race r, string n, string cat)
 	AddRaceAddOnArrayToList(r,n,cat,"AdultActor_MalePlayer")
 	AddRaceAddOnArrayToList(r,n,cat,"AdultActorVoice_Female")
 	AddRaceAddOnArrayToList(r,n,cat,"AdultActorVoice_Male")
+	AddRaceAddOnArrayToList(r,n,cat,"AdultOutfit_Female")
+	AddRaceAddOnArrayToList(r,n,cat,"AdultOutfit_Male")
 	if(FWUtility.getIniCBool("AddOn", n, cat, "MixWithCopyActorBase", false))
 		trace("FWAddOnManager - AddRaceAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for race " + r + ". Activating FW.AddOn.MixWithCopyActorBase for this race and reading ProbChildActorBorn...")
 		
@@ -1290,9 +1294,14 @@ function AddRaceAddOn(race r, string n, string cat)
 		trace("FWAddOnManager - AddRaceAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for race " + r + ". Activating FW.AddOn.AllowUnrestrictedS for this race")
 		StorageUtil.SetIntValue(r, "FW.AddOn.AllowUnrestrictedS", 1)
 	endif
-	if FWUtility.getIniCBool("AddOn", n, cat, "GrowUpToAdult", false)
-		trace("FWAddOnManager - AddRaceAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for race " + r + ". Activating FW.AddOn.GrowUpToAdult for this race")
-		StorageUtil.SetIntValue(r, "FW.AddOn.GrowUpToAdult", 1)
+	; GrowUpToAdult: 1 = always grow, -1 = never grow; legacy "true" still means 1
+	int guRace = FWUtility.getIniCInt("AddOn", n, cat, "GrowUpToAdult", 0)
+	if guRace == 0 && FWUtility.getIniCBool("AddOn", n, cat, "GrowUpToAdult", false)
+		guRace = 1
+	endif
+	if guRace != 0
+		trace("FWAddOnManager - AddRaceAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for race " + r + ". FW.AddOn.GrowUpToAdult = " + guRace)
+		StorageUtil.SetIntValue(r, "FW.AddOn.GrowUpToAdult", guRace)
 	endif
 	if(FWUtility.getIniCBool("AddOn", n, cat, "ProtectedChildActor", false))
 		trace("FWAddOnManager - AddRaceAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for race " + r + ". Activating FW.AddOn.ProtectedChildActor for this race")
@@ -1375,6 +1384,8 @@ Function ClearGlobalSettings()
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActor_MalePlayer")
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActorVoice_Female")
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActorVoice_Male")
+	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Female")
+	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Male")
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_GrowUpToAdult", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_AllowAdultMarriage", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_MixWithCopyActorBase", 0)
@@ -1462,6 +1473,8 @@ Function ClearGlobalSettings()
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActor_MalePlayer")
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActorVoice_Female")
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultActorVoice_Male")
+	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Female")
+	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Male")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_GrowUpToAdult")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_AllowAdultMarriage")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_MixWithCopyActorBase")
@@ -1794,6 +1807,8 @@ function AddActorAddOn(actor a, string n, string cat)
 	AddActorAddOnArrayToList(a, n, cat, "AdultActor_MalePlayer")
 	AddActorAddOnArrayToList(a, n, cat, "AdultActorVoice_Female")
 	AddActorAddOnArrayToList(a, n, cat, "AdultActorVoice_Male")
+	AddActorAddOnArrayToList(a, n, cat, "AdultOutfit_Female")
+	AddActorAddOnArrayToList(a, n, cat, "AdultOutfit_Male")
 	if(FWUtility.getIniCBool("AddOn", n, cat, "MixWithCopyActorBase", false))
 		trace("FWAddOnManager - AddActorAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for actor " + a + ". Activating FW.AddOn.MixWithCopyActorBase for this actor and reading ProbChildActorBorn...")
 		
@@ -1818,9 +1833,14 @@ function AddActorAddOn(actor a, string n, string cat)
 		trace("FWAddOnManager - AddActorAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for actor " + a + ". Activating FW.AddOn.AllowUnrestrictedS for this actor")
 		StorageUtil.SetIntValue(a, "FW.AddOn.AllowUnrestrictedS", 1)
 	endif
-	if FWUtility.getIniCBool("AddOn", n, cat, "GrowUpToAdult", false)
-		trace("FWAddOnManager - AddActorAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for actor " + a + ". Activating FW.AddOn.GrowUpToAdult for this actor")
-		StorageUtil.SetIntValue(a, "FW.AddOn.GrowUpToAdult", 1)
+	; GrowUpToAdult: 1 = always grow, -1 = never grow; legacy "true" still means 1
+	int guActor = FWUtility.getIniCInt("AddOn", n, cat, "GrowUpToAdult", 0)
+	if guActor == 0 && FWUtility.getIniCBool("AddOn", n, cat, "GrowUpToAdult", false)
+		guActor = 1
+	endif
+	if guActor != 0
+		trace("FWAddOnManager - AddActorAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for actor " + a + ". FW.AddOn.GrowUpToAdult = " + guActor)
+		StorageUtil.SetIntValue(a, "FW.AddOn.GrowUpToAdult", guActor)
 	endif
 	if(FWUtility.getIniCBool("AddOn", n, cat, "ProtectedChildActor", false))
 		trace("FWAddOnManager - AddActorAddOn : AddOn file name = " + n + ", loading data in = " + cat + " for actor " + a + ". Activating FW.AddOn.ProtectedChildActor for this actor")
@@ -1919,6 +1939,8 @@ function ClearActorAddOns()
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActor_MalePlayer")
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActorVoice_Female")
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActorVoice_Male")
+			StorageUtil.FormListClear(a, "FW.AddOn.AdultOutfit_Female")
+			StorageUtil.FormListClear(a, "FW.AddOn.AdultOutfit_Male")
 			StorageUtil.SetIntValue(a, "FW.AddOn.GrowUpToAdult", 0)
 			StorageUtil.SetIntValue(a, "FW.AddOn.MixWithCopyActorBase", 0)
 			StorageUtil.SetIntValue(a, "FW.AddOn.ProbChildActorBorn", -1)
@@ -2015,6 +2037,8 @@ function ClearActorAddOns()
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActor_MalePlayer")
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActorVoice_Female")
 			StorageUtil.FormListClear(a, "FW.AddOn.AdultActorVoice_Male")
+			StorageUtil.FormListClear(a, "FW.AddOn.AdultOutfit_Female")
+			StorageUtil.FormListClear(a, "FW.AddOn.AdultOutfit_Male")
 			StorageUtil.UnsetIntValue(a, "FW.AddOn.GrowUpToAdult")
 			StorageUtil.UnsetIntValue(a, "FW.AddOn.MixWithCopyActorBase")
 			StorageUtil.UnsetIntValue(a, "FW.AddOn.ProbChildActorBorn")
@@ -2176,6 +2200,8 @@ function ClearRaceAddOns()
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActor_MalePlayer")
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActorVoice_Female")
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActorVoice_Male")
+			StorageUtil.FormListClear(r,"FW.AddOn.AdultOutfit_Female")
+			StorageUtil.FormListClear(r,"FW.AddOn.AdultOutfit_Male")
 			StorageUtil.SetIntValue(r, "FW.AddOn.GrowUpToAdult", 0)
 			StorageUtil.SetIntValue(r, "FW.AddOn.MixWithCopyActorBase", 0)
 			StorageUtil.SetIntValue(r, "FW.AddOn.ProbChildActorBorn", -1)
@@ -2276,6 +2302,8 @@ function ClearRaceAddOns()
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActor_MalePlayer")
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActorVoice_Female")
 			StorageUtil.FormListClear(r,"FW.AddOn.AdultActorVoice_Male")
+			StorageUtil.FormListClear(r,"FW.AddOn.AdultOutfit_Female")
+			StorageUtil.FormListClear(r,"FW.AddOn.AdultOutfit_Male")
 			StorageUtil.UnsetIntValue(r, "FW.AddOn.GrowUpToAdult")
 			StorageUtil.UnsetIntValue(r, "FW.AddOn.MixWithCopyActorBase")
 			StorageUtil.UnsetIntValue(r, "FW.AddOn.ProbChildActorBorn")
@@ -4290,19 +4318,30 @@ endFunction
 
 
 ; Whether a fully grown child should transition into an adult NPC.
-; MCM toggle is the master switch; add-on INIs can opt in per actor/race/globally.
+; Per-actor/per-race add-on values are explicit overrides checked FIRST:
+;   1 = always grow, -1 = never grow (even when the MCM toggle is on).
+; With no explicit override, the MCM toggle or Global_GrowUpToAdult decides.
+; (a is the configuring parent - the same actor the other gates key off.)
 bool Function ActorGrowUpToAdult(actor a)
-	if cfg && cfg.ChildrenGrowUpToAdult
-		return true
-	endif
 	if a
-		if StorageUtil.GetIntValue(a, "FW.AddOn.GrowUpToAdult", 0) == 1
+		int actorFlag = StorageUtil.GetIntValue(a, "FW.AddOn.GrowUpToAdult", 0)
+		if actorFlag == 1
 			return true
+		elseif actorFlag == -1
+			return false
 		endif
 		race abr = a.GetRace()
-		if abr && StorageUtil.GetIntValue(abr, "FW.AddOn.GrowUpToAdult", 0) == 1
-			return true
+		if abr
+			int raceFlag = StorageUtil.GetIntValue(abr, "FW.AddOn.GrowUpToAdult", 0)
+			if raceFlag == 1
+				return true
+			elseif raceFlag == -1
+				return false
+			endif
 		endif
+	endif
+	if cfg && cfg.ChildrenGrowUpToAdult
+		return true
 	endif
 	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_GrowUpToAdult", 0) == 1
 endFunction
@@ -4382,6 +4421,25 @@ VoiceType Function GetAdultVoice(actor ParentActor, race ParentRace, int sex)
 		v = StorageUtil.FormListGet(none, "FW.AddOn.Global_" + listName, 0) as VoiceType
 	endif
 	return v
+endFunction
+
+
+; Resolve the Outfit assigned to grown-up adults (entry 0 of the AdultOutfit
+; lists, actor -> race -> global). None = caller falls back to the default
+; tunic. Only applied to add-on bases; parent-base copies keep their own outfit.
+Outfit Function GetAdultOutfit(actor ParentActor, race ParentRace, int sex)
+	string listName = "AdultOutfit_Female"
+	if sex == 0
+		listName = "AdultOutfit_Male"
+	endif
+	Outfit o = StorageUtil.FormListGet(ParentActor, "FW.AddOn." + listName, 0) as Outfit
+	if !o
+		o = StorageUtil.FormListGet(ParentRace, "FW.AddOn." + listName, 0) as Outfit
+	endif
+	if !o
+		o = StorageUtil.FormListGet(none, "FW.AddOn.Global_" + listName, 0) as Outfit
+	endif
+	return o
 endFunction
 
 

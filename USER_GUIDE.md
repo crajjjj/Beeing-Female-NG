@@ -223,7 +223,7 @@ Children start small and grow linearly to their final size over a configurable p
 - **Growth duration**: controlled by the MCM slider "Mature Time in Days" (default 50 days), scaled by the addon `MatureTimeScale` multiplier for the parent's race
 - Growth is checked every 5 in-game hours
 - Once fully grown, the child is registered with SexLab/BF if applicable and stops growing
-- **Tracking**: the MCM Children tab shows each child's remaining time to maturity next to their name ("Grown" once they reach full size), and the child's info window shows their age in days
+- **Tracking**: the MCM Children tab shows each child's remaining time to maturity next to their name ("Grown" once they reach full size, their current location once they have grown into an adult), and the child's info window shows their age in days
 
 The growth formula is linear interpolation:
 
@@ -253,9 +253,11 @@ With **"Children grow into adults"** enabled on the MCM Children page (off by de
 Where the adult's appearance comes from:
 
 - The shipped **"Default Adult Actors"** add-on (`Data/BeeingFemale/AddOn/Default Adult Actors.ini`) gives each of the 10 vanilla races 10 adult faces per sex, taken from Skyrim's own character-creation presets, with a race-fitting voice. Delete or disable that INI and the adult will instead be spawned as a copy of their same-sex parent -- but only when that parent uses a generic actor base. The player and unique NPCs (named followers, spouses) are never cloned; if no usable base remains, the transition is skipped and the child stays a grown child (add an `AdultActor_*` INI entry for the race to cover this).
-- Add-on authors can supply their own adult bases and voices with `AdultActor_Male/Female` and `AdultActorVoice_Male/Female` keys in race or actor add-on INIs -- same format as the existing `BabyActor_*` keys, resolving from any installed plugin.
+- Add-on authors can supply their own adult bases, voices, and clothing with `AdultActor_Male/Female`, `AdultActorVoice_Male/Female`, and `AdultOutfit_Male/Female` keys in race or actor add-on INIs -- same format as the existing `BabyActor_*` keys, resolving from any installed plugin. Without an outfit key, add-on adults get a basic roughspun tunic.
 
 What grown adults can and cannot do:
+
+- **Their upbringing carries over**: skills you trained through the child skill menu (weapons, magic schools, health, sneak, and so on) are applied to the adult, so a child you raised as a fighter grows into one.
 
 - The primary way to manage a grown adult is the **native follower system**: they receive the same Current/Potential Follower factions children get at spawn, so the standard "Follow me" dialogue works (with a follower-capable voice -- all the default-INI voices are), and follower frameworks like NFF/EFF/AFT treat them like any other NPC.
 - The BF child command **dialogue** does not carry over: it belongs to the child-race actors, which are replaced at transition (and "small adult" children never had it in the first place). The parent **"order children" powers** still target grown adults of both kinds, but only the teleport orders (come here, go home, meet point) do anything meaningful -- the BF follow order merely marks the adult as a combat teammate, the same limited handling plain-actor children always had. To actually have a grown adult follow you, recruit them with the normal "Follow me" dialogue.
@@ -264,7 +266,10 @@ What grown adults can and cannot do:
 
 Notes:
 
-- Only children that finish growing **after** the toggle is enabled transition; already-grown children stay as they are.
+- The automatic transition only covers children that finish growing **after** the toggle is enabled. Children that were already fully grown can be converted at any time with the **"Grow up children now"** button on the MCM Cheat page.
+- You can also force a **single** child or carried baby item: on the MCM Children page, pick it from the **"Select child / baby"** dropdown and press **"Grow up / hatch now"** -- the child becomes an adult (or the baby item hatches into its recorded child) immediately, skipping the growth timer and all gates. A confirmation is asked first.
+- You get a notification when one of your children grows up, and grown adults show their current location in the MCM Children tab.
+- To keep a specific NPC's children (or a whole race) from ever growing up, set `GrowUpToAdult=-1` in an actor or race add-on INI -- it overrides the MCM toggle.
 - Creature children never transition -- they simply reach full size and keep responding to child commands as before.
 - If the transition cannot complete (for example, both parents are unavailable and no adult base is configured for the race), the child stays fully grown and the mod retries on later updates -- up to 10 attempts (roughly two game days). After that it gives up and the child permanently remains a fully grown child.
 

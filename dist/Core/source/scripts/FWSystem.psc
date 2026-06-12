@@ -2942,6 +2942,9 @@ actor function GrowChildToAdult(Actor child)
 		ApplyAdultFactions(child, bIsPlayerChild)
 		child.EvaluatePackage()
 		FW_log.WriteLog("FWSystem - GrowChildToAdult: " + child + " graduated in place")
+		if bIsPlayerChild
+			Debug.Notification(child.GetDisplayName() + " has grown into an adult")
+		endif
 		return child
 	endif
 
@@ -3049,6 +3052,24 @@ actor function GrowChildToAdult(Actor child)
 		StorageUtil.SetFormValue(adult, "FW.Child.VoiceType", adultVoice)
 	endif
 
+	; Trained stats: skills a FWChildActor learned while growing up (skill menu,
+	; books) carry into the adult, so raising the child mattered. Custom children
+	; never write FW.Child.Stat* keys - zeros are skipped and the base's own
+	; values stay untouched.
+	CopyTrainedStat(child, adult, "Health")
+	CopyTrainedStat(child, adult, "Magicka")
+	CopyTrainedStat(child, adult, "CarryWeight")
+	CopyTrainedStat(child, adult, "OneHanded")
+	CopyTrainedStat(child, adult, "TwoHanded")
+	CopyTrainedStat(child, adult, "Marksman")
+	CopyTrainedStat(child, adult, "Block")
+	CopyTrainedStat(child, adult, "Sneak")
+	CopyTrainedStat(child, adult, "Destruction")
+	CopyTrainedStat(child, adult, "Illusion")
+	CopyTrainedStat(child, adult, "Conjuration")
+	CopyTrainedStat(child, adult, "Alteration")
+	CopyTrainedStat(child, adult, "Restoration")
+
 	; Relationships
 	if Mother
 		adult.SetRelationshipRank(Mother, 2)
@@ -3064,17 +3085,23 @@ actor function GrowChildToAdult(Actor child)
 	; Inventory; add-on bases like the chargen presets ship without an outfit
 	child.RemoveAllItems(adult, false, false)
 	if bFromAddOnList
-		if _GrownAdultTunic == none
-			_GrownAdultTunic = Game.GetFormFromFile(0x0003C9FE, "Skyrim.esm") ; Roughspun Tunic
-			_GrownAdultShoes = Game.GetFormFromFile(0x0003CA00, "Skyrim.esm") ; Footwraps
-		endif
-		if _GrownAdultTunic
-			adult.AddItem(_GrownAdultTunic, 1, true)
-			adult.EquipItem(_GrownAdultTunic, false, true)
-		endif
-		if _GrownAdultShoes
-			adult.AddItem(_GrownAdultShoes, 1, true)
-			adult.EquipItem(_GrownAdultShoes, false, true)
+		; AdultOutfit_* INI keys win; the roughspun tunic is only the fallback
+		Outfit adultOutfit = Manager.GetAdultOutfit(cfgParent, childRace, sex)
+		if adultOutfit
+			adult.SetOutfit(adultOutfit)
+		else
+			if _GrownAdultTunic == none
+				_GrownAdultTunic = Game.GetFormFromFile(0x0003C9FE, "Skyrim.esm") ; Roughspun Tunic
+				_GrownAdultShoes = Game.GetFormFromFile(0x0003CA00, "Skyrim.esm") ; Footwraps
+			endif
+			if _GrownAdultTunic
+				adult.AddItem(_GrownAdultTunic, 1, true)
+				adult.EquipItem(_GrownAdultTunic, false, true)
+			endif
+			if _GrownAdultShoes
+				adult.AddItem(_GrownAdultShoes, 1, true)
+				adult.EquipItem(_GrownAdultShoes, false, true)
+			endif
 		endif
 	endif
 
@@ -3095,7 +3122,53 @@ actor function GrowChildToAdult(Actor child)
 
 	adult.EvaluatePackage()
 	FW_log.WriteLog("FWSystem - GrowChildToAdult: " + child + " grew into " + adult + " (base=" + adultBase + ")")
+	if bIsPlayerChild
+		Debug.Notification(adult.GetDisplayName() + " has grown into an adult")
+	endif
 	return adult
+endFunction
+
+; Copy one trained skill value from the child's persisted FW.Child.Stat* keys
+; onto the replacement adult. Zero/absent values are skipped so bases keep
+; their own defaults.
+function CopyTrainedStat(actor child, actor adult, string av)
+	float v = StorageUtil.GetFloatValue(child, "FW.Child.Stat" + av, 0.0)
+	if v > 0.0
+		adult.SetActorValue(av, v)
+	endif
+endFunction
+
+; Cheat entry: grow ONE child right now, regardless of remaining growth time
+; and of the MCM toggle / add-on gates (explicit user intent bypasses them).
+; Creature children still refuse via GrowChildToAdult's own guard.
+actor function ForceGrowChildToAdult(Actor child)
+	if child == none
+		return none
+	endif
+	actor result = GrowChildToAdult(child)
+	if result && result == child
+		; Path A graduate forced mid-growth: finish the visual ramp and stop
+		; the growth machinery that would otherwise keep rescaling it
+		actor growParent = StorageUtil.GetFormValue(child, "FW.Child.ParentActor", none) as actor
+		if growParent == none
+			growParent = StorageUtil.GetFormValue(child, "FW.Child.Mother", none) as actor
+		endif
+		; Stop the growth machinery BEFORE the final SetScale, or a tick landing
+		; in between could re-scale the child to an intermediate value that
+		; then freezes (UpdateSize is gated on StartGrowing; the custom-child
+		; effect dies with the spell - its OnEffectFinish sees GrownUp==1)
+		StorageUtil.SetIntValue(child, "FW.AddOn.StartGrowing", 0)
+		child.RemoveSpell(_BF_DefaultCustomChildSpell)
+		child.SetScale(Manager.ActorFinalScale(growParent))
+		; The maturity endpoints normally do these BEFORE calling
+		; GrowChildToAdult; a forced transition skipped them:
+		; lift the spawn-time scene/tracking exclusion ...
+		Manager.AddToSLandBF(child)
+		; ... and clear a pending dispel-recast flag, or FWCloaking would
+		; re-add the growth spell and shrink the adult back down
+		StorageUtil.UnsetIntValue(child, "FW.Child.DispelledCustomChildActor")
+	endif
+	return result
 endFunction
 
 ; Follower/marriage faction state shared by both transition paths
