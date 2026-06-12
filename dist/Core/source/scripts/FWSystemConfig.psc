@@ -27,6 +27,7 @@ int[] UI_AddOnCME
 int[] UI_AddOnMisc
 int[] UI_SpermInside
 int[] UI_Child
+int[] UI_BabyItem
 string[] UIS_AddOnCME
 string[] UIS_AddOnMisc
 string[] UIS_AddOnRaces
@@ -1876,7 +1877,10 @@ function BuildGrowTargets()
 		Form frm = StorageUtil.FormListGet(none, "FW.Babys", ind)
 		actor ca = frm as Actor
 		if ca
-			if !ca.IsDead() && StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) != 1 && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
+			; GrownUp FWChildActors are in-place graduates from the old adult-race
+			; gate that still need the actor swap - keep them selectable
+			bool bMisGraduated = StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) == 1 && (ca as FWChildActor)
+			if !ca.IsDead() && (StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) != 1 || bMisGraduated) && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
 				if StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player
 					race car = ca.GetRace()
 					if car && car.HasKeywordString("ActorTypeNPC")
@@ -1967,6 +1971,14 @@ int function GrowUpGrownChildrenNow()
 	while c > 0
 		c -= 1
 		actor ca = StorageUtil.FormListGet(none, "FW.Babys", c) as actor
+		if ca && !ca.IsDead() && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
+			; In-place graduates from the old adult-race gate are still
+			; FWChildActor with the GrownUp claim set - release them so the
+			; replacement path can swap them properly
+			if StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) == 1 && (ca as FWChildActor)
+				StorageUtil.SetIntValue(ca, "FW.Child.GrownUp", 0)
+			endif
+		endif
 		if ca && !ca.IsDead() && StorageUtil.GetIntValue(ca, "FW.Child.GrownUp", 0) != 1 && StorageUtil.GetIntValue(ca, "FW.Child.GrowUpFailed", 0) != 1
 			; Reuse the tab's status logic as the "fully grown" predicate
 			if GetChildGrowthStatus(ca) == "$FW_MENU_CHILDREN_Grown"
@@ -2289,6 +2301,7 @@ function ResetConfigArrays()
 	UI_AddOnMisc = new int[128]
 	UI_SpermInside = new int[128]
 	UI_Child = new int[128]
+	UI_BabyItem = new int[128]
 	UI_TestPerk = new int[128]
 	perkTestResultText = new string[128]
 	perkTestResult = new string[128]
@@ -2787,7 +2800,7 @@ Event OnPageReset(string page)
 		endwhile
 
 		; Carried baby items (BabySpawn "item" mode) with growth status.
-		; Not stored in UI_Child, so clicking them is a no-op.
+		; Tracked in UI_BabyItem for the highlight hint; clicking them is a no-op.
 		float babyDob = StorageUtil.GetFloatValue(PlayerRef, "FW.ChildArmor.dob", 0.0)
 		float matureHours = System.Manager.ActorCustomMatureTimeInHours(PlayerRef)
 		float hatchDuration = 0.0
@@ -2795,6 +2808,7 @@ Event OnPageReset(string page)
 			hatchDuration = (matureHours / 24.0) / 5.0
 		endif
 		ind = 0
+		int bn = 0
 		while ind < c
 			Armor babyItem = StorageUtil.FormListGet(none, "FW.Babys", ind) as Armor
 			if babyItem && PlayerRef.GetItemCount(babyItem) > 0
@@ -2811,11 +2825,12 @@ Event OnPageReset(string page)
 					endif
 				endif
 				if itemDob > 0.0
-					AddTextOption(itemName, GetTimeString((itemDob + hatchDuration) - GameDaysPassed.GetValue(), true, "$FW_MENU_OPTIONS_Overdue"))
+					UI_BabyItem[bn] = AddTextOption(itemName, GetTimeString((itemDob + hatchDuration) - GameDaysPassed.GetValue(), true, "$FW_MENU_OPTIONS_Overdue"))
 				else
 					; legacy dob is set on first equip; until then growth has not started
-					AddTextOption(itemName, "$FW_MENU_OPTIONS_Paused")
+					UI_BabyItem[bn] = AddTextOption(itemName, "$FW_MENU_OPTIONS_Paused")
 				endif
+				bn += 1
 			endif
 			ind += 1
 		endwhile
@@ -3484,7 +3499,7 @@ Event OnPageReset(string page)
 			while c<females.length
 				if females[c];/!=none/;
 					if females[c].GetLeveledActorBase();/!=none/;
-						UI_SpermInside[c] = AddTextOption(females[c].GetLeveledActorBase().GetName(),"")
+						UI_SpermInside[c] = AddTextOption(GetActorDisplayNameOrBase(females[c]),"")
 					endif
 				endif
 				c+=1
@@ -3572,7 +3587,7 @@ Event OnPageReset(string page)
 			while i < c
 				if (StorageUtil.FloatListGet(xPlayer,"FW.SpermAmount",i) > 0.0) && (StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor;/!=none/;) && (currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i) <= SpermDuration)
 					
-					UI_SpermInside[(j - 1)] = AddTextOption("(" + j + ") " + (StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor).GetLeveledActorBase().GetName(), GetTimeString(currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i),true,"-"))
+					UI_SpermInside[(j - 1)] = AddTextOption("(" + j + ") " + GetActorDisplayNameOrBase(StorageUtil.FormListGet(xPlayer,"FW.SpermName",i) As Actor), GetTimeString(currentTime - StorageUtil.FloatListGet(xPlayer,"FW.SpermTime",i),true,"-"))
 					j += 1
 				endIf
 				i += 1
@@ -4368,6 +4383,14 @@ Event OnOptionHighlight(int option)
 			SetInfoText("")
 			return
 		endIf
+	elseif CurrentPage==Pages[FW_MENU_PAGE_Children]
+		if UI_Child.Find(option) >= 0
+			SetInfoText("$FW_MENUTXT_CHILDREN_ChildRow")
+			return
+		elseif UI_BabyItem.Find(option) >= 0
+			SetInfoText("$FW_MENUTXT_CHILDREN_BabyItemRow")
+			return
+		endif
 	elseif CurrentPage==Pages[FW_MENU_PAGE_System]
 		int index = UI_Compatible.Find(option)
 		if index>=0

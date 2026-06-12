@@ -2896,9 +2896,11 @@ endFunction
 ;--------------------------------------------------------------------------------
 ; Called from the maturity endpoints (FWChildActor.UpdateSize and
 ; FWDefaultCustomChildEffect.FinalizeMature) when Manager.ActorGrowUpToAdult is on.
-; Path A: the child already uses an adult-race base (the no-add-on default, born
-;         from a copied parent base) - graduate it in place, reuse everything.
-; Path B: the child uses a real child-race base - spawn an adult and replace it.
+; Path A: custom child born from a copied parent base (no FWChildActor script) -
+;         graduate it in place, reuse everything.
+; Path B: FWChildActor children and child-race bases - spawn an adult and replace
+;         it. The FW default child bases use ADULT races at small scale with a
+;         child class/AI, so the race alone cannot tell them apart from Path A.
 Faction _PotentialMarriageFaction
 Form _GrownAdultTunic
 Form _GrownAdultShoes
@@ -2930,7 +2932,7 @@ actor function GrowChildToAdult(Actor child)
 	actor Father = StorageUtil.GetFormValue(child, "FW.Child.Father", none) as actor
 	bool bIsPlayerChild = IsPlayerChild(Mother, Father)
 
-	if !child.IsChild()
+	if !child.IsChild() && !(child as FWChildActor)
 		; Path A: in-place graduation - the actor already has an adult base at
 		; full scale. Name, inventory, relationships and FW.Babys entry carry over.
 		if BYOHRelationshipAdoptableFaction && child.IsInFaction(BYOHRelationshipAdoptableFaction)
@@ -3145,6 +3147,12 @@ actor function ForceGrowChildToAdult(Actor child)
 	if child == none
 		return none
 	endif
+	; Children the old adult-race gate graduated in place kept the child base
+	; (class, combat style, child AI) - they are still FWChildActor with the
+	; GrownUp claim set. Release the claim so the replacement path can run.
+	if (child as FWChildActor) && StorageUtil.GetIntValue(child, "FW.Child.GrownUp", 0) == 1
+		StorageUtil.SetIntValue(child, "FW.Child.GrownUp", 0)
+	endif
 	actor result = GrowChildToAdult(child)
 	if result && result == child
 		; Path A graduate forced mid-growth: finish the visual ramp and stop
@@ -3172,11 +3180,17 @@ actor function ForceGrowChildToAdult(Actor child)
 endFunction
 
 ; Follower/marriage faction state shared by both transition paths
+Faction _VanillaPotentialFollower
+Faction _VanillaCurrentFollower
 function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 	if bIsPlayerChild
 		ChildSettings.AddPlayerChild(adult) ; dedupes internally
-		; Native follower framework: same faction set children receive at spawn
-		; (Current/Potential Follower slots), minus the HearthFires adoption slot
+		; The CK ChildFollowerFaction* properties ship UNFILLED in the ESM
+		; (VMAD formids are all None - verified), so the guards below have
+		; never fired. Keep them for ESP add-ons that fill them, but add the
+		; VANILLA follower factions directly: PotentialFollower rank 0 plus
+		; CurrentFollower rank -1 is the idle state the vanilla "Follow me"
+		; dialogue requires (recruiting flips CurrentFollower to 0).
 		if ChildFollowerFaction
 			adult.SetFactionRank(ChildFollowerFaction, ChildFollowerFactionRank)
 		endif
@@ -3188,6 +3202,16 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 		endif
 		if ChildFollowerFaction5
 			adult.SetFactionRank(ChildFollowerFaction5, ChildFollowerFactionRank5)
+		endif
+		if _VanillaPotentialFollower == none
+			_VanillaPotentialFollower = Game.GetFormFromFile(0x0005C84D, "Skyrim.esm") as Faction
+			_VanillaCurrentFollower = Game.GetFormFromFile(0x0005C84E, "Skyrim.esm") as Faction
+		endif
+		if _VanillaPotentialFollower && !adult.IsInFaction(_VanillaPotentialFollower)
+			adult.SetFactionRank(_VanillaPotentialFollower, 0)
+		endif
+		if _VanillaCurrentFollower && !adult.IsInFaction(_VanillaCurrentFollower)
+			adult.SetFactionRank(_VanillaCurrentFollower, -1)
 		endif
 		adult.SetRelationshipRank(PlayerRef, 3)
 	endif

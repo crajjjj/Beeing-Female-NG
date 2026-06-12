@@ -512,7 +512,7 @@ When **"Children grow into adults"** is enabled (MCM Children page), a child tha
 | `GrowUpToAdult` | Per-race/per-actor explicit override: `1` = always grow (even with the MCM toggle off), `-1` = never grow (even with it on). `Global_GrowUpToAdult` in a global add-on INI enables the feature globally. Legacy `GrowUpToAdult=true` still reads as `1`. |
 | `Global_AllowAdultMarriage` | Global add-on INI only (`=1`): grown adults join the vanilla marriage pool (voice permitting). Off by default; no MCM equivalent. |
 
-The shipped `dist/Core/BeeingFemale/AddOn/Default Adult Actors.ini` is the reference example: it maps all 10 vanilla races (including vampire variants) to Skyrim's own chargen preset NPCs with race-fitting voices. Delete or disable it to fall back to parent-base copies.
+The shipped `dist/Core/BeeingFemale/AddOn/Default Adult Actors.ini` maps all 10 vanilla races (including vampire variants) to the **BF Adult Pack** bases (`BeeingFemaleAdultPack.esp`, ESL-flagged): 10 dedicated adults per race and sex, generated from Skyrim's chargen presets so their faces are computed live (no FaceGen files, no dark-face), with proper names, a real class, baked-in follower voices, a farm-clothes outfit, and a sandbox AI package. Delete or disable the INI to fall back to parent-base copies. A copyable template showing all grow-up keys ships in `AddOn/AdultGrowUpExample/`; the pack itself can be regenerated with the xEdit script in `tools/xedit/BFAP_GenerateAdultPack.pas`.
 
 #### Shipping adult NPCs with their own dialogue ("Mom"/"Dad" lines)
 

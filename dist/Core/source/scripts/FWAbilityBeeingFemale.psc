@@ -1844,7 +1844,10 @@ function EquipNapkin()
 				endif
 				ActorRef.UnequipItem(ax)
 			endif
-			ActorRef.EquipItem(Sanitary_Napkin_Bloody, false, true)
+			; Equip a FRESH one (was the Bloody variant, which the actor does
+			; not own at this point - EquipItem silently failed and NPCs never
+			; wore their hygiene items). The flow roll soils it naturally later.
+			ActorRef.EquipItem(Sanitary_Napkin_Normal, false, true)
 		 endif
 		endif
 	endif
@@ -1869,7 +1872,8 @@ function EquipTampon()
 				endif
 				ActorRef.UnequipItem(ax)
 			endif
-			ActorRef.EquipItem(Tampon_Bloody, false, true)
+			; Fresh tampon, not the unowned Bloody variant (see EquipNapkin)
+			ActorRef.EquipItem(Tampon_Normal, false, true)
 		 endif
 		endif
 	endif
@@ -2355,7 +2359,13 @@ state Menstruation_State
 		endwhile
 
 
-		EquipNapkin()
+		; NPC-only: the player manages hygiene manually (the panty widget is
+		; the prompt) - auto-equipping would consume the player's items and
+		; could re-equip a soiled one she just took off
+		if IsPlayer
+		else
+			EquipNapkin()
+		endif
 		Float fStateFlowRisk = CurrentStatePercent
 		If fStateFlowRisk > 50.0
 			fStateFlowRisk = 50.0 - (fStateFlowRisk - 50.0)

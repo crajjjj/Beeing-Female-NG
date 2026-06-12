@@ -44,8 +44,17 @@ float ImodPause = 5.0
 Actor Property PlayerRef Auto
 
 function OnDoDamageStart(actor a, float Amount, int DamageType, float OptionalArgument)
-	; Only allow imod every X seconds (5 sec)
-	if LastIModTime < Utility.GetCurrentRealTime() - ImodPause
+	; Only allow an imod every ImodPause seconds. The old check was inverted
+	; (returned when the LAST one was old): effects were dead for most of the
+	; session, and in the brief windows where they ran they applied on every
+	; damage tick with no throttle - stacking imods into a bright red flash.
+	float now = Utility.GetCurrentRealTime()
+	if LastIModTime > now
+		; Real time restarts at 0 each game session; a stale value saved from
+		; a previous session would otherwise mute the effects until it is passed
+		LastIModTime = 0.0
+	endif
+	if now - LastIModTime < ImodPause
 		return
 	endif
 	if a==PlayerRef

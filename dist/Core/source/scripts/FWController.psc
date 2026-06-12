@@ -3242,6 +3242,23 @@ endFunction
 
 ; Open a Messagebox with informations depending on the rank (Rang = 0 to 100)
 ; As higher the given rank - as more informations will be shown
+; Info-window name: display name first - grown-up preset adults keep their
+; base name ("Prisoner"); SetDisplayName holds the real one
+string function GetInfoName(actor a)
+	if a == none
+		return ""
+	endif
+	string n = a.GetDisplayName()
+	if n != ""
+		return n
+	endif
+	ActorBase ab = a.GetLeveledActorBase()
+	if ab
+		return ab.GetName()
+	endif
+	return ""
+endFunction
+
 function showRankedInfoBox(Actor target, int Rank)
 	System.InfoMenuBlur()
 	UI.OpenCustomMenu("BeeingFemale/BeeingFemaleInfo")
@@ -3334,34 +3351,34 @@ function showRankedInfoBox(Actor target, int Rank)
 		elseif(iValidate<0 || target.GetLeveledActorBase()==none)
 			ent = new string[3]
 			ent[0] = 4
-			ent[1] = target.GetLeveledActorBase().GetName()
+			ent[1] = GetInfoName(target)
 			ent[2] = iValidate * -1
 		else
 			if target.GetLeveledActorBase().GetSex()==0
 				ent = new string[5]
 				ent[0]=2
-				ent[1]=target.GetLeveledActorBase().GetName()
+				ent[1]=GetInfoName(target)
 				ent[2]=Math.Floor(GetVirility(target)*100)
-				ent[3]= FWUtility.getActorListNames(getFemalesWithSpermFrom(target, 20) , false)
-				ent[4]= FWUtility.getActorListNames(getFemalesImpregnatedFrom(target, 5) , false)
+				ent[3]= FWUtility.getActorListNames(getFemalesWithSpermFrom(target, 20) , true)
+				ent[4]= FWUtility.getActorListNames(getFemalesImpregnatedFrom(target, 5) , true)
 			else
 				Data.Update(target)
 				if IsPregnant(target)==false
 					Actor[] a = GetRelevantSpermActors(target, true);getMalesInWoman(target)
 					ent = new string[9]
 					ent[0]=0
-					ent[1]=target.GetLeveledActorBase().GetName()
+					ent[1]=GetInfoName(target)
 					ent[2]=GetFemaleState(target)
 					ent[3]=GameDaysPassed.GetValue() - GetStateEnterTime(target)
 					ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
 					ent[5]=getContraception(target) as int
 					ent[6]=GetContraceptionDuration(target)
 					ent[7]=getRelativePregnancyChance(target)
-					ent[8]=FWUtility.getActorListNames(a,false)
+					ent[8]=FWUtility.getActorListNames(a,true)
 				else
 					ent = new string[8]
 					ent[0]=1
-					ent[1]=target.GetLeveledActorBase().GetName()
+					ent[1]=GetInfoName(target)
 					ent[2]=GetFemaleState(target)
 					ent[3]=GameDaysPassed.GetValue() - GetStateEnterTime(target)
 					ent[4]=System.getStateDuration(GetFemaleState(target), target) as int
@@ -3830,11 +3847,7 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 					if bHasNames;/==true/;
 						xSpermNames+=", "
 					endIf
-					if spermNames[c].GetLeveledActorBase().GetName()==""
-						xSpermNames+=spermNames[c].GetActorBase().GetName()
-					else
-						xSpermNames+=spermNames[c].GetLeveledActorBase().GetName()
-					endif
+					xSpermNames+=GetInfoName(spermNames[c])
 					bHasNames=true
 				endif
 			endWhile
