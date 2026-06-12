@@ -303,6 +303,7 @@ Talk to a child to give orders:
 | Children May Cry | On | Children make crying sounds |
 | BabyTracker Tattoos | Off | SlaveTats tally marks for babies born |
 | Semen Circle Tattoos | Off | SlaveTats indicator when sperm is present |
+| Womb State Tattoo | Off | SlaveTats womb diagram that follows the whole cycle |
 
 ---
 
@@ -323,7 +324,7 @@ Widget layout can be customized via profiles in `Data/BeeingFemale/HUD/`. Copy `
 
 ## SlaveTats Integration
 
-If SlaveTats and the BabyTracker tattoo pack are installed, two optional tattoo features are available (enable in MCM under Children):
+If SlaveTats is installed, three optional tattoo features are available (enable in MCM under Children). The tattoo packs themselves -- **BabyTracker** for the first two and **BF Womb tattoo** for the womb state -- ship with Beeing Female:
 
 ### Baby Tracker Tattoos
 
@@ -336,6 +337,18 @@ Shows a circle tattoo when viable sperm is present. Two variants:
 - **Hearts circle** -- sperm is inside during ovulation (conception possible)
 
 The tattoo automatically clears when all sperm expires or is washed out.
+
+### Womb State Tattoo
+
+A single womb-diagram tattoo that mirrors the full reproductive state and updates as it changes:
+
+- **Baseline / Ovulation** -- empty womb, with the ovulation variant during the fertile window
+- **Semen fill levels** -- the womb fills as more sperm accumulates (separate art for normal and ovulation phases)
+- **Fertilization** -- shown for the first day after conception
+- **Pregnancy phases 1-3** -- one image per trimester; from the second trimester, twins/triplets/quadruplets get their own art
+- **Birth** -- during labor, then back to baseline after recovery
+
+Exactly one tattoo from the set is shown at a time, and it updates on every cycle tick. Player only.
 
 ---
 

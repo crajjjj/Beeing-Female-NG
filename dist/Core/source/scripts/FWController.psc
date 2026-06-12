@@ -724,6 +724,7 @@ function WashOutSperm(actor woman, int WashOutType = 1, float Strength=1.0)
 		endWhile
 	endif
 	ApplySemenCircleTattoo(woman)
+	ApplyWombTattoo(woman)
 endfunction
 
 function ContraceptionSpermKill(actor Woman)
@@ -1180,6 +1181,7 @@ function GiveBirth(actor Mother)
 	SendModEvent("BeeingFemale","Update", Mother.GetFormID())
 
 	ApplyBabyTrackerTattoos(Mother)
+	ApplyWombTattoo(Mother)
 
 	StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother) ; Tkc (Loverslab) : end of givingbirth anim, remove the Mother
 	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
@@ -1263,12 +1265,17 @@ function RemoveBabyTrackerTattoos(actor Mother)
 endFunction
 
 ; BabyTracker semen circle tattoo — regular when cum inside, hearts when conception chance
-function ApplySemenCircleTattoo(actor Woman)
+function ApplySemenCircleTattoo(actor Woman, bool force = false)
 	if !cfg.SemenCircleTattoos || !Woman
 		return
 	endif
 	if Game.GetModByName("SlaveTats.esp") == 255
 		return
+	endif
+	if force
+		; re-add even when the tracked state is unchanged (MCM Refresh after
+		; SlaveTats lost the overlay)
+		RemoveSemenCircleTattoo(Woman)
 	endif
 	; Check if there is visible sperm (matches MCM info page criteria)
 	bool hasCum = false
@@ -1324,6 +1331,111 @@ function RemoveSemenCircleTattoo(actor Woman)
 	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_semen", true, true)
 	SlaveTats.simple_remove_tattoo(Woman, "BabyTracker", "Babytracker_hearts semen sircle", true, true)
 	StorageUtil.SetIntValue(Woman, "FW.SemenTattooState", 0)
+endFunction
+
+; "BF Womb tattoo" SlaveTats pack integration (section "BF PW") - a single
+; womb-state tattoo following the whole cycle: baseline/ovulation with semen
+; fill levels, fertilization, pregnancy phases, multiples, and birth.
+; Exactly one tattoo from the section is shown at a time; FW.WombTattooState
+; remembers the current one so SlaveTats is only invoked on actual changes.
+function ApplyWombTattoo(actor Woman, bool force = false)
+	if !cfg.WombTattoos || Woman != PlayerRef
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	if force
+		; re-add even when the tracked state is unchanged (MCM Refresh after
+		; SlaveTats lost the overlay)
+		RemoveWombTattoo(Woman)
+	endif
+	string desired = GetWombTattooName(Woman)
+	string current = StorageUtil.GetStringValue(Woman, "FW.WombTattooState", "")
+	if desired == current
+		return
+	endif
+	if current != ""
+		SlaveTats.simple_remove_tattoo(Woman, "BF PW", current, true, true)
+	endif
+	if desired != ""
+		SlaveTats.simple_add_tattoo(Woman, "BF PW", desired, 0, true, true)
+	endif
+	StorageUtil.SetStringValue(Woman, "FW.WombTattooState", desired)
+endFunction
+
+string function GetWombTattooName(actor Woman)
+	int cycleState = StorageUtil.GetIntValue(Woman, "FW.CurrentState", 0)
+	if cycleState == 7
+		return "PW Birth"
+	endif
+	if cycleState >= 4 && cycleState <= 6
+		; multiples become visible from the second trimester
+		; (FW.NumChilds = unborn count this pregnancy; FW.NumBabys is the lifetime birth tally)
+		int babys = StorageUtil.GetIntValue(Woman, "FW.NumChilds", 0)
+		if babys >= 2 && cycleState >= 5
+			if babys >= 4
+				return "PW 4Babies"
+			elseif babys == 3
+				return "PW 3Babies"
+			endif
+			return "PW 2Babies"
+		endif
+		if cycleState == 4
+			; fertilized egg on the first day, then the embryo
+			if GameDaysPassed.GetValue() - StorageUtil.GetFloatValue(Woman, "FW.StateEnterTime", 0.0) < 1.0
+				return "PW fertilization"
+			endif
+			return "PW Baby(phase1)"
+		elseif cycleState == 5
+			return "PW Baby(phase2)"
+		endif
+		return "PW Baby(phase3)"
+	endif
+	; states 0-3 and 8: baseline with semen fill level
+	float total = 0.0
+	int sa = StorageUtil.FormListCount(Woman, "FW.SpermName")
+	while sa > 0
+		sa -= 1
+		float amt = StorageUtil.FloatListGet(Woman, "FW.SpermAmount", sa)
+		if amt >= Sperm_Min_Amount_For_Impregnation
+			total += amt
+		endif
+	endwhile
+	if cycleState == 1
+		if total <= 0.0
+			return "PW Ovulation"
+		elseif total < 3.0
+			return "PW Ovulation semen(3)"
+		elseif total < 9.0
+			return "PW Ovulation semen(11)"
+		elseif total < 15.0
+			return "PW Ovulation semen(full)"
+		endif
+		return "PW Ovulation semen(full2)"
+	endif
+	if total <= 0.0
+		return "PW normal"
+	elseif total < 3.0
+		return "PW normal semen(3)"
+	elseif total < 9.0
+		return "PW normal semen(9)"
+	endif
+	return "PW normal semen(full)"
+endFunction
+
+function RemoveWombTattoo(actor Woman)
+	if !Woman
+		return
+	endif
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	string current = StorageUtil.GetStringValue(Woman, "FW.WombTattooState", "")
+	if current != ""
+		SlaveTats.simple_remove_tattoo(Woman, "BF PW", current, true, true)
+	endif
+	StorageUtil.UnsetStringValue(Woman, "FW.WombTattooState")
 endFunction
 
 ; Forcing a Belly-Refresh for the given actor
@@ -1632,6 +1744,7 @@ function AddSperm(actor Woman, actor PotentialFather, float amount = 1.0)
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
 
 	ApplySemenCircleTattoo(Woman)
+	ApplyWombTattoo(Woman)
 
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef
@@ -1682,6 +1795,7 @@ function AddSpermTimed(actor Woman, float Time, actor PotentialFather, float amo
 	StorageUtil.FloatListAdd(Woman,"FW.SpermAmount", tmp_amount)
 
 	ApplySemenCircleTattoo(Woman)
+	ApplyWombTattoo(Woman)
 
 	; If the player is the Male Actor, show the stats widget
 	if PotentialFather==PlayerRef

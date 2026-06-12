@@ -120,6 +120,7 @@ bool property ChildrenMayCry = true auto hidden
 bool property ChildrenGrowUpToAdult = false auto hidden
 bool property BabyTrackerTattoos = false auto hidden
 bool property SemenCircleTattoos = false auto hidden
+bool property WombTattoos = false auto hidden
 ; Impregnation
 bool property ImpregnateActive = false auto hidden
 bool property ImpregnateHusband = true auto hidden
@@ -226,6 +227,7 @@ bool ChildrenMayCryDef = true
 bool ChildrenGrowUpToAdultDef = false
 bool BabyTrackerTattoosDef = false
 bool SemenCircleTattoosDef = false
+bool WombTattoosDef = false
 ; Impregnate
 bool ImpregnateActiveDef = false
 bool ImpregnateHusbandDef = true
@@ -874,6 +876,7 @@ function LoadProfile(string File)
 	ChildrenGrowUpToAdult = JsonUtil.GetIntValue(s, "CHILDREN_GrowUpToAdult", FWUtility.SwitchInt(ChildrenGrowUpToAdult,1,0))==1
 	BabyTrackerTattoos = JsonUtil.GetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))==1
 	SemenCircleTattoos = JsonUtil.GetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))==1
+	WombTattoos = JsonUtil.GetIntValue(s, "CHILDREN_WombTattoos", FWUtility.SwitchInt(WombTattoos,1,0))==1
 
 	; Impregnation
 	ImpregnateActive = JsonUtil.GetIntValue(s, "IMPREGNATE_NPC_Active", FWUtility.SwitchInt(ImpregnateActive,1,0))==1
@@ -1017,6 +1020,7 @@ string function SaveProfile(string FileName="")
 	JsonUtil.SetIntValue(s, "CHILDREN_GrowUpToAdult", FWUtility.SwitchInt(ChildrenGrowUpToAdult,1,0))
 	JsonUtil.SetIntValue(s, "CHILDREN_BabyTrackerTattoos", FWUtility.SwitchInt(BabyTrackerTattoos,1,0))
 	JsonUtil.SetIntValue(s, "CHILDREN_SemenCircleTattoos", FWUtility.SwitchInt(SemenCircleTattoos,1,0))
+	JsonUtil.SetIntValue(s, "CHILDREN_WombTattoos", FWUtility.SwitchInt(WombTattoos,1,0))
 	
 	; Impregnation
 	JsonUtil.SetIntValue(s, "IMPREGNATE_NPC_Active", FWUtility.SwitchInt(ImpregnateActive,1,0))
@@ -2759,6 +2763,7 @@ Event OnPageReset(string page)
 		AddToggleOptionST("ToggleChildrenGrowUp","$FW_MENU_CHILDREN_GrowUpToAdult", ChildrenGrowUpToAdult, OPTION_FLAG_NONE)
 		AddToggleOptionST("ToggleBabyTrackerTattoos","$FW_MENU_CHILDREN_BabyTrackerTattoos", BabyTrackerTattoos, OPTION_FLAG_NONE)
 		AddToggleOptionST("ToggleSemenCircleTattoos","$FW_MENU_CHILDREN_SemenCircleTattoos", SemenCircleTattoos, OPTION_FLAG_NONE)
+		AddToggleOptionST("ToggleWombTattoos","$FW_MENU_CHILDREN_WombTattoos", WombTattoos, OPTION_FLAG_NONE)
 		AddTextOptionST("RefreshTattoos", "$FW_MENU_CHILDREN_RefreshTattoos", "")
 
 		; Pick one child / carried baby item and grow or hatch it immediately
@@ -7260,13 +7265,40 @@ state ToggleSemenCircleTattoos
 	EndEvent
 endstate
 
+state ToggleWombTattoos
+	Event OnSelectST()
+		WombTattoos = !WombTattoos
+		if WombTattoos
+			Controller.ApplyWombTattoo(PlayerRef)
+		else
+			Controller.RemoveWombTattoo(PlayerRef)
+		endif
+		SetToggleOptionValueST(WombTattoos)
+	EndEvent
+
+	Event OnDefaultST()
+		WombTattoos = WombTattoosDef
+		if !WombTattoos
+			Controller.RemoveWombTattoo(PlayerRef)
+		endif
+		SetToggleOptionValueST(WombTattoos)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_WombTattoos")
+	EndEvent
+endstate
+
 state RefreshTattoos
 	Event OnSelectST()
 		if BabyTrackerTattoos
 			Controller.ApplyBabyTrackerTattoos(PlayerRef)
 		endif
 		if SemenCircleTattoos
-			Controller.ApplySemenCircleTattoo(PlayerRef)
+			Controller.ApplySemenCircleTattoo(PlayerRef, true)
+		endif
+		if WombTattoos
+			Controller.ApplyWombTattoo(PlayerRef, true)
 		endif
 		ShowMessage("$FW_MENU_BASIC_Success")
 	EndEvent

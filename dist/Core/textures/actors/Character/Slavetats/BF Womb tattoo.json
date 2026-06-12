@@ -1,0 +1,104 @@
+[
+  {
+    "name": "PW 2Babies",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW 2Babies.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW 3Babies",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW 3Babies.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW 4Babies",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW 4Babies.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Baby(phase1)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Baby(phase1).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Baby(phase2)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Baby(phase2).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Baby(phase3)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Baby(phase3).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW fertilization",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW fertilization.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW normal semen(3)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW normal semen(3).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW normal semen(9)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW normal semen(9).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW normal semen(full)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW normal semen(full).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW normal",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW normal.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Ovulation",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Ovulation.dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Ovulation semen(11)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Ovulation semen(11).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Ovulation semen(3)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Ovulation semen(3).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Ovulation semen(full)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Ovulation semen(full).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Ovulation semen(full2)",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Ovulation semen(full2).dds",
+    "area": "body"
+  },
+  {
+    "name": "PW Birth",
+    "section": "BF PW",
+    "texture": "BF Womb tattoo\\PW Birth.dds",
+    "area": "body"
+  }
+]
