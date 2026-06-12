@@ -549,5 +549,4 @@ SkyrimSE.code-workspace
 dist/Core/Interface/translations/SexLabAroused_rename.bat
 skyrimse.ppj
 **/dependencies
-dist/Patches/FMR-Immersive Effects/scripts/**
 .claude/settings.local.json

@@ -45,11 +45,11 @@ Event OnInit()
     RegisterForSingleUpdateGameTime(TrackedUpdateIntervalHours)
 EndEvent
 
-Event OnPlayerLoadGame()
-    DetectFrameworks()
-    RegisterEvents()
-    RegisterForSingleUpdateGameTime(TrackedUpdateIntervalHours)
-EndEvent
+; NOTE: no OnPlayerLoadGame here - Quest scripts never receive that event
+; (it only reaches the player actor's aliases/effects). Mod-event
+; registrations and the pending single-update survive save/load, and
+; OnUpdateGameTime re-arms itself FIRST and re-detects frameworks each
+; pass, so the bridge self-heals without a load hook.
 
 Function RegisterEvents()
     UnregisterForAllModEvents()
@@ -147,6 +147,7 @@ Function RefreshActor(Actor mother)
     if mother == none
         return
     endIf
+    Int prevRank = StorageUtil.GetIntValue(mother, "FME.Rank", 0)
     Int rank = ComputeRank(mother)
 
     ; FME.Rank is the contract between the bridge and the patched FMR-IE
@@ -159,12 +160,12 @@ Function RefreshActor(Actor mother)
 
     SendStatusEvent(mother, rank)
 
-    ; Always kick the overlay refresh — including when rank == 0 — so the
-    ; overlay script's cleanup branches (elseif RCT <= 0) run and remove
-    ; stretchmark / areola textures when the cycle returns to non-pregnant.
-    ; Without this the textures linger at their last fade-out alpha after
-    ; recovery ends.
-    if (mother.Is3DLoaded() || mother == PlayerRef) && OverlayUpdater
+    ; Kick the overlay refresh while pregnant/recovering, and exactly ONCE
+    ; when the rank drops to 0, so the overlay script's cleanup branches
+    ; (elseif RCT <= 0) remove the stretchmark / areola textures. Gating the
+    ; rank==0 case on prevRank avoids re-running NiOverride removals on every
+    ; never-pregnant tracked NPC each poll.
+    if (rank > 0 || prevRank != 0) && (mother.Is3DLoaded() || mother == PlayerRef) && OverlayUpdater
         mother.AddSpell(OverlayUpdater, false)
     endIf
 
@@ -323,6 +324,11 @@ EndFunction
 ; Periodic safety poll
 ;================================================================================
 Event OnUpdateGameTime()
+    ; Re-arm FIRST: if anything below errors out, the poll chain survives.
+    RegisterForSingleUpdateGameTime(TrackedUpdateIntervalHours)
+    ; Cheap; keeps the SexLab/OStim flags honest across load-order changes
+    ; (no OnPlayerLoadGame is available on a Quest script to do it on load).
+    DetectFrameworks()
     Int n = StorageUtil.FormListCount(none, "FW.SavedNPCs")
     Int i = 0
     while i < n
@@ -332,7 +338,6 @@ Event OnUpdateGameTime()
         endIf
         i += 1
     endWhile
-    RegisterForSingleUpdateGameTime(TrackedUpdateIntervalHours)
 EndEvent
 
 ;================================================================================
@@ -411,15 +416,20 @@ Event OnBeeingFemaleStateChange(string eventName, string strArg, float numArg, F
     Int stateId = StorageUtil.GetIntValue(m, "FW.CurrentState", -1)
 
     if stateId == 0 || stateId == 1 || stateId == 2 || stateId == 3
-        CleanupEffects(m)
-        StorageUtil.UnsetFloatValue(m, "FME.NextEffectTime")
-        StorageUtil.SetIntValue(m, "FME.Rank", 0)
-        SendStatusEvent(m, 0)
-        ; Trigger an OverlayUpdater pass now so the stretchmark / areola
-        ; textures get cleaned up immediately rather than lingering until
-        ; the next 1.5h poll catches the rank=0 state.
-        if (m.Is3DLoaded() || m == PlayerRef) && OverlayUpdater
-            m.AddSpell(OverlayUpdater, false)
+        ; Only tear down when there was something to tear down - "Update"
+        ; fires for never-pregnant women too, and CleanupEffects alone is
+        ; nine DispelSpell calls.
+        if StorageUtil.GetIntValue(m, "FME.Rank", 0) != 0
+            CleanupEffects(m)
+            StorageUtil.UnsetFloatValue(m, "FME.NextEffectTime")
+            StorageUtil.SetIntValue(m, "FME.Rank", 0)
+            SendStatusEvent(m, 0)
+            ; Trigger an OverlayUpdater pass now so the stretchmark / areola
+            ; textures get cleaned up immediately rather than lingering until
+            ; the next 1.5h poll catches the rank=0 state.
+            if (m.Is3DLoaded() || m == PlayerRef) && OverlayUpdater
+                m.AddSpell(OverlayUpdater, false)
+            endIf
         endIf
         return
     endIf

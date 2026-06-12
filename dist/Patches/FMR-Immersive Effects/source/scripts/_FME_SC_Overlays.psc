@@ -72,10 +72,12 @@ Function AreolaUpdate(Actor akActor)
     LastTime2 = akActor.GetFactionRank(FMELastRank)
     ; BF NG patch: GenericFaction may be None after the master-swap step
     ; (the patched ESP can leave the property unfilled), so we use
-    ; FME.Rank > 0 as the "BF is tracking this actor in a pregnancy state"
-    ; signal instead of IsInFaction(GenericFaction). FMELastRank is still
-    ; consulted because it is a local FMR-IE faction (not None-vulnerable).
-    If akActor.IsInFaction(FMELastRank) && akActor.Is3DLoaded() && RCT2 > 0
+    ; FME.Rank 1..100 as the "BF is tracking this actor in a pregnancy state"
+    ; signal instead of IsInFaction(GenericFaction). The <= 100 bound matters:
+    ; upstream FMR dropped GenericFaction at birth, which is what let the
+    ; recovery ranks (101-115) fall through to the fade-out branches below.
+    ; FMELastRank is still consulted because it is a local FMR-IE faction.
+    If akActor.IsInFaction(FMELastRank) && akActor.Is3DLoaded() && RCT2 > 0 && RCT2 <= 100
         RCT2 = StorageUtil.GetIntValue(akActor, "FME.Rank", 0)
         LastTime2 = akActor.GetFactionRank(FMELastRank)
         If (RCT2 >= 1 && RCT2 < 67 && LastTime2 != RCT2)
@@ -109,8 +111,8 @@ endFunction
 Function StretchmarkUpdate(Actor akActor)
     RCT = StorageUtil.GetIntValue(akActor, "FME.Rank", 0)
     LastTime = akActor.GetFactionRank(FMELastRank)
-    ; BF NG patch: see AreolaUpdate's matching comment.
-    If akActor.IsInFaction(FMELastRank) && akActor.Is3DLoaded() && RCT > 0
+    ; BF NG patch: see AreolaUpdate's matching comment (incl. why <= 100).
+    If akActor.IsInFaction(FMELastRank) && akActor.Is3DLoaded() && RCT > 0 && RCT <= 100
         ; If the actor is, pull those values for faction rank to use in the logic path
         RCT = StorageUtil.GetIntValue(akActor, "FME.Rank", 0)
         LastTime = akActor.GetFactionRank(FMELastRank)
