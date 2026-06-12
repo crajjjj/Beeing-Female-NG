@@ -32,8 +32,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 |---|---|----------|----------|---------|
 | 3.1 | P0 | AddSperm during Ovulation (peak fertility) | Sperm stored in `FW.SpermName`/`Amount`/`Time`, `ActiveSpermImpregnation` fires, conception possible | FWController |
 | 3.2 | P0 | AddSperm outside fertility window | Sperm stored but `canBecomePregnant` returns false, no conception | FWController |
-| 3.3 | P1 | Contraception active | `ContraceptionSpermKillTimed` reduces sperm below threshold, no conception | FWController |
-| 3.4 | P1 | Multiple fathers — weighted selection | `calculateNumChildren` produces 1–3, father selection weighted by amount + addon boost, `FW.ChildFather` populated correctly. Father selection loop OOB fix applied (commit 479c2d8) | FWController |
+| 3.3 | P1 | Contraception active | `ContraceptionSpermKillTimed` sets killed sperm to `Sperm_Amount_For_Delete` (BELOW the `>=` relevance threshold) → no conception. Previously it set exactly `Sperm_Min_Amount_For_Impregnation`, which every filter accepted — contraception never blocked | FWController |
+| 3.4 | P1 | Multiple fathers — weighted selection | `calculateNumChildren` produces 1–3; father picked by classic weighted-by-amount/relevance selection (bounded, no OOB); `FW.ChildFather` populated correctly. `Sperm_Impregnation_Boost` affects conception CHANCE only, not father choice — the old boost-based pick was deterministic (2 donors → always the older one) and paired sorted weights with unsorted donors (inverted `bSort`) | FWController |
+| 3.10 | P1 | Any-period conception (`Allow_Impregnation_For_Any_Period`) | Conceives outside the fertility window per the configured chance; emits `BeeingFemaleConception` (was missing); per-donor chance not inherited from the previous donor (stale-variable fix); no OOB at the last donor | FWController `MyActiveSpermImpregnationTimedForAnyPeriod` |
 | 3.5 | P2 | Non-lore-friendly pairing | Sperm amount zeroed to `Sperm_Amount_For_Delete`, no conception | FWController |
 | 3.9 | P1 | Creature father unloads before conception | `FW.SpermRace` mirror persists donor race. Sperm entries preserved when actor is None. All-None-donors fallback conceives with stored race. MCM cheat bypasses washout delay | FWController, FWUtility |
 | 3.6 | P2 | NPC pregnancy disabled in MCM | `cfg.NPCCanBecomePregnant = false` → NPCs skipped, no error | FWController |
@@ -293,7 +294,12 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | 23.21 | ~P1~ | ~~**Dead SexLab event registrations on System quest**~~ **FIXED** — removed orphaned registrations (commit e56921b) | FWSystemConfig | No handler existed on target script |
 | 23.22 | ~P2~ | ~~**SexLab anal cum double-roll** — `NoVaginalCumChance` rolled twice independently~~ **FIXED** — single roll reused (commit e56921b) | BFA_ssl `OrgasmSeparate` | Consistent anal conception chance |
 | 23.23 | ~P1~ | ~~**ContraceptionSpermKillTimed null crash** — `.GetRace()` on None actor~~ **FIXED** — null-safe fallback to global setting (commit 3fe384d) | FWController | No crash on unloaded creature donors |
+| 23.24 | ~P1~ | ~~**Inverted `bSort` in sperm weight helpers** — `GetRelevantSpermFloatTimed` (+ ForAnyPeriod variant) sorted when asked NOT to~~ **FIXED** — impregnation paths paired DESC-sorted weights with insertion-ordered donors | FWController | Father weights now belong to the right donors |
+| 23.25 | ~P1~ | ~~**Boost-based father pick deterministic at default settings** — determinator = 0 with shipped boost 0: two donors → always the older; newest donor never picked~~ **FIXED** — classic bounded weighted pick restored in both sites; boost remains a conception-chance knob | FWController | Weighted father selection works as documented |
+| 23.26 | ~P1~ | ~~**Contraception sperm-kill was a no-op** — killed amount set to exactly `Sperm_Min_Amount_For_Impregnation`, accepted by every `>=` filter (speed-up variant set 0.1)~~ **FIXED** — kills set `Sperm_Amount_For_Delete` | FWController | Contraception actually prevents conception now (balance change) |
+| 23.27 | ~P1~ | ~~**Any-period conception: missing `BeeingFemaleConception` event, stale per-donor chance, unfixed pre-479c2d8 OOB**~~ **FIXED** — event emitted, chance reset per donor, classic bounded pick | FWController `MyActiveSpermImpregnationTimedForAnyPeriod` | External listeners (FMR-IE bridge, FAR) see any-period conceptions |
+| 23.28 | ~P2~ | ~~**`setNumBabys` raise branch never ran** — `int i=cur; while i<cur`~~ **FIXED** — `while i<num` + none-safe logging; `AddContraceptionTimed` also clamped the pre-add value instead of the new total | FWController | NumChilds and ChildFather lists stay aligned when raising baby count |
 
 ---
 
-*Last updated: 2026-06-11*
+*Last updated: 2026-06-12*

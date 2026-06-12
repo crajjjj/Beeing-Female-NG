@@ -468,142 +468,22 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			StorageUtil.SetIntValue(Mother,"FW.NumChilds",numChild)
 			actor[] Fathers = FWUtility.ActorArray(numChild)
 
-			float my_Impreg_boost_prev = 0
-			float my_Impreg_boost_new = 0
-			float my_Impreg_boost_abs_max = 0
-			actor my_prev_cand = none
-			actor my_new_cand = none
-			float my_determinator = 0
-			float my_prev_determ = 0
-			float my_next_determ = 0
-			float rnd_r = 0
-			int j = 0
-
 			while numChild>0
 				numChild-=1
-				;float rnd_r= Utility.RandomFloat(0,relevanceTotal)
-				;int j=0
-				rnd_r = Utility.RandomFloat(0, relevanceTotal)
-				j = 0
-
-				if(c > 1)
-					my_prev_cand = a[j]
-					my_Impreg_boost_prev = StorageUtil.GetFloatValue(my_prev_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-					if(my_Impreg_boost_prev == 0)
-						my_Impreg_boost_prev = StorageUtil.GetFloatValue(my_prev_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_boost_prev == 0)
-							my_Impreg_boost_prev = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-						endIf
-					endIf
-
-					my_new_cand = a[j + 1]
-					my_Impreg_boost_new = StorageUtil.GetFloatValue(my_new_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-					if(my_Impreg_boost_new == 0)
-						my_Impreg_boost_new = StorageUtil.GetFloatValue(my_new_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_boost_new == 0)
-							my_Impreg_boost_new = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-						endIf
-					endIf
-					
-					if(my_Impreg_boost_prev < 0)
-						if(my_Impreg_boost_new < 0)
-							if(my_Impreg_boost_prev < my_Impreg_boost_new)
-								my_Impreg_boost_abs_max = -my_Impreg_boost_prev
-							else
-								my_Impreg_boost_abs_max = -my_Impreg_boost_new
-							endIf
-						else
-							if((-my_Impreg_boost_prev) < my_Impreg_boost_new)
-								my_Impreg_boost_abs_max = my_Impreg_boost_new
-							else
-								my_Impreg_boost_abs_max = -my_Impreg_boost_prev
-							endIf
-						endIf
-					else
-						if(my_Impreg_boost_new < 0)
-							if(my_Impreg_boost_prev < (-my_Impreg_boost_new))
-								my_Impreg_boost_abs_max = -my_Impreg_boost_new
-							else
-								my_Impreg_boost_abs_max = my_Impreg_boost_prev
-							endIf
-						else
-							if(my_Impreg_boost_prev < my_Impreg_boost_new)
-								my_Impreg_boost_abs_max = my_Impreg_boost_new
-							else
-								my_Impreg_boost_abs_max = my_Impreg_boost_prev
-							endIf
-						endIf
-					endIf
-
-					my_prev_determ = my_Impreg_boost_prev * relevantSperm[j]
-					my_next_determ = my_Impreg_boost_new * relevantSperm[j + 1]
-					if(my_Impreg_boost_abs_max <= 0)
-						my_determinator = (my_prev_determ - my_next_determ)
-					else
-						my_determinator = (my_prev_determ - my_next_determ) / my_Impreg_boost_abs_max
-					endIf
-
-					;while rnd_r>=relevantSperm[j] && j<c
-					; (j + 2) < c ensures a[j+1] is valid after j is incremented inside the loop
-					while((rnd_r >= my_determinator) && ((j + 2) < c))
-						rnd_r -= relevantSperm[j]
-						j += 1
-
-						my_prev_cand = my_new_cand
-						my_Impreg_boost_prev = my_Impreg_boost_new
-						my_prev_determ = my_next_determ
-
-						my_new_cand = a[j + 1]
-						my_Impreg_boost_new = StorageUtil.GetFloatValue(my_new_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_boost_new == 0)
-							my_Impreg_boost_new = StorageUtil.GetFloatValue(my_new_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-							if(my_Impreg_boost_new == 0)
-								my_Impreg_boost_new = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-							endIf
-						endIf
-
-						if(my_Impreg_boost_prev < 0)
-							if(my_Impreg_boost_new < 0)
-								if(my_Impreg_boost_prev < my_Impreg_boost_new)
-									my_Impreg_boost_abs_max = -my_Impreg_boost_prev
-								else
-									my_Impreg_boost_abs_max = -my_Impreg_boost_new
-								endIf
-							else
-								if((-my_Impreg_boost_prev) < my_Impreg_boost_new)
-									my_Impreg_boost_abs_max = my_Impreg_boost_new
-								else
-									my_Impreg_boost_abs_max = -my_Impreg_boost_prev
-								endIf
-							endIf
-						else
-							if(my_Impreg_boost_new < 0)
-								if(my_Impreg_boost_prev < (-my_Impreg_boost_new))
-									my_Impreg_boost_abs_max = -my_Impreg_boost_new
-								else
-									my_Impreg_boost_abs_max = my_Impreg_boost_prev
-								endIf
-							else
-								if(my_Impreg_boost_prev < my_Impreg_boost_new)
-									my_Impreg_boost_abs_max = my_Impreg_boost_new
-								else
-									my_Impreg_boost_abs_max = my_Impreg_boost_prev
-								endIf
-							endIf
-						endIf
-
-						my_next_determ = my_Impreg_boost_new * relevantSperm[j + 1]
-						if(my_Impreg_boost_abs_max <= 0)
-							my_determinator = (my_prev_determ - my_next_determ)
-						else
-							my_determinator = (my_prev_determ - my_next_determ) / my_Impreg_boost_abs_max
-						endIf
-					endWhile
-					; advance to last donor if random value still exceeds threshold
-					if (rnd_r >= my_determinator) && ((j + 1) < c)
-						j += 1
-					endIf
-				endIf
+				; Classic weighted pick (the upstream original): walk the donors
+				; until the cumulative weight bucket containing rnd_r is found.
+				; The (j + 1) < c bound keeps a[j] valid even when float rounding
+				; pushes rnd_r past the last bucket.
+				; Sperm_Impregnation_Boost is deliberately NOT part of the father
+				; weighting - it is a conception-CHANCE modifier (see
+				; FWAbilityBeeingFemale); the earlier boost-based selection here
+				; degenerated to "always the last donor" at the default boost of 0.
+				float rnd_r = Utility.RandomFloat(0, relevanceTotal)
+				int j = 0
+				while (rnd_r >= relevantSperm[j]) && ((j + 1) < c)
+					rnd_r -= relevantSperm[j]
+					j += 1
+				endWhile
 				FWUtility.AddChildFather(Mother, a[j])
 				Fathers[numChild]=a[j]
 			endWhile
@@ -668,7 +548,9 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 			endIf
 ;			if contraception>rnd2
 			if(contraception >= rnd2)
-				StorageUtil.FloatListSet(Mother, "FW.SpermAmount", sa, 0.1)
+				; Below Sperm_Min_Amount_For_Impregnation so the kill actually
+				; blocks conception (0.1 still passed every relevance filter)
+				StorageUtil.FloatListSet(Mother, "FW.SpermAmount", sa, Sperm_Amount_For_Delete)
 			endif
 		endif
 	endWhile
@@ -705,7 +587,7 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 				numChild-=1
 				float rnd_r= Utility.RandomFloat(0,relevanceTotal)
 				int j=0
-				while rnd_r>relevantSperm[j]
+				while rnd_r>relevantSperm[j] && (j + 1) < c
 					rnd_r-=relevantSperm[j]
 					j+=1
 				endWhile
@@ -742,8 +624,14 @@ bool function setNumBabys(actor Mother,int num)
 			StorageUtil.SetIntValue(Mother,"FW.NumChilds",num)
 			actor father = StorageUtil.FormListGet(Mother,"FW.ChildFather", 0) as actor
 			int i=cur
-			while i<cur
-				FW_log.WriteLog("- Father for Baby "+i+" is "+father.GetLeveledActorBase().GetName())
+			; Was "while i<cur" - the loop never ran, so NumChilds rose without
+			; matching ChildFather entries and the parallel lists went out of sync
+			while i<num
+				if father
+					FW_log.WriteLog("- Father for Baby "+i+" is "+father.GetLeveledActorBase().GetName())
+				else
+					FW_log.WriteLog("- Father for Baby "+i+" is none")
+				endif
 				FWUtility.AddChildFather(Mother, father)
 				i+=1
 			endWhile
@@ -900,7 +788,9 @@ function ContraceptionSpermKillTimed(actor Woman, float Time)
 				
 	;			if contraception>rnd2
 				if(contraception >= rnd2)
-					StorageUtil.FloatListSet(Woman, "FW.SpermAmount", c, Sperm_Min_Amount_For_Impregnation)
+					; Was Sperm_Min_Amount_For_Impregnation, which every relevance
+					; filter accepts with >= - the kill never blocked conception
+					StorageUtil.FloatListSet(Woman, "FW.SpermAmount", c, Sperm_Amount_For_Delete)
 				elseif contraception > 20
 					StorageUtil.FloatListSet(Woman, "FW.SpermAmount", c, amo - (contraception * 0.002))
 				endif
@@ -2271,31 +2161,29 @@ float[] function GetRelevantSpermFloatTimed(actor woman,float Time, bool bShowTr
 			FWUtility.RemoveSpermMirrorAt(woman, c)
 		endif
 	endwhile
-	if bSort ;Tkc (Loverslab) optimization
-	else;if bSort==false
-		; Skip the bubble-sort scaffolding entirely when there's nothing to compare.
-		if actorr.length > 1
-			int bi=1
-			int bj
-			int bc=actorr.length ; Count
-			bool bl=true ; Flag
-			actor ba ; Temp
-			float bf ; Temp
-			while bi<=bc && bl
-				bl=false
-				bj=0
-				while bj<bc - 1
-					if actorr[bj+1]>actorr[bj]
-						bf=actorr[bj]
-						actorr[bj]=actorr[bj+1]
-						actorr[bj+1]=bf
-						bl=true
-					endIf
-					bj+=1
-				endWhile
-				bi+=1
+	; Sort only when ASKED to. This was inverted (sorted when bSort==false),
+	; which paired DESC-sorted weights with the insertion-ordered actor array
+	; in the impregnation paths - donors got each other's weights.
+	if bSort && actorr.length > 1
+		int bi=1
+		int bj
+		int bc=actorr.length ; Count
+		bool bl=true ; Flag
+		float bf ; Temp
+		while bi<=bc && bl
+			bl=false
+			bj=0
+			while bj<bc - 1
+				if actorr[bj+1]>actorr[bj]
+					bf=actorr[bj]
+					actorr[bj]=actorr[bj+1]
+					actorr[bj+1]=bf
+					bl=true
+				endIf
+				bj+=1
 			endWhile
-		endif
+			bi+=1
+		endWhile
 	endif
 	
 	return actorr
@@ -2413,86 +2301,17 @@ bool function MyActiveSpermImpregnationTimedForAnyPeriod(actor Mother, bool bIgn
 			StorageUtil.SetIntValue(Mother, "FW.NumChilds", numChild)
 			actor[] Fathers = FWUtility.ActorArray(numChild)
 
-			float my_Impreg_Chance_prev = 0
-			float my_Impreg_Chance_new = 0
-			float my_Impreg_Chance_abs_max = 0
-			actor my_prev_cand = none
-			actor my_new_cand = none
-			float my_determinator = 0
-			float my_prev_determ = 0
-			float my_next_determ = 0
-			float rnd_r = 0
-			int j = 0
-
 			while(numChild > 0)
 				numChild -= 1
-				rnd_r = Utility.RandomFloat(0, relevanceTotal)
-				j = 0
-
-				if(c > 1)
-					my_prev_cand = a[j]
-					my_Impreg_Chance_prev = StorageUtil.GetFloatValue(my_prev_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-					if(my_Impreg_Chance_prev == 0)
-						my_Impreg_Chance_prev = StorageUtil.GetFloatValue(my_prev_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_Chance_prev == 0)
-							my_Impreg_Chance_prev = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-						endIf
-					endIf
-
-					my_new_cand = a[j + 1]
-					my_Impreg_Chance_new = StorageUtil.GetFloatValue(my_new_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-					if(my_Impreg_Chance_new == 0)
-						my_Impreg_Chance_new = StorageUtil.GetFloatValue(my_new_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_Chance_new == 0)
-							my_Impreg_Chance_new = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-						endIf
-					endIf
-					
-					if(my_Impreg_Chance_prev < my_Impreg_Chance_new)
-						my_Impreg_Chance_abs_max = my_Impreg_Chance_new
-					else
-						my_Impreg_Chance_abs_max = my_Impreg_Chance_prev
-					endIf
-
-					my_prev_determ = my_Impreg_Chance_prev * relevantSperm[j]
-					my_next_determ = my_Impreg_Chance_new * relevantSperm[j + 1]
-					if(my_Impreg_Chance_abs_max <= 0)
-						my_determinator = (my_prev_determ - my_next_determ)
-					else
-						my_determinator = (my_prev_determ - my_next_determ) / my_Impreg_Chance_abs_max
-					endIf
-
-					while((rnd_r >= my_determinator) && ((j + 1) < c))
-						rnd_r -= relevantSperm[j]
-						j += 1
-
-						my_prev_cand = my_new_cand
-						my_Impreg_Chance_prev = my_Impreg_Chance_new
-						my_prev_determ = my_next_determ
-
-						my_new_cand = a[j + 1]
-						my_Impreg_Chance_new = StorageUtil.GetFloatValue(my_new_cand, "FW.AddOn.Sperm_Impregnation_Boost", 0)
-						if(my_Impreg_Chance_new == 0)
-							my_Impreg_Chance_new = StorageUtil.GetFloatValue(my_new_cand.GetRace(), "FW.AddOn.Sperm_Impregnation_Boost", 0)
-							if(my_Impreg_Chance_new == 0)
-								my_Impreg_Chance_new = StorageUtil.GetFloatValue(none, "FW.AddOn.Global_Sperm_Impregnation_Boost", 0)
-							endIf
-						endIf
-						
-						if(my_Impreg_Chance_prev < my_Impreg_Chance_new)
-							my_Impreg_Chance_abs_max = my_Impreg_Chance_new
-						else
-							my_Impreg_Chance_abs_max = my_Impreg_Chance_prev
-						endIf
-
-						my_next_determ = my_Impreg_Chance_new * relevantSperm[j + 1]
-						if(my_Impreg_Chance_abs_max <= 0)
-							my_determinator = (my_prev_determ - my_next_determ)
-						else
-							my_determinator = (my_prev_determ - my_next_determ) / my_Impreg_Chance_abs_max
-						endIf
-					endWhile
-				endIf
+				; Classic weighted pick - see ActiveSpermImpregnationTimed for the
+				; rationale. The old boost-based variant here also still carried
+				; the pre-479c2d8 out-of-bounds read (a[j+1] at j == c-1).
+				float rnd_r = Utility.RandomFloat(0, relevanceTotal)
+				int j = 0
+				while (rnd_r >= relevantSperm[j]) && ((j + 1) < c)
+					rnd_r -= relevantSperm[j]
+					j += 1
+				endWhile
 				FWUtility.AddChildFather(Mother, a[j])
 				Fathers[numChild]=a[j]
 			endWhile
@@ -2500,6 +2319,8 @@ bool function MyActiveSpermImpregnationTimedForAnyPeriod(actor Mother, bool bIgn
 			StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
 			StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
+			; This path was the only conception flow not emitting the public event
+			SendConceptionEvent(Mother, Fathers)
 			ChangeStateTimed(Mother,Time,4)
 			return true
 		endIf
@@ -2535,6 +2356,9 @@ actor[] function MyGetRelevantSpermActorsTimedForAnyPeriod(actor woman, float Ti
 			float maxSDuration = System.getMaleSpermDuration(SName)
 
 			if SName!=none
+				; Reset per donor - without this a donor with no any-period
+				; permission inherited the previous donor's chance
+				my_Impreg_Chance = 0
 				my_Impreg_Any = StorageUtil.GetIntValue(SName, "FW.AddOn.Allow_Impregnation_For_Any_Period", -1)
 				if(my_Impreg_Any <= 0)
 					abr = SName.GetRace()
@@ -2576,6 +2400,9 @@ actor[] function MyGetRelevantSpermActorsTimedForAnyPeriod(actor woman, float Ti
 			float maxSDuration = System.getMaleSpermDuration(SName)
 					
 			if SName!=none
+				; Reset per donor - without this a donor with no any-period
+				; permission inherited the previous donor's chance
+				my_Impreg_Chance = 0
 				my_Impreg_Any = StorageUtil.GetIntValue(SName, "FW.AddOn.Allow_Impregnation_For_Any_Period", -1)
 				if(my_Impreg_Any <= 0)
 					abr = SName.GetRace()
@@ -2670,6 +2497,9 @@ float[] function MyGetRelevantSpermFloatTimedForAnyPeriod(actor woman, float Tim
 		float maxSDuration = System.getMaleSpermDuration(SName)
 		
 		if SName!=none
+			; Reset per donor - without this a donor with no any-period
+			; permission inherited the previous donor's chance
+			my_Impreg_Chance = 0
 			my_Impreg_Any = StorageUtil.GetIntValue(SName, "FW.AddOn.Allow_Impregnation_For_Any_Period", -1)
 			if(my_Impreg_Any <= 0)
 				abr = SName.GetRace()
@@ -2700,31 +2530,29 @@ float[] function MyGetRelevantSpermFloatTimedForAnyPeriod(actor woman, float Tim
 			FWUtility.RemoveSpermMirrorAt(woman, c)
 		endif
 	endwhile
-	if bSort ;Tkc (Loverslab) optimization
-	else;if bSort==false
-		; Skip the bubble-sort scaffolding entirely when there's nothing to compare.
-		if actorr.length > 1
-			int bi=1
-			int bj
-			int bc=actorr.length ; Count
-			bool bl=true ; Flag
-			actor ba ; Temp
-			float bf ; Temp
-			while bi<=bc && bl
-				bl=false
-				bj=0
-				while bj<bc - 1
-					if actorr[bj+1]>actorr[bj]
-						bf=actorr[bj]
-						actorr[bj]=actorr[bj+1]
-						actorr[bj+1]=bf
-						bl=true
-					endIf
-					bj+=1
-				endWhile
-				bi+=1
+	; Sort only when ASKED to. This was inverted (sorted when bSort==false),
+	; which paired DESC-sorted weights with the insertion-ordered actor array
+	; in the impregnation paths - donors got each other's weights.
+	if bSort && actorr.length > 1
+		int bi=1
+		int bj
+		int bc=actorr.length ; Count
+		bool bl=true ; Flag
+		float bf ; Temp
+		while bi<=bc && bl
+			bl=false
+			bj=0
+			while bj<bc - 1
+				if actorr[bj+1]>actorr[bj]
+					bf=actorr[bj]
+					actorr[bj]=actorr[bj+1]
+					actorr[bj+1]=bf
+					bl=true
+				endIf
+				bj+=1
 			endWhile
-		endif
+			bi+=1
+		endWhile
 	endif
 	
 	return actorr
@@ -3059,9 +2887,11 @@ float function AddContraceptionTimed(actor Woman, float Time, float Value)
 		addValue = 2.0
 	endif
 	new_contraception=contraception+addValue
-	if contraception>System.MaxContraception
+	; Clamp the NEW value - the old code tested the pre-add value, which never
+	; exceeds the cap, so the stored total could overshoot MaxContraception
+	if new_contraception>System.MaxContraception
 		new_contraception = System.MaxContraception
-	elseif contraception < 0
+	elseif new_contraception < 0
 		new_contraception = 0.0
 	endif
 	StorageUtil.SetFloatValue(Woman,"FW.ContraceptionTime",Time)
