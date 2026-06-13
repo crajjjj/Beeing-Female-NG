@@ -38,6 +38,7 @@ theme:
 nav:
   - Home: index.md
   - User Guide: user-guide.md
+  - Item Slots & Conflicts: slot-conflicts.md
 
 markdown_extensions:
   - admonition
