@@ -3204,12 +3204,12 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 			adult.SetFactionRank(ChildFollowerFaction5, ChildFollowerFactionRank5)
 		endif
 		if _VanillaPotentialFollower == none
-			; Vanilla FormIDs: 0005C84D = CurrentFollowerFaction,
-			; 0005C84E = PotentialFollowerFaction (these were previously swapped,
-			; which left grown adults in the phantom "already following" state and
-			; suppressed the "Follow me" / dismiss dialogue)
-			_VanillaCurrentFollower = Game.GetFormFromFile(0x0005C84D, "Skyrim.esm") as Faction
-			_VanillaPotentialFollower = Game.GetFormFromFile(0x0005C84E, "Skyrim.esm") as Faction
+			; Vanilla FormIDs: 0005C84D = PotentialFollowerFaction,
+			; 0005C84E = CurrentFollowerFaction. Recruitable idle state is
+			; PotentialFollower rank 0 + CurrentFollower rank -1; recruiting via
+			; the "Follow me" dialogue flips CurrentFollower to 0.
+			_VanillaPotentialFollower = Game.GetFormFromFile(0x0005C84D, "Skyrim.esm") as Faction
+			_VanillaCurrentFollower = Game.GetFormFromFile(0x0005C84E, "Skyrim.esm") as Faction
 		endif
 		if _VanillaPotentialFollower && !adult.IsInFaction(_VanillaPotentialFollower)
 			adult.SetFactionRank(_VanillaPotentialFollower, 0)
