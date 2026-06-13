@@ -164,9 +164,42 @@
 								</dependencyType> 
 							</typeDescriptor> 
 						</plugin>
-					</plugins> 
-				</group> 
-			</optionalFileGroups> 
+					</plugins>
+				</group>
+			</optionalFileGroups>
 		</installStep>
-    </installSteps> 
+        <installStep name="Step 4">
+			<visible>
+				<dependencies operator="Or">
+					<fileDependency file="SlaveTats.esp" state="Active"/>
+				</dependencies>
+			</visible>
+			<optionalFileGroups order="Explicit">
+				<group name="SlaveTats Tattoo Packs" type="SelectAny">
+					<plugins order="Explicit">
+						<plugin name="Womb &amp; Birth-count tattoos">
+							<description>Optional SlaveTats overlay packs that BF can drive from the cycle: the Womb State Tattoo (a womb diagram following ovulation, semen fill, fertilization, pregnancy phases, multiples and birth) and the BabyTracker tattoos (birth-count tally and semen circle). Enable the matching toggles on the MCM Children page after install. Requires SlaveTats; safe to skip if you do not use it.</description>
+							<image path="Fomod_resources\fw.jpg" />
+							<files>
+								<folder source="SlaveTats" destination="" priority="0" />
+							</files>
+							<typeDescriptor>
+								<dependencyType>
+									<defaultType name="Optional"/>
+									<patterns>
+										<pattern>
+											<dependencies operator="Or">
+												<fileDependency file="SlaveTats.esp" state="Active"/>
+											</dependencies>
+											<type name="Recommended"/>
+										</pattern>
+									</patterns>
+								</dependencyType>
+							</typeDescriptor>
+						</plugin>
+					</plugins>
+				</group>
+			</optionalFileGroups>
+		</installStep>
+    </installSteps>
 </config>

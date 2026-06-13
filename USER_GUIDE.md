@@ -324,7 +324,7 @@ Widget layout can be customized via profiles in `Data/BeeingFemale/HUD/`. Copy `
 
 ## SlaveTats Integration
 
-If SlaveTats is installed, three optional tattoo features are available (enable in MCM under Children). The tattoo packs themselves -- **BabyTracker** for the first two and **BF Womb tattoo** for the womb state -- ship with Beeing Female:
+If SlaveTats is installed, three optional tattoo features are available (enable in MCM under Children). The tattoo packs themselves -- **BabyTracker** for the first two and **BF Womb tattoo** for the womb state -- are an optional component in the FOMOD installer (the **SlaveTats Tattoo Packs** step, shown and pre-selected only when `SlaveTats.esp` is active). Re-run the installer and tick it if you skipped it:
 
 ### Baby Tracker Tattoos
 
@@ -447,6 +447,7 @@ The installer offers ready-made patches that hook other mods to Beeing Female. S
 - **FMR-Immersive Effects** -- removes FMR-IE's Fertility Mode requirement and drives its stretchmark/areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks, and lactation effects from BF pregnancy progress, including a gradual fade-out during recovery.
 - **RS Children child actors** -- BF-born children use RS Children Overhaul's look, matching other children in your game.
 - **Creature child actors** -- species-matched offspring from creature impregnations (dog pup, falmer child, and so on).
+- **SlaveTats Tattoo Packs** -- the womb-state and BabyTracker overlay textures used by the SlaveTats tattoo features. Shown and pre-selected only when SlaveTats is installed; skip it if you do not use SlaveTats.
 
 ---
 
