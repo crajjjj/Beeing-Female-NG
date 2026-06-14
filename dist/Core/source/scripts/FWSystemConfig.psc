@@ -1936,6 +1936,9 @@ endFunction
 ; Growth status for the MCM Children tab: time until maturity while growing,
 ; "Grown" once full size is reached; grown-up adults show their whereabouts
 string function GetChildGrowthStatus(Actor child)
+	if child.IsDead()
+		return "$FW_MENU_CHILDREN_Dead"
+	endif
 	if StorageUtil.GetIntValue(child, "FW.Child.GrownUp", 0) == 1
 		Location adultLoc = child.GetCurrentLocation()
 		if adultLoc && adultLoc.GetName() != ""
@@ -2000,6 +2003,28 @@ int function GrowUpGrownChildrenNow()
 		endif
 	endwhile
 	return grownCount
+endFunction
+
+; Permanently remove the player's deceased children -- including dead grown adults,
+; which have no death handler of their own -- from the world and the FW.Babys list.
+; Iterates backwards so removals don't shift unvisited indices.
+int function PruneDeceasedChildren()
+	int removed = 0
+	int c = StorageUtil.FormListCount(none, "FW.Babys")
+	actor player = PlayerRef
+	while c > 0
+		c -= 1
+		actor ca = StorageUtil.FormListGet(none, "FW.Babys", c) as actor
+		if ca && ca.IsDead()
+			if (StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player) || (StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
+				StorageUtil.FormListRemove(none, "FW.Babys", ca)
+				ca.Disable()
+				ca.Delete()
+				removed += 1
+			endif
+		endif
+	endWhile
+	return removed
 endFunction
 
 string function getRemainingTime(bool mayBeZero = true)
@@ -2788,6 +2813,7 @@ Event OnPageReset(string page)
 		else
 			AddTextOptionST("TextGrowSelected", "$FW_MENU_CHILDREN_GrowSelected", "", OPTION_FLAG_DISABLED)
 		endif
+		AddTextOptionST("RemoveDeceasedChildren", "$FW_MENU_CHILDREN_RemoveDeceased", "")
 
 		SetCursorPosition(1)
 		AddHeaderOption("$FW_MENU_CHILDREN_YourChildren")
@@ -2799,7 +2825,7 @@ Event OnPageReset(string page)
 		while ind<c
 ;			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", ind) as FWChildActor
 			Actor ca = StorageUtil.FormListGet(none, "FW.Babys", ind) as Actor
-			If(ca;/!=none/;)
+			If(ca) ; include dead too - GetChildGrowthStatus tags them "Dead"; click handler matches
 ;				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
 				FWChildActor FWChildca = ca as FWChildActor
 				if(FWChildca)
@@ -4145,7 +4171,7 @@ Event OnOptionSelect(int option)
 ;			FWChildActor ca = StorageUtil.FormListGet(none, "FW.Babys", i) as FWChildActor
 			Actor ca = StorageUtil.FormListGet(none, "FW.Babys", i) as Actor
 ;			If(ca;/!=none/;)
-			If(ca && !ca.IsDead())
+			If(ca) ; include dead so row indexes match the display loop (dead shown as "Dead")
 ;				If(ca as FWChildActorPlayer;/!=none/; || StorageUtil.GetFormValue(ca, "FW.Child.Mother", none) == player || StorageUtil.GetFormValue(ca, "FW.Child.Father", none) == player)
 				FWChildActor fwca = ca as FWChildActor
 				if(fwca)
@@ -6013,6 +6039,22 @@ state TextGrowUpChildren
 
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_CHEAT_GrowUpNow")
+	EndEvent
+endstate
+
+state RemoveDeceasedChildren
+	Event OnSelectST()
+		if ShowMessage("$FW_MENUTXT_CHILDREN_RemoveDeceasedConfirm", true, "$FW_MENU_BASIC_Yes", "$FW_MENU_BASIC_No")
+			SetOptionFlagsST(OPTION_FLAG_DISABLED)
+			int removed = PruneDeceasedChildren()
+			Debug.Notification(removed + " deceased children removed")
+			SetOptionFlagsST(OPTION_FLAG_NONE)
+			ForcePageReset()
+		endif
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_CHILDREN_RemoveDeceased")
 	EndEvent
 endstate
 
