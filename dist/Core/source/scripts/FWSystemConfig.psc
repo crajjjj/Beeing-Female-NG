@@ -2042,6 +2042,17 @@ string function getContraceptionTime()
 	endIf
 endFunction
 
+; Approximate per-update conception chance at the ovulation peak for a given tonic
+; boost. The ovulation roll is RandomInt(0,15) < 7 + boost, so the chance is
+; (7 + boost) / 16, clamped to 100%. Player-facing gauge of the active tonic.
+int function getFertilityOvulationChance(float boost)
+	float thr = 7.0 + boost
+	if thr > 16.0
+		thr = 16.0
+	endif
+	return Math.Floor((thr / 16.0) * 100.0) as int
+endFunction
+
 string function OvulationPainString()
 	if System.Player
 		if((System.Player.stateDamageScale < 2.2) && (System.Player.stateDamageScale >= 0))
@@ -3550,6 +3561,11 @@ Event OnPageReset(string page)
 			AddEmptyOption()
 			AddTextOption("$FW_MENU_INFO_ContraceptionHormones", getContraception()+"%")
 			AddTextOption("$FW_MENU_INFO_ContraceptionTime", getContraceptionTime())
+			; Only surface the fertility tonic while one is active (boost decays to 0)
+			float myFertilityBoost = Controller.getFertility(PlayerRef)
+			if myFertilityBoost > 0.0
+				AddTextOption("$FW_MENU_INFO_FertilityTonic", "~"+getFertilityOvulationChance(myFertilityBoost)+"%")
+			endif
 		
 			AddEmptyOption()
 			AddHeaderOption("$FW_MENU_INFO_StateInformation")

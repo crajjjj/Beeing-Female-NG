@@ -981,6 +981,8 @@ Event onBeeingFemaleCommand(string hookName, string argString, float argNum, for
 		int validateM = IsValidateMaleActor(a)
 		if argString=="AddContraception" && argNum>0.0 && validateF>0
 			Controller.AddContraception(a, argNum)
+		elseif argString=="AddFertility" && argNum>0.0 && validateF>0
+			Controller.AddFertility(a, argNum)
 		elseif argString=="AddSperm" && argNum>0.0
 			form f1 = Game.GetForm(argNum as int)
 			if f1

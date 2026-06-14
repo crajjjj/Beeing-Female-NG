@@ -2056,6 +2056,7 @@ state Ovulation_State
 		int my_Impreg_Any = 0
 		float my_Impreg_Chance = 0
 		float my_Impreg_boost = 0
+		float my_Fertility = Controller.getFertility(ActorRef)
 
 		bool bool_NotPregnant = true
 		while((c > 0) && bool_NotPregnant)
@@ -2090,7 +2091,7 @@ state Ovulation_State
 				if CurrentStatePercent >= 50
 					; Check for Pregnancy
 					int rnd = Utility.RandomInt(0, 15)
-					if rnd < (7 + my_Impreg_boost)
+					if rnd < (7 + my_Impreg_boost + my_Fertility)
 						; Actor is pregnant!
 						if Controller.ActiveSpermImpregnation(ActorRef);/==true/;
 							bool_NotPregnant = false
@@ -2154,6 +2155,7 @@ state Luteal_State
 			int my_Impreg_Any = 0
 			float my_Impreg_Chance = 0
 			float my_Impreg_boost = 0
+			float my_Fertility = Controller.getFertility(ActorRef)
 
 			bool bool_NotPregnant = true
 			while((c > 0) && bool_NotPregnant)
@@ -2189,7 +2191,7 @@ state Luteal_State
 						; Check for Pregnancy
 						Float rnd = Utility.RandomFloat(0, 99)
 						float chance = System.LutealImpregnationTime(CurrentStatePercent)
-						if rnd < (chance + my_Impreg_boost)
+						if rnd < (chance + my_Impreg_boost + my_Fertility)
 							if Controller.ActiveSpermImpregnation(ActorRef);/==true/;
 								; Actor is pregnant!
 								bool_NotPregnant = false

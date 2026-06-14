@@ -126,13 +126,15 @@ You can remove sperm before it leads to conception:
 ## Conception
 
 Conception is only checked when:
-- There is viable sperm present
-- The female is in the **ovulation** phase (or an addon allows any-period conception)
-- The conception roll passes
+- There is viable sperm present (i.e. not washed out or killed by contraception)
+- The female is in her **fertile window** -- the **ovulation** phase, or the early **luteal** phase at a declining chance (or any phase, if an addon enables any-period conception)
+- **Both** conception gates below pass
 
 ### How the Roll Works
 
-Each eligible cycle, the game rolls against the conception chance:
+Conception uses **two independent gates**, not a single roll:
+
+**Gate 1 -- "Is this a fertile cycle?"** Rolled **once per cycle**, at the cycle boundary (when menstruation ends and the follicular phase begins). This sets the *Can get pregnant this cycle* flag. The chance is:
 
 | Who | Default Chance |
 |-----|---------------|
@@ -140,9 +142,23 @@ Each eligible cycle, the game rolls against the conception chance:
 | Followers | 40% |
 | Other NPCs | 40% |
 
-These can be adjusted per-actor or per-race via addons. Contraception reduces the effective chance.
+These can be adjusted in the MCM and scaled per-actor or per-race via addons. If this roll fails, **no conception is possible for the whole cycle** -- regardless of how much sperm is present -- and it is **not** re-rolled until the next cycle.
+
+**Gate 2 -- the fertile-window roll.** If the cycle is fertile, the game then rolls **on each cycle update** while she is in the fertile window. At the ovulation peak this is roughly a **44%** chance per update; in the luteal phase it starts high and declines toward zero. Because the window spans many updates, these per-update chances compound over the window. When a roll passes, conception succeeds **only if viable sperm survives** the contraception sperm-kill (see [Contraception](#contraception)).
+
+The two dials therefore act on different stages: **ConceiveChance** governs Gate 1 (how often a cycle is fertile at all), while **contraception** acts after Gate 2 (by killing the sperm). They are independent.
 
 If multiple males have deposited sperm, the father is chosen randomly, weighted by how much sperm each has.
+
+### Fertility Tonics
+
+Fertility Tonics are the counterpart to contraception: drinking one raises your conception odds for a few in-game days, then fades. Two strengths exist, and like the contraception fluids they can be crafted or found on merchants/loot.
+
+- **Mild tonic** -- nudges only the **fertile-window roll (Gate 2)**, strongest during **ovulation** (a smaller nudge in luteal). It improves the odds but **cannot** make an infertile cycle fertile -- that is Gate 1, set once per cycle by **ConceiveChance**.
+- **Potent tonic** -- applies the same Gate 2 boost **and** forces the current cycle to count as fertile (Gate 1), so a cycle that rolled infertile becomes fertile for the rest of its window. Drink it before or during ovulation; it does nothing once the fertile window has already passed.
+- Either way the boost is **temporary** -- it lasts a few in-game days at full strength, then wears off; the forced fertile flag also clears at the next cycle boundary.
+- Neither tonic **guarantees** pregnancy, and neither cancels contraception -- if you are actively dosed, that still kills the sperm first, so let it lapse before relying on a tonic.
+- While a tonic is active, the MCM **Info** page shows its approximate ovulation conception chance.
 
 ### Twins and Multiples
 
@@ -162,15 +178,20 @@ Pregnancy has three trimesters, each defaulting to 10 in-game days (30 days tota
 
 ### Baby Health
 
-The unborn baby has a health value (0--100, starting at 100). It can be reduced by:
-- **Combat damage** to the mother
-- **Infection spells** (curable by drinking healing potions)
+The unborn baby has a health value (0--100, starting at 100). It is reduced by **combat damage** taken by the mother while pregnant. If health drops too low and the miscarriage system is enabled, a miscarriage may occur.
 
-If health drops too low and the miscarriage system is enabled, a miscarriage may occur.
+**Restoring baby health:** drink a **Restore Health potion** (stronger = more healing), **sleep**, or **sit/rest** in furniture; health also **regenerates slowly on its own** over time (faster in later trimesters). Drinking a *harmful/poison* potion hurts the baby instead. Note: once a miscarriage has actually started, healing no longer works -- act *before* health gets critically low.
 
 ### Miscarriage
 
 When enabled (MCM toggle), low baby health can trigger miscarriage at any point during pregnancy. The chance increases as health decreases. Miscarriage ends the pregnancy and returns the mother to the normal cycle.
+
+**Post-miscarriage complications (player only).** After a miscarriage or abortion, the game rolls for aftermath conditions whose likelihood depends on the type of loss (an incomplete abortion is the most dangerous, at roughly a 60% infection chance):
+
+- **Infection** -- an escalating affliction that deals steadily increasing health damage to the **mother** every game-hour until treated. **Drink any healing potion to cure it.** It also clears on its own at the next cycle, or if she becomes pregnant again.
+- **Fever** -- a companion affliction rolled the same way.
+
+These damage the mother *after* the pregnancy has ended -- they are not a cause of unborn baby health loss. Higher difficulty increases the damage; on the *Painless* difficulty there is none.
 
 ---
 
@@ -233,7 +254,7 @@ current_scale = starting_scale + ((final_scale - starting_scale) / growth_durati
 
 ### Scale Growth vs. Model Appearance
 
-Growth in Beeing Female is **scale-based only** -- the child's actor model does not change during growth. What the child looks like depends on which actor base was used at birth:
+Growth in Beeing Female's **core** is **scale-based** -- on its own the mod only changes the child's size over time, not its underlying actor model. Visual changes to the model itself come from the **add-ons and features described below** (staged child model packs, and the grow-into-adults option). What the child looks like as it grows depends on which actor base was used at birth:
 
 - **With a child model pack** (BFACCA_SE_Opt, BFASE_RSChildren_SE_Opt, or similar): the child is spawned using a proper child-race actor base from the pack. These packs are designed so that at full scale the child looks appropriately grown. Some packs provide staged models that swap appearance at growth milestones.
 

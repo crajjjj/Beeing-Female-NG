@@ -3019,6 +3019,78 @@ float function AddContraceptionTimed(actor Woman, float Time, float Value)
 	return new_contraception
 endFunction
 
+
+; ===========================================================================
+; Fertility Tonic - symmetric counterpart of the contraception API above.
+; A timed conception-chance boost (FW.Fertility) that decays like the pill and
+; is added to the impregnation roll in FWAbilityBeeingFemale. Unlike
+; contraception there is no widget/manager hook to fire.
+; ===========================================================================
+
+; Get the woman's current fertility boost (decayed to "now")
+float function getFertility(actor Woman)
+	return getFertilityTimed(Woman, GameDaysPassed.GetValue())
+endFunction
+
+; Get the fertility boost the woman has got at the given time
+; (result is 0.0 to MaxFertility)
+float function getFertilityTimed(actor Woman, float Time)
+	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
+		return 0.0
+	EndIf
+	float MaxFertility = 8.0
+	float fertility = StorageUtil.GetFloatValue(Woman,"FW.Fertility",0)
+	if fertility<=0
+		return 0.0
+	elseif fertility > MaxFertility
+		fertility=MaxFertility
+	endif
+	float fTime = StorageUtil.GetFloatValue(Woman,"FW.FertilityTime",0)
+	float fDur = System.GetPillDuration(Woman)
+
+	float res = fertility - ((Time - fTime - fDur) * 24)
+	return FWUtility.RangedFloat(res,0.0,fertility)
+endFunction
+
+; Add an amount of fertility boost (drinking a Fertility Tonic)
+float function AddFertility(actor Woman, float Value)
+	return AddFertilityTimed(Woman, GameDaysPassed.GetValue(), Value)
+endFunction
+
+; Adds an amount of fertility boost at the given time
+float function AddFertilityTimed(actor Woman, float Time, float Value)
+	If (StorageUtil.FormListFind(none,"FW.SavedNPCs",woman)<0)
+		CreateFemaleActor(woman)
+	EndIf
+	float MaxFertility = 8.0
+	float fDur = System.GetPillDuration(Woman)
+	float fTime = StorageUtil.GetFloatValue(Woman,"FW.FertilityTime",0.0)
+	float fertility = getFertilityTimed(Woman, Time)
+	float new_fertility
+	float addValue=0.0
+	if fTime==0.0
+		addValue = Value
+	elseif Time - fTime <= 0
+		return fertility
+	elseif fTime + (fDur*0.75) < Time
+		addValue=Value
+	else
+		addValue = ((Time - fTime) * Value) / (fDur*0.75)
+	endIf
+	if addValue < 1
+		addValue = 1.0
+	endif
+	new_fertility=fertility+addValue
+	if new_fertility>MaxFertility
+		new_fertility = MaxFertility
+	elseif new_fertility < 0
+		new_fertility = 0.0
+	endif
+	StorageUtil.SetFloatValue(Woman,"FW.FertilityTime",Time)
+	StorageUtil.SetFloatValue(Woman,"FW.Fertility",new_fertility)
+	return new_fertility
+endFunction
+
 ; Add an amount of contraception (pill effect)
 float function SetContraception(actor Woman, float Value)
 	;System.Trace("FWController.AddContraception", Woman)
