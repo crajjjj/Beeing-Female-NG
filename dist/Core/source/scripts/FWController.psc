@@ -3453,8 +3453,13 @@ function showRankedInfoBox(Actor target, int Rank)
 ;	if (target as FWChildActor);/!=none/;
 		FWChildActor child = target as FWChildActor
 		bool IsCustomChildActor = (StorageUtil.GetIntValue(target, "FW.Child.IsCustomChildActor", 0) == 1)
-		
-		if(child)
+		; Living grown-up children are adult NPCs now: skip the child card so they fall
+		; through to the normal male/female info (cycle/pregnancy/virility). Dead
+		; grown-ups keep the child card (lineage + death age), since the NPC branch
+		; would just report them as invalid.
+		bool IsGrownUp = (StorageUtil.GetIntValue(target, "FW.Child.GrownUp", 0) == 1)
+
+		if(child && (!IsGrownUp || target.IsDead()))
 			Child.InitChild()
 			ent = new string[9]
 			ent[0]=3
@@ -3492,7 +3497,7 @@ function showRankedInfoBox(Actor target, int Rank)
 			else
 				ent[8]="$FW_INFOWINDOW_UnknownLocation"
 			endif
-		elseif(IsCustomChildActor)
+		elseif(IsCustomChildActor && (!IsGrownUp || target.IsDead()))
 			ent = new string[9]
 			ent[0] = 3
 			ent[1] = target.GetDisplayName()
@@ -3572,6 +3577,25 @@ function showRankedInfoBox(Actor target, int Rank)
 					ent[6]=GetBabyHealth(target) as int
 					ent[7]=FWUtility.getActorListNames(getFathers(target, 8), true)
 				endif
+			endif
+		endif
+		; Living grown-up children show as adult NPCs (types 0/1/2, or 4 if untracked),
+		; which have no parent row - re-attach their lineage to the name so the basic
+		; child info (mother/father) stays visible. Type 3 (dead grown-ups, real
+		; children) already shows parents, so skip it.
+		if IsGrownUp && ent[0] != "3"
+			actor gMother = StorageUtil.GetFormValue(target, "FW.Child.Mother", none) as actor
+			actor gFather = StorageUtil.GetFormValue(target, "FW.Child.Father", none) as actor
+			string lineage = ""
+			if gMother && gFather
+				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildParents, gMother.GetDisplayName(), gFather.GetDisplayName())
+			elseif gMother
+				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildMotherIs, gMother.GetDisplayName())
+			elseif gFather
+				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildFatherIs, gFather.GetDisplayName())
+			endif
+			if lineage != ""
+				ent[1] = ent[1] + "\n" + lineage
 			endif
 		endif
 		UI.InvokeStringA("CustomMenu", "_root.FWInfoMenu.initData", ent)
