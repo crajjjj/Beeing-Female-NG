@@ -966,6 +966,8 @@ endFunction
 
 ; How to use
 ; FemaleActor.SendModEvent("BeeingFemale", "AddContraception", 100) ; This adds contraception to the woman
+; FemaleActor.SendModEvent("BeeingFemale", "AddFertility", 4) ; This adds a raw fertility (Gate 2) conception-roll boost; magnitude is the boost size
+; FemaleActor.SendModEvent("BeeingFemale", "DrinkFertilityTonic", 4) ; This applies a full Fertility Tonic of the given potency (>=3.5 also forces this cycle fertile), exactly like drinking one
 ; FemaleActor.SendModEvent("BeeingFemale", "AddSperm", MaleActor.GetFormID()) ; This will add sperm to the woman
 ; FemaleActor.SendModEvent("BeeingFemale", "AddSpermImpregnate", MaleActor.GetFormID()) ; This will add sperm and try to impregnate immediately
 ; FemaleActor.SendModEvent("BeeingFemale", "WashOutSperm", 100) ; This will wash out 100% sperm
@@ -983,6 +985,8 @@ Event onBeeingFemaleCommand(string hookName, string argString, float argNum, for
 			Controller.AddContraception(a, argNum)
 		elseif argString=="AddFertility" && argNum>0.0 && validateF>0
 			Controller.AddFertility(a, argNum)
+		elseif argString=="DrinkFertilityTonic" && argNum>0.0 && validateF>0
+			Controller.ApplyFertilityTonic(a, argNum)
 		elseif argString=="AddSperm" && argNum>0.0
 			form f1 = Game.GetForm(argNum as int)
 			if f1

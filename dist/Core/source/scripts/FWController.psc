@@ -1444,6 +1444,32 @@ function RemoveWombTattoo(actor Woman)
 	StorageUtil.UnsetStringValue(Woman, "FW.WombTattooState")
 endFunction
 
+; Refresh the womb-state SlaveTats across every tracked female NPC: re-apply it
+; when the Global_WombTattooNPCs opt-in is on (and WombTattoos enabled), otherwise
+; remove it so overlays left behind from a previous "on" state are stripped off
+; NPCs. Heavy (loops all tracked NPCs and hits SlaveTats), so it is driven only by
+; the MCM "Refresh Tattoos" button, never automatically. The player is refreshed
+; separately by that button.
+function RefreshWombTattooNPCs()
+	if Game.GetModByName("SlaveTats.esp") == 255
+		return
+	endif
+	bool bApply = cfg.WombTattoos && Manager.WombTattooNPCsAllowed()
+	int c = StorageUtil.FormListCount(none, "FW.SavedNPCs")
+	int i = 0
+	while i < c
+		actor npc = StorageUtil.FormListGet(none, "FW.SavedNPCs", i) as actor
+		if npc && npc != PlayerRef
+			if bApply
+				ApplyWombTattoo(npc, true)
+			else
+				RemoveWombTattoo(npc)
+			endif
+		endif
+		i += 1
+	endWhile
+endFunction
+
 ; Forcing a Belly-Refresh for the given actor
 function SetBelly(actor Woman, bool ForceNPC=true)
 	;System.Trace("FWController.SetBelly",Woman)
@@ -3097,6 +3123,33 @@ float function AddFertilityTimed(actor Woman, float Time, float Value)
 	return new_fertility
 endFunction
 
+; Apply a Fertility Tonic of the given magnitude - the single entry point shared
+; by the consumable (FWFertilityItem) and the "DrinkFertilityTonic" mod event, so
+; the potion and the API can never drift apart.
+;
+; magnitude doubles as the tier selector, matching the potion's EFIT magnitude:
+;   < 3.5  (mild, ~2): a Gate 2 conception-roll boost; additionally, if the
+;          current cycle rolled infertile (and she is not pregnant), it grants
+;          ONE extra Gate 1 ConceiveChance roll - a nudge, never a guarantee.
+;   >= 3.5 (potent, ~4): the same Gate 2 boost PLUS it forces the current cycle's
+;          Gate 1 "can become pregnant" flag on for the rest of the window.
+; Magnitude is floored to 2.0 so an under-spec tonic still does something.
+; Returns the resulting FW.Fertility value.
+float function ApplyFertilityTonic(actor Woman, float magnitude)
+	if magnitude < 2.0
+		magnitude = 2.0
+	endif
+	float res = AddFertility(Woman, magnitude)
+	if magnitude >= 3.5
+		setCanBecomePregnant(Woman, true)
+	elseif GetFemaleState(Woman) < 4 && canBecomePregnant(Woman) == false
+		if System.canBecomePregnant(Woman)
+			setCanBecomePregnant(Woman, true)
+		endif
+	endif
+	return res
+endFunction
+
 ; Add an amount of contraception (pill effect)
 float function SetContraception(actor Woman, float Value)
 	;System.Trace("FWController.AddContraception", Woman)
@@ -4016,16 +4069,10 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 		
 		
 		if Rank>=95 && stateID<4
-			; Base conception chance first; if a Fertility Tonic is active also show
-			; the tonic-boosted chance in brackets, e.g. "43% (61%)".
-			string sPregChance = " "+Math.Floor(getRelativePregnancyChance(target, none, false))+"%"
-			if getFertility(target) > 0
-				sPregChance += " ("+Math.Floor(getRelativePregnancyChance(target, none, true))+"%)"
-			endif
 			if Math.LogicalOr(flag,1)==flag
-				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+sPregChance+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+" ("+ Math.Floor(getRelativePregnancyChance(target))+"%)\n"
 			else
-				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+sPregChance+"\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+" ("+Math.Floor(getRelativePregnancyChance(target))+"%)\n"
 			endIf
 		elseif Rank>=80 && stateID<4
 			if Math.LogicalOr(flag,1)==flag

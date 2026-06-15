@@ -9,6 +9,7 @@ Actor lastChanceTarget
 int lastChanceStateID = -1
 float lastChanceStateEnterTime = -1.0
 int lastChanceHour = -1
+int lastChanceFertility = -1
 float lastChanceValue = 0.0
 
 bool function AllowToHide()
@@ -47,11 +48,17 @@ function UpdateContent()
 			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setState",1) ; Set Cycle state
 			float curStateEnter = StorageUtil.GetFloatValue(Target, "FW.StateEnterTime", -1.0)
 			int curHour = Math.Floor(Utility.GetCurrentGameTime() * 24.0)
-			if Target != lastChanceTarget || stateID != lastChanceStateID || curStateEnter != lastChanceStateEnterTime || curHour != lastChanceHour
+			; Drinking a Fertility Tonic changes the chance mid-hour (Gate 2 boost
+			; and, for potent/mild, the Gate 1 flag), so include fertility in the
+			; cache key - quantized to int so the slow decay doesn't recompute the
+			; multi-day simulation every tick (the hourly key already covers decay).
+			int curFertility = Controller.getFertility(Target) as int
+			if Target != lastChanceTarget || stateID != lastChanceStateID || curStateEnter != lastChanceStateEnterTime || curHour != lastChanceHour || curFertility != lastChanceFertility
 				lastChanceTarget = Target
 				lastChanceStateID = stateID
 				lastChanceStateEnterTime = curStateEnter
 				lastChanceHour = curHour
+				lastChanceFertility = curFertility
 				lastChanceValue = Controller.getRelativePregnancyChance(Target)
 			endif
 			UI.InvokeInt(HUD_MENU, WidgetRoot + ".setValue", Math.Floor(lastChanceValue))

@@ -7358,6 +7358,10 @@ state RefreshTattoos
 		if WombTattoos
 			Controller.ApplyWombTattoo(PlayerRef, true)
 		endif
+		; The womb tattoo can also extend to tracked NPCs (Global_WombTattooNPCs):
+		; re-apply it to them when enabled, or strip it when the option was turned
+		; off - the cleanup path for overlays left on NPCs. (Player handled above.)
+		Controller.RefreshWombTattooNPCs()
 		ShowMessage("$FW_MENU_BASIC_Success")
 	EndEvent
 

@@ -299,6 +299,8 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
 
 - `BeeingFemale` (SendModEvent): command-style event; sender must be an Actor (typically the female).
   - `AddContraception` (numArg = %): add contraception to the sender; values > 0 only.
+  - `AddFertility` (numArg = magnitude): add a raw fertility (Gate 2) conception-roll boost to the sender; the magnitude is the boost size (capped internally at 8). This is the low-level knob and does **not** touch the per-cycle fertile flag (Gate 1).
+  - `DrinkFertilityTonic` (numArg = potency): apply a full Fertility Tonic of the given potency, exactly as if the sender drank one. Potency < 3.5 is a mild tonic (Gate 2 boost, plus a one-roll Gate 1 nudge on an infertile cycle); potency >= 3.5 is a potent tonic (Gate 2 boost **and** forces this cycle fertile). Use this for parity with the in-game potions; use `AddFertility` if you only want the raw boost.
   - `AddSperm` (numArg = donor FormID): add sperm from the donor to the sender; donor must resolve to an Actor.
   - `AddSpermImpregnate` (numArg = donor FormID): like `AddSperm`, but also runs an immediate impregnation attempt.
   - `WashOutSperm` (numArg = %): wash out a percentage of stored sperm on the sender; strength scales the configured washout chances (higher % increases the effective washout chance for that call).
@@ -329,6 +331,8 @@ Examples:
 ```papyrus
 ; BeeingFemale command event (SendModEvent is a Form method)
 FemaleActor.SendModEvent("BeeingFemale", "AddContraception", 100)
+FemaleActor.SendModEvent("BeeingFemale", "AddFertility", 4)            ; raw Gate 2 boost
+FemaleActor.SendModEvent("BeeingFemale", "DrinkFertilityTonic", 4)     ; full potent-tonic behavior (>=3.5 forces this cycle fertile)
 FemaleActor.SendModEvent("BeeingFemale", "AddSperm", MaleActor.GetFormID())
 FemaleActor.SendModEvent("BeeingFemale", "AddSpermImpregnate", MaleActor.GetFormID())
 FemaleActor.SendModEvent("BeeingFemale", "WashOutSperm", 100)
