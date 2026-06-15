@@ -154,7 +154,7 @@ If multiple males have deposited sperm, the father is chosen randomly, weighted 
 
 Fertility Tonics are the counterpart to contraception: drinking one raises your conception odds for a few in-game days, then fades. Two strengths exist, and like the contraception fluids they can be crafted or found on merchants/loot.
 
-- **Mild tonic** -- nudges only the **fertile-window roll (Gate 2)**, strongest during **ovulation** (a smaller nudge in luteal). It improves the odds but **cannot** make an infertile cycle fertile -- that is Gate 1, set once per cycle by **ConceiveChance**.
+- **Mild tonic** -- nudges the **fertile-window roll (Gate 2)**, strongest during **ovulation** (a smaller nudge in luteal). It also gently nudges **Gate 1**: if the current cycle rolled infertile, drinking it grants one extra fertility roll at your normal **ConceiveChance** (about 40%), so an infertile cycle gets a chance -- but no guarantee -- to flip fertile (roughly 40% becomes ~64% over the cycle). Unlike the potent tonic it cannot *force* fertility, and it does nothing if the cycle is already fertile.
 - **Potent tonic** -- applies the same Gate 2 boost **and** forces the current cycle to count as fertile (Gate 1), so a cycle that rolled infertile becomes fertile for the rest of its window. Drink it before or during ovulation; it does nothing once the fertile window has already passed.
 - Either way the boost is **temporary** -- it lasts a few in-game days at full strength, then wears off; the forced fertile flag also clears at the next cycle boundary.
 - Neither tonic **guarantees** pregnancy, and neither cancels contraception -- if you are actively dosed, that still kills the sperm first, so let it lapse before relying on a tonic.
@@ -370,7 +370,7 @@ A single womb-diagram tattoo that mirrors the full reproductive state and update
 - **Pregnancy phases 1-3** -- one image per trimester; from the second trimester, twins/triplets/quadruplets get their own art
 - **Birth** -- during labor, then back to baseline after recovery
 
-Exactly one tattoo from the set is shown at a time, and it updates on every cycle tick. Player only.
+Exactly one tattoo from the set is shown at a time, and it updates on every cycle tick. **Player only by default.** Because it re-applies on every cycle/semen change, broadcasting it to tracked NPCs is expensive (and the belly overlay is rarely visible on clothed actors), so it is gated behind an INI opt-in: set `Global_WombTattooNPCs=true` in `Default Global Settings.ini` (and enable that add-on) to extend it to tracked female NPCs.
 
 ---
 

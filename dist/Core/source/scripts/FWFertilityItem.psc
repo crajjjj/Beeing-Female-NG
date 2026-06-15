@@ -24,9 +24,20 @@ function execute()
 	; current cycle's "can become pregnant" flag (Gate 1) on, so a cycle that
 	; rolled infertile becomes fertile for the rest of its window. The flag is
 	; re-rolled at the next cycle boundary, so the effect naturally expires.
-	; The mild tonic (magnitude ~2) stays a pure Gate 2 nudge.
 	if mag >= 3.5
 		Controller.setCanBecomePregnant(ActorRef, true)
+	elseif Controller.GetFemaleState(ActorRef) < 4 && Controller.canBecomePregnant(ActorRef) == false
+		; Mild tier (magnitude ~2): it cannot guarantee fertility like the potent
+		; tonic, but it does "nudge" Gate 1. If the current cycle rolled infertile,
+		; grant one extra fertility roll at the actor's normal ConceiveChance (the
+		; same roll the cycle boundary uses, so per-actor/race scaling still
+		; applies). Net effect: roughly one additional chance for the cycle to be
+		; fertile (e.g. 40% -> ~64%), still well below the potent tonic's
+		; guaranteed flip. No effect once she is already fertile this cycle or
+		; pregnant; like the potent flag, it clears at the next cycle boundary.
+		if System.canBecomePregnant(ActorRef)
+			Controller.setCanBecomePregnant(ActorRef, true)
+		endif
 	endif
 endfunction
 

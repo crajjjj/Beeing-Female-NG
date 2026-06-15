@@ -484,6 +484,10 @@ function RefreshAddOnH(int type=127)
 								trace("FWAddOnManager - Global_ProtectedChildActor is true")
 								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectedChildActor", 1)
 							endif
+							if FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_WombTattooNPCs", false)
+								trace("FWAddOnManager - Global_WombTattooNPCs is true")
+								StorageUtil.SetIntValue(none, "FW.AddOn.Global_WombTattooNPCs", 1)
+							endif
 							; Global_ProtectGrownAdult: 1 = protect, -1 = killable, 0 = use ESP base as-is
 							int globalProtAdult = FWUtility.getIniCInt("AddOn", n, "AddOn", "Global_ProtectGrownAdult", 99)
 							if globalProtAdult != 99
@@ -1399,6 +1403,7 @@ Function ClearGlobalSettings()
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Male")
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_GrowUpToAdult", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_AllowAdultMarriage", 0)
+	StorageUtil.SetIntValue(none, "FW.AddOn.Global_WombTattooNPCs", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_MixWithCopyActorBase", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProbChildActorBorn", -1)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_AllowPCDialogue", 0)
@@ -1489,6 +1494,7 @@ Function ClearGlobalSettings()
 	StorageUtil.FormListClear(none, "FW.AddOn.Global_AdultOutfit_Male")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_GrowUpToAdult")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_AllowAdultMarriage")
+	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_WombTattooNPCs")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_MixWithCopyActorBase")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_ProbChildActorBorn")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_AllowPCDialogue")
@@ -4374,6 +4380,13 @@ endFunction
 ; Whether grown-up children may join the vanilla marriage pool. INI-only, no MCM.
 bool Function AdultMarriageAllowed()
 	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_AllowAdultMarriage", 0) == 1
+endFunction
+
+
+; Whether the womb-state SlaveTats may be applied to tracked NPCs (not just the
+; player). INI-only, default off - expensive, see the INI comment. Default off.
+bool Function WombTattooNPCsAllowed()
+	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_WombTattooNPCs", 0) == 1
 endFunction
 
 

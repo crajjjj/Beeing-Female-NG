@@ -1339,7 +1339,13 @@ endFunction
 ; Exactly one tattoo from the section is shown at a time; FW.WombTattooState
 ; remembers the current one so SlaveTats is only invoked on actual changes.
 function ApplyWombTattoo(actor Woman, bool force = false)
-	if !cfg.WombTattoos || Woman != PlayerRef
+	if !cfg.WombTattoos
+		return
+	endif
+	; Player-only by default. The womb tattoo re-applies on every cycle/semen
+	; change, so broadcasting it to all tracked NPCs is expensive (and rarely
+	; visible on clothed actors) - opt in via the Global_WombTattooNPCs INI.
+	if Woman != PlayerRef && !Manager.WombTattooNPCsAllowed()
 		return
 	endif
 	if Game.GetModByName("SlaveTats.esp") == 255
@@ -3170,14 +3176,14 @@ endFunction
 ; Returns the calculated chance to become pregnant when the given womand has sex right now
 ; depending on all stats and settings
 ; (return value is from 0.01 to 0.99)
-float function getRelativePregnancyChance(actor woman, actor man = none)
-	return getRelativePregnancyChanceTimed(woman, GameDaysPassed.GetValue(), man)
+float function getRelativePregnancyChance(actor woman, actor man = none, bool includeFertility = true)
+	return getRelativePregnancyChanceTimed(woman, GameDaysPassed.GetValue(), man, includeFertility)
 endfunction
 
 ; Returns the calculated chance to become pregnant when the given womand had sex at the given time
 ; depending on all stats and settings
 ; (return value is from 0.01 to 0.99)
-float function getRelativePregnancyChanceTimed(actor woman, float Time, actor man = none)
+float function getRelativePregnancyChanceTimed(actor woman, float Time, actor man = none, bool includeFertility = true)
 	int WomanState = GetFemaleState(woman)
 	float StateEnterTime = GetStateEnterTime(woman)
 	if WomanState >=4
@@ -3203,7 +3209,16 @@ float function getRelativePregnancyChanceTimed(actor woman, float Time, actor ma
 		else
 			canBecomePregnantBonus=0.05
 		endif
-		
+
+		; A consumed Fertility Tonic (FW.Fertility) raises the conception roll, so
+		; the previewed chance should reflect it. Mirror the per-phase weighting of
+		; the live impregnation check: ovulation rolls out of 16 (~+6.25%/point),
+		; the luteal phase rolls out of 100 (+1%/point). See FWAbilityBeeingFemale.
+		float my_Fertility = 0.0
+		if includeFertility
+			my_Fertility = getFertilityTimed(woman, Time)
+		endif
+
 		float newChance = 0.0
 		
 		while curTime < SpermLifeTime
@@ -3244,6 +3259,10 @@ float function getRelativePregnancyChanceTimed(actor woman, float Time, actor ma
 					;
 					newChance = (EggStart * 100) / EggDif
 				endif
+				if newChance > 0
+					; +6.25%/point: ovulation roll is RandomInt(0,15) < 7 + fertility
+					newChance = newChance + my_Fertility * 6.25
+				endif
 				stateTime+=0.5
 				curTime+=0.5
 				if stateTime > Dur1
@@ -3253,7 +3272,8 @@ float function getRelativePregnancyChanceTimed(actor woman, float Time, actor ma
 			elseif WomanState==2 ; Lutheal Phase
 				float statePercent = (100 * stateTime) / Dur2
 				if statePercent<65
-					newChance = System.LutealImpregnationTime(statePercent)
+					; +1%/point: luteal roll is RandomFloat(0,99) < chance + fertility
+					newChance = System.LutealImpregnationTime(statePercent) + my_Fertility
 				endif
 				stateTime+=0.25
 				curTime+=0.25
@@ -3996,10 +4016,16 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 		
 		
 		if Rank>=95 && stateID<4
+			; Base conception chance first; if a Fertility Tonic is active also show
+			; the tonic-boosted chance in brackets, e.g. "43% (61%)".
+			string sPregChance = " "+Math.Floor(getRelativePregnancyChance(target, none, false))+"%"
+			if getFertility(target) > 0
+				sPregChance += " ("+Math.Floor(getRelativePregnancyChance(target, none, true))+"%)"
+			endif
 			if Math.LogicalOr(flag,1)==flag
-				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+" ("+ Math.Floor(getRelativePregnancyChance(target))+"%)\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_Yes)+sPregChance+"\n"
 			else
-				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+" ("+Math.Floor(getRelativePregnancyChance(target))+"%)\n"
+				s+=FWUtility.MultiStringReplace(Content.InfoSpell_CanBecomePregnant, Content.InfoSpell_No)+sPregChance+"\n"
 			endIf
 		elseif Rank>=80 && stateID<4
 			if Math.LogicalOr(flag,1)==flag
