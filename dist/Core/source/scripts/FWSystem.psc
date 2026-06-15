@@ -3232,17 +3232,20 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 		endif
 	endif
 	; Protection: matured adults are Protected by default (survive combat like
-	; followers); disable globally with Global_ProtectGrownAdult=false. SetProtected
-	; is a base-level flag, so DON'T touch a base shared with a living parent (the
-	; parent-clone fallback when no dedicated adult base exists) - that would flip
-	; protection on the parent and every other NPC using that base.
-	ActorBase grownBase = adult.GetActorBase()
-	if grownBase
-		actor protMother = StorageUtil.GetFormValue(adult, "FW.Child.Mother", none) as actor
-		actor protFather = StorageUtil.GetFormValue(adult, "FW.Child.Father", none) as actor
-		bool sharedWithParent = (protMother && protMother.GetActorBase() == grownBase) || (protFather && protFather.GetActorBase() == grownBase)
-		if !sharedWithParent
-			grownBase.SetProtected(Manager.ShouldProtectGrownAdult())
+	; followers). Global_ProtectGrownAdult: 1 = protect, -1 = killable, 0 = leave
+	; the actor base's own ESP setting alone. SetProtected is a base-level flag, so
+	; even when forcing it we DON'T touch a base shared with a living parent (the
+	; parent-clone fallback) - that would flip the parent and every NPC on that base.
+	int protMode = Manager.GrownAdultProtectMode()
+	if protMode != 0
+		ActorBase grownBase = adult.GetActorBase()
+		if grownBase
+			actor protMother = StorageUtil.GetFormValue(adult, "FW.Child.Mother", none) as actor
+			actor protFather = StorageUtil.GetFormValue(adult, "FW.Child.Father", none) as actor
+			bool sharedWithParent = (protMother && protMother.GetActorBase() == grownBase) || (protFather && protFather.GetActorBase() == grownBase)
+			if !sharedWithParent
+				grownBase.SetProtected(protMode == 1)
+			endif
 		endif
 	endif
 endFunction

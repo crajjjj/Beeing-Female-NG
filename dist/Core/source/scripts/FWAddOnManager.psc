@@ -484,10 +484,16 @@ function RefreshAddOnH(int type=127)
 								trace("FWAddOnManager - Global_ProtectedChildActor is true")
 								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectedChildActor", 1)
 							endif
-							; Grown adults are Protected by default; a global add-on can disable it with Global_ProtectGrownAdult=false
-							if !FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_ProtectGrownAdult", true)
-								trace("FWAddOnManager - Global_ProtectGrownAdult disabled")
-								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 0)
+							; Global_ProtectGrownAdult: 1 = protect, -1 = killable, 0 = use ESP base as-is
+							int globalProtAdult = FWUtility.getIniCInt("AddOn", n, "AddOn", "Global_ProtectGrownAdult", 99)
+							if globalProtAdult != 99
+								if globalProtAdult > 0
+									globalProtAdult = 1
+								elseif globalProtAdult < 0
+									globalProtAdult = -1
+								endif
+								trace("FWAddOnManager - Global_ProtectGrownAdult = " + globalProtAdult)
+								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", globalProtAdult)
 							endif
 						elseif(t == "actor")
 							trace("FWAddOnManager - AddOn " + n + " type is actor")
@@ -1403,7 +1409,7 @@ Function ClearGlobalSettings()
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_MatureStep", -1)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_AllowUnrestrictedS", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectedChildActor", 0)
-	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 1) ; default ON
+	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 0) ; default: leave ESP base as-is
 
 
 	; Unset variables
@@ -4354,13 +4360,14 @@ bool Function ActorGrowUpToAdult(actor a)
 endFunction
 
 
-; Whether matured grown-up adults should be flagged Protected. GLOBAL-only,
-; INI-only (no MCM, no per-actor/race): default ON, disabled by setting
-; Global_ProtectGrownAdult=false in a global add-on. A global toggle is the only
-; meaningful granularity here - SetProtected is a base-level flag and grown
-; adults share a base pool (see the parent-base guard in ApplyAdultFactions).
-bool Function ShouldProtectGrownAdult()
-	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 1) != 0
+; Protection mode for matured grown-up adults. GLOBAL-only, INI-only (no MCM):
+;    1 = force Protected (survive combat, like followers)
+;   -1 = force NOT protected (normal killable NPC)
+;    0 = leave the actor base's own ESP setting untouched (BF doesn't change it)  [default]
+; Global only because SetProtected is a base-level flag and grown adults share a
+; base pool (see the parent-base guard in ApplyAdultFactions).
+int Function GrownAdultProtectMode()
+	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 0)
 endFunction
 
 
