@@ -3232,10 +3232,12 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 		endif
 	endif
 	; Protection: matured adults are Protected by default (survive combat like
-	; followers). Global_ProtectGrownAdult: 1 = protect, -1 = killable, 0 = leave
-	; the actor base's own ESP setting alone. SetProtected is a base-level flag, so
-	; even when forcing it we DON'T touch a base shared with a living parent (the
-	; parent-clone fallback) - that would flip the parent and every NPC on that base.
+	; followers). Global_ProtectGrownAdult: 1 = protect, -1 = fully killable (clears
+	; Protected AND Essential, else an Essential base stays unkillable), 0 = leave
+	; the actor base's own ESP setting alone. SetProtected/SetEssential are
+	; base-level flags, so even when forcing them we DON'T touch a base shared with
+	; a living parent (the parent-clone fallback) - that would flip the parent and
+	; every NPC on that base.
 	int protMode = Manager.GrownAdultProtectMode()
 	if protMode != 0
 		ActorBase grownBase = adult.GetActorBase()
@@ -3245,6 +3247,9 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 			bool sharedWithParent = (protMother && protMother.GetActorBase() == grownBase) || (protFather && protFather.GetActorBase() == grownBase)
 			if !sharedWithParent
 				grownBase.SetProtected(protMode == 1)
+				if protMode == -1
+					grownBase.SetEssential(false)  ; truly killable, even if the base was Essential
+				endif
 			endif
 		endif
 	endif

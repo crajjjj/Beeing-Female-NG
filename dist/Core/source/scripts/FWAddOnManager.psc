@@ -4362,7 +4362,7 @@ endFunction
 
 ; Protection mode for matured grown-up adults. GLOBAL-only, INI-only (no MCM):
 ;    1 = force Protected (survive combat, like followers)
-;   -1 = force NOT protected (normal killable NPC)
+;   -1 = fully killable (clears Protected AND Essential on the base)
 ;    0 = leave the actor base's own ESP setting untouched (BF doesn't change it)  [default]
 ; Global only because SetProtected is a base-level flag and grown adults share a
 ; base pool (see the parent-base guard in ApplyAdultFactions).

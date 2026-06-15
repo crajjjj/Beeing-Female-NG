@@ -2,10 +2,25 @@
   BF_SetFertilityRussianStrings.pas
   Beeing Female NG - Russian names/descriptions for the Fertility Tonic
 
+  !!! DO NOT USE - USE xTranslator INSTEAD !!!
+  This script edits the ESM and requires a SAVE. Saving a <Localized> plugin in
+  xEdit reassigns its localized string IDs and only rewrites the STRINGS of the
+  language xEdit loaded - so it DESYNCS every other language (English/clones),
+  whose unchanged STRINGS then map the ESM's new IDs to the wrong text (observed:
+  the potions ended up showing the effect name / description). To add Russian
+  names, use xTranslator: it writes BeeingFemale_RUSSIAN.STRINGS directly WITHOUT
+  re-saving the ESM, keeping all languages' IDs aligned. Kept only for reference.
+
   BeeingFemale.esm is <Localized>, and Russian is a REAL translation (not an
   English clone), so the clone bats skip it. This script fills the Russian FULL
   and DNAM strings for the fertility records that BF_GenerateFertilityPotion.pas
   created. Run it AFTER that generator + the English save.
+
+  !! RE-RUN AFTER EVERY REGEN !! BF_GenerateFertilityPotion creates the records
+  fresh each run, so they get NEW localized string IDs. English is rewritten by
+  xEdit and re-cloned, but the Russian translation desyncs - its old IDs no
+  longer match, so the tonics show a stale/wrong Russian name (e.g. the
+  contraception name they were cloned from) until this script is run again.
 
   ! CRITICAL ! It writes the strings of whatever language xEdit loaded. You MUST
   start xEdit with the Russian language or you will overwrite ENGLISH:

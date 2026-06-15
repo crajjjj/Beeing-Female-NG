@@ -84,9 +84,17 @@
       Skipping this leaves non-English STRINGS stale/mismatched. The MCM .txt
       files under Interface/translations/ are unrelated (SkyUI menu text).
     - RUSSIAN is the exception: it is a REAL translation (not a clone), so the
-      clone bats skip it. It will be missing the new names until you add them
-      with xTranslator (translate, or paste the English text). Ukrainian has no
-      ESM STRINGS file and auto-falls back to English, so it needs nothing.
+      clone bats skip it. Add the new names with xTranslator (translate, or paste
+      the English text). Ukrainian has no ESM STRINGS file and auto-falls back to
+      English, so it needs nothing.
+    - !! CRITICAL ORDER !! Treat the ESM as FINAL once you save it in English.
+      Do NOT re-save it in another language mode (e.g. an -l:russian xEdit save):
+      saving a <Localized> plugin reassigns its string IDs and only rewrites the
+      loaded language's STRINGS, which desyncs every other language - the ESM's
+      new IDs then map to the wrong text (e.g. potions show the effect name /
+      description). xTranslator is safe because it writes a language's STRINGS
+      WITHOUT re-saving the ESM. So: English save -> clone bats -> xTranslator for
+      Russian, and no further ESM saves.
 
   LOOT / VENDOR
     Contraception itself is not seeded through leveled lists (NPCs receive it via
