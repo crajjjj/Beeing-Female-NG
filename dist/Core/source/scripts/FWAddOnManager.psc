@@ -484,6 +484,11 @@ function RefreshAddOnH(int type=127)
 								trace("FWAddOnManager - Global_ProtectedChildActor is true")
 								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectedChildActor", 1)
 							endif
+							; Grown adults are Protected by default; a global add-on can disable it with Global_ProtectGrownAdult=false
+							if !FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_ProtectGrownAdult", true)
+								trace("FWAddOnManager - Global_ProtectGrownAdult disabled")
+								StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 0)
+							endif
 						elseif(t == "actor")
 							trace("FWAddOnManager - AddOn " + n + " type is actor")
 							
@@ -1398,6 +1403,7 @@ Function ClearGlobalSettings()
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_MatureStep", -1)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_AllowUnrestrictedS", 0)
 	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectedChildActor", 0)
+	StorageUtil.SetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 1) ; default ON
 
 
 	; Unset variables
@@ -1487,6 +1493,7 @@ Function ClearGlobalSettings()
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_MatureStep")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_AllowUnrestrictedS")
 	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_ProtectedChildActor")
+	StorageUtil.UnsetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult")
 endFunction
 function LoadGlobalAddOnValue(string n, string valueName)
 	float v = FWUtility.getIniCFloat("AddOn", n, "AddOn", valueName, -1)
@@ -4344,6 +4351,16 @@ bool Function ActorGrowUpToAdult(actor a)
 		return true
 	endif
 	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_GrowUpToAdult", 0) == 1
+endFunction
+
+
+; Whether matured grown-up adults should be flagged Protected. GLOBAL-only,
+; INI-only (no MCM, no per-actor/race): default ON, disabled by setting
+; Global_ProtectGrownAdult=false in a global add-on. A global toggle is the only
+; meaningful granularity here - SetProtected is a base-level flag and grown
+; adults share a base pool (see the parent-base guard in ApplyAdultFactions).
+bool Function ShouldProtectGrownAdult()
+	return StorageUtil.GetIntValue(none, "FW.AddOn.Global_ProtectGrownAdult", 1) != 0
 endFunction
 
 

@@ -23,9 +23,10 @@
   contraception: a single MGEF, two potions whose EFIT magnitude differs):
 
   ONE magic effect (_BFFertilityEffect), cloned from the contraception MGEF:
-    - VMAD script re-pointed FWContraceptionItem -> FWFertilityItem, and the
-      contraception-only script properties (iModContraception0..9 / PlayerRef)
-      stripped
+    - VMAD script re-pointed FWContraceptionItem -> FWFertilityItem; ONLY the
+      contraception-only properties (iModContraception0..9 / PlayerRef) are pruned.
+      The FWSpell base properties (Controller, System, StatPregnancyCycle) are KEPT
+      - they are required, or the effect errors out on cast.
     - FULL = "Fertility"; DNAM = "This fluid gives <mag> of fertility." (distinct
       text, so it gets its own string and never edits contraception's)
     - keyword swapped _FWContraceptionItemEffect -> _FWFertilityItemEffect; the
@@ -61,7 +62,8 @@
     - Both new ALCH records ("Fertility Tonic" / "Potent Fertility Tonic") have one
       effect whose Base Effect is the SAME _BFFertilityEffect, with EFIT magnitude
       2 (mild) and 4 (potent).
-    - _BFFertilityEffect's VMAD names FWFertilityItem and has no leftover properties;
+    - _BFFertilityEffect's VMAD names FWFertilityItem and keeps Controller/System
+      (no iModContraception*/PlayerRef);
       its KWDA has _FWFertilityItemEffect (NOT _FWContraceptionItemEffect).
     - Each new ALCH's KWDA has _FWFertilityItem (NOT _FWContraceptionItem).
     - The copied COBJ recipes' "Created Object" points at the new potions.
@@ -187,18 +189,32 @@ begin
 end;
 
 //==========================================================================
-// remove every VMAD script property on the first script (best effort)
+// Remove ONLY the contraception-specific VMAD properties (iModContraception0..9
+// and PlayerRef). Everything else is kept - critically the FWSpell base
+// properties (Controller, System, StatPregnancyCycle) that FWFertilityItem
+// inherits and REQUIRES: stripping those leaves them None and the effect errors
+// out on the very first line of OnEffectStart (System.IsValidateFemaleActor).
+// Fail-safe: if the property name can't be read, nothing is removed (all kept).
 procedure StripScriptProperties(mgef: IInterface);
 var
-  props: IInterface;
+  props, p: IInterface;
+  i: integer;
+  nm: string;
 begin
   try
     props := ElementByPath(mgef, 'VMAD - Virtual Machine Adapter\Scripts\[0]\Properties');
-    if Assigned(props) then
-      while ElementCount(props) > 0 do
-        RemoveElement(props, ElementByIndex(props, 0));
+    if not Assigned(props) then
+      Exit;
+    i := ElementCount(props) - 1;
+    while i >= 0 do begin
+      p := ElementByIndex(props, i);
+      nm := LowerCase(GetElementEditValues(p, 'propertyName'));
+      if (Pos('imodcontraception', nm) > 0) or (nm = 'playerref') then
+        RemoveElement(props, p);
+      i := i - 1;
+    end;
   except
-    AddMessage('  NOTE: could not strip script properties (harmless - unused properties are ignored by the engine).');
+    AddMessage('  NOTE: could not prune contraception-only properties (kept all - harmless).');
   end;
 end;
 

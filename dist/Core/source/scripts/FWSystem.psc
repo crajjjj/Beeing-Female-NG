@@ -3231,6 +3231,20 @@ function ApplyAdultFactions(actor adult, bool bIsPlayerChild)
 			adult.RemoveFromFaction(_PotentialMarriageFaction)
 		endif
 	endif
+	; Protection: matured adults are Protected by default (survive combat like
+	; followers); disable globally with Global_ProtectGrownAdult=false. SetProtected
+	; is a base-level flag, so DON'T touch a base shared with a living parent (the
+	; parent-clone fallback when no dedicated adult base exists) - that would flip
+	; protection on the parent and every other NPC using that base.
+	ActorBase grownBase = adult.GetActorBase()
+	if grownBase
+		actor protMother = StorageUtil.GetFormValue(adult, "FW.Child.Mother", none) as actor
+		actor protFather = StorageUtil.GetFormValue(adult, "FW.Child.Father", none) as actor
+		bool sharedWithParent = (protMother && protMother.GetActorBase() == grownBase) || (protFather && protFather.GetActorBase() == grownBase)
+		if !sharedWithParent
+			grownBase.SetProtected(Manager.ShouldProtectGrownAdult())
+		endif
+	endif
 endFunction
 
 ; Failure exit for GrowChildToAdult: re-arm the child so a later tick retries.

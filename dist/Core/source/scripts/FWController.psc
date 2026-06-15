@@ -3580,22 +3580,23 @@ function showRankedInfoBox(Actor target, int Rank)
 			endif
 		endif
 		; Living grown-up children show as adult NPCs (types 0/1/2, or 4 if untracked),
-		; which have no parent row - re-attach their lineage to the name so the basic
-		; child info (mother/father) stays visible. Type 3 (dead grown-ups, real
-		; children) already shows parents, so skip it.
+		; which have no parent row. The info-window title shows ent[1] raw on a single
+		; line, so append the lineage INLINE using resolved names (no $-key, no newline
+		; - both fail in that field). Type 3 (dead grown-ups / real children) already
+		; shows parents, so skip it.
 		if IsGrownUp && ent[0] != "3"
 			actor gMother = StorageUtil.GetFormValue(target, "FW.Child.Mother", none) as actor
 			actor gFather = StorageUtil.GetFormValue(target, "FW.Child.Father", none) as actor
 			string lineage = ""
 			if gMother && gFather
-				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildParents, gMother.GetDisplayName(), gFather.GetDisplayName())
+				lineage = gMother.GetDisplayName() + " & " + gFather.GetDisplayName()
 			elseif gMother
-				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildMotherIs, gMother.GetDisplayName())
+				lineage = gMother.GetDisplayName()
 			elseif gFather
-				lineage = FWUtility.MultiStringReplace(Content.InfoSpell_ChildFatherIs, gFather.GetDisplayName())
+				lineage = gFather.GetDisplayName()
 			endif
 			if lineage != ""
-				ent[1] = ent[1] + "\n" + lineage
+				ent[1] = ent[1] + " (child of " + lineage + ")"
 			endif
 		endif
 		UI.InvokeStringA("CustomMenu", "_root.FWInfoMenu.initData", ent)
