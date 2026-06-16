@@ -36,8 +36,8 @@ The repo publishes a docs site to GitHub Pages via [.github/workflows/docs.yml](
 
 The `docs/` folder is the **authoritative, standalone source** for the site — a multi-page structure split by audience:
 - `docs/index.md` — landing page linking the two tracks.
-- `docs/players/*.md` — the player-facing guide (getting-started, cycle-and-conception, pregnancy-and-birth, children, hud-widgets, tattoos, npc-pregnancy, couples-import, integrations, mcm-reference).
-- `docs/authors/*.md` — the mod-author / patcher guide (add-on-framework, modevents, state-data, pregnancy-ranks, item-slots, building).
+- `docs/players/*.md` — the player-facing guide (getting-started, troubleshooting, cycle-and-conception, pregnancy-and-birth, children, hud-widgets, tattoos, npc-pregnancy, couples-import, integrations, mcm-reference).
+- `docs/authors/*.md` — the mod-author / patcher guide (overview, add-on-framework, modevents, state-data, pregnancy-ranks, item-slots, building).
 
 `README.md` and `USER_GUIDE.md` are **not** mirrored copies anymore: README is a slim overview that links to the site, and USER_GUIDE is a pointer. Edit the relevant `docs/` page directly; do not re-sync content into the root files. The `nav:` in `mkdocs.yml` must list every page. The CI build runs `mkdocs build --strict`, so broken cross-page links (or pages missing from `nav`) will fail the deploy — use relative `.md` links (e.g. `../authors/state-data.md#anchor`).
 

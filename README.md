@@ -8,6 +8,7 @@ Full documentation lives on the docs site: **https://crajjjj.github.io/Beeing-Fe
 
 **For players**
 - [Getting Started](https://crajjjj.github.io/Beeing-Female-NG/players/getting-started/) — requirements, installation, MCM troubleshooting
+- [Troubleshooting & Logs](https://crajjjj.github.io/Beeing-Female-NG/players/troubleshooting/) — log locations and enabling Papyrus logging
 - [Cycle, Sex & Conception](https://crajjjj.github.io/Beeing-Female-NG/players/cycle-and-conception/)
 - [Pregnancy & Birth](https://crajjjj.github.io/Beeing-Female-NG/players/pregnancy-and-birth/)
 - [Children](https://crajjjj.github.io/Beeing-Female-NG/players/children/)

@@ -23,10 +23,11 @@ Work through this list -- it covers nearly every case:
 6. **Remove leftovers of the original Beeing Female.** The old LE/SE-ported mod shares script file names; an old copy overriding the NG files breaks loading. Uninstall it completely and ideally test on a save that never had it.
 7. **Confirm the SKSE plugin loaded.** Look for `BeeingFemale.log` in `Documents\My Games\Skyrim Special Edition\SKSE\` (`Skyrim VR` on VR). If it is missing, open `skse64.log` (`sksevr.log` on VR) in the same folder and search for "BeeingFemale" -- it will say why the DLL was rejected (usually a wrong game version or missing Address Library).
 
-If none of that helps, report the issue together with `SKSE\BeeingFemale.log` (or `skse64.log` if it is absent) and `Documents\My Games\Skyrim Special Edition\Logs\Script\Papyrus.0.log` -- a missing requirement shows up there as `Failed to load script FWSystemConfig` or "is not a valid type" lines.
+If none of that helps, report the issue together with `SKSE\BeeingFemale.log` (or `skse64.log` if it is absent) and `Documents\My Games\Skyrim Special Edition\Logs\Script\Papyrus.0.log` -- a missing requirement shows up there as `Failed to load script FWSystemConfig` or "is not a valid type" lines. See [Troubleshooting & Logs](troubleshooting.md) for the full log paths and how to enable Papyrus logging.
 
 ## Where to next?
 
 - New to the systems? Read [Cycle, Sex & Conception](cycle-and-conception.md).
 - Want every toggle in one table? See the [MCM Reference](mcm-reference.md).
+- Something not working? See [Troubleshooting & Logs](troubleshooting.md).
 - Hygiene item getting knocked off by other gear? See [Item Slots & Conflicts](../authors/item-slots.md) (quick fix: switch to tampons).

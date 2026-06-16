@@ -9,6 +9,7 @@ These docs are split into two tracks. Pick the one that fits you:
 Install it, play it, configure it. Start here if you just want to use the mod.
 
 - [Getting Started](players/getting-started.md) — requirements, installation, and "it doesn't show up in the MCM" fixes
+- [Troubleshooting & Logs](players/troubleshooting.md) — log locations and how to enable Papyrus logging
 - [Cycle, Sex & Conception](players/cycle-and-conception.md) — the menstrual cycle, insemination, contraception, conception, and Fertility Tonics
 - [Pregnancy & Birth](players/pregnancy-and-birth.md) — trimesters, baby health, miscarriage, and labor
 - [Children](players/children.md) — growth, growing into adults, baby items, and commands
@@ -23,6 +24,7 @@ Install it, play it, configure it. Start here if you just want to use the mod.
 
 Extend or integrate with Beeing Female without touching its core scripts.
 
+- [Overview](authors/overview.md) — the four `.esm`/`.esp` files, what's inside them, and where everything lives in the source tree
 - [Add-on Framework](authors/add-on-framework.md) — INI-driven race/actor/cme/misc/global add-ons, including the grow-up adult pack
 - [Papyrus ModEvents API](authors/modevents.md) — the events BF listens for and emits
 - [StorageUtil & State Data](authors/state-data.md) — reading cycle/sperm/pregnancy state from `FW.*` keys

@@ -39,6 +39,7 @@ nav:
   - Home: index.md
   - For Players:
     - Getting Started: players/getting-started.md
+    - Troubleshooting & Logs: players/troubleshooting.md
     - Cycle, Sex & Conception: players/cycle-and-conception.md
     - Pregnancy & Birth: players/pregnancy-and-birth.md
     - Children: players/children.md
@@ -49,6 +50,7 @@ nav:
     - Mod Integrations & Patches: players/integrations.md
     - MCM Reference: players/mcm-reference.md
   - For Mod Authors:
+    - Overview: authors/overview.md
     - Add-on Framework: authors/add-on-framework.md
     - Papyrus ModEvents: authors/modevents.md
     - StorageUtil & State Data: authors/state-data.md
