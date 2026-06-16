@@ -1,0 +1,68 @@
+# NPC Pregnancy & Couples
+
+NPCs can go through the same cycle and pregnancy system as the player. Key settings:
+
+| Setting | Default | What It Does |
+|---------|---------|-------------|
+| NPCs Can Become Pregnant | On | Global toggle |
+| NPC Feel Pain | Off | NPCs get pain effects |
+| NPC Born Child | On | NPCs actually spawn child actors |
+| NPC Have Items | Off | NPCs receive hygiene/contraception items via scripts |
+
+NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time.
+
+## NPC Auto-Insemination (Couples System)
+
+When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This simulates NPCs having an ongoing intimate life with their partners.
+
+**How it works:** Once per in-game day (at a configurable time), the system picks several random tracked females and attempts to inseminate them with a suitable male partner.
+
+**Partner selection is weighted by relationship:**
+
+| Source | Weight | Description |
+|--------|--------|-------------|
+| Husband | 10x | Vanilla spouse or manually assigned via Couple Widget |
+| Affairs | 4x | Assigned via Couple Widget |
+| Partners | 2x | Assigned via Couple Widget |
+| Last Seen NPCs | 1x | Males the female was recently near (automatic) |
+
+A male is picked randomly from this weighted pool (e.g. a husband is 10 times more likely to be chosen than a random nearby NPC). The system tries up to 3 times to find a valid male.
+
+**A male is valid if:**
+
+- Not in the player's current location
+- Not a player follower
+- Had sex more than ~7 hours ago (cooldown)
+- Relationship rank is neutral or better (not an enemy)
+- Not a creature (unless creature sperm is enabled)
+
+**Couple data** is stored in JSON files at `Data/BeeingFemale/Couples/`. Each file is named `ModName_FormID.json` and contains husband, affairs, and partners for one female NPC. You can edit these manually or use the in-game Couple Widget. The exact file format and bulk-import behavior are documented in [Couples Import](couples-import.md).
+
+## Couple Widget
+
+The Couple Widget is a debug/editing tool for managing NPC relationships in-game. Enable it in MCM under the System page.
+
+| Hotkey | Action |
+|--------|--------|
+| E (hold 1.5s) | Select a female NPC as subject |
+| H (hold 1.5s) | Assign or clear husband |
+| G (hold 1.5s) | Add or remove affair partner |
+| P (hold 1.5s) | Add or remove regular partner |
+
+The widget auto-detects existing vanilla spouses (relationship rank 4+ or Spouse association).
+
+## Couples Import
+
+You can bulk-import couple data from JSON files via MCM (first page, "Couples Import"). This scans `Data/BeeingFemale/Couples/` and applies stored partner data to matching NPCs.
+
+## MCM Settings (Impregnate Page)
+
+| Setting | Default | What It Does |
+|---------|---------|-------------|
+| Active | Off | Master toggle for NPC auto-insemination |
+| Husband | On | Include husbands in partner pool |
+| Affairs | On | Include affairs in partner pool |
+| Partners | On | Include regular partners in partner pool |
+| Last Seen NPCs | Off | Include recently nearby males |
+| Time | Configurable | What time of day the daily check runs |
+| Count | 3 | How many NPCs to attempt per daily check |

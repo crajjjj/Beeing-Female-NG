@@ -37,8 +37,24 @@ theme:
 
 nav:
   - Home: index.md
-  - User Guide: user-guide.md
-  - Item Slots & Conflicts: slot-conflicts.md
+  - For Players:
+    - Getting Started: players/getting-started.md
+    - Cycle, Sex & Conception: players/cycle-and-conception.md
+    - Pregnancy & Birth: players/pregnancy-and-birth.md
+    - Children: players/children.md
+    - HUD Widgets: players/hud-widgets.md
+    - Tattoos (SlaveTats): players/tattoos.md
+    - NPC Pregnancy & Couples: players/npc-pregnancy.md
+    - Couples Import: players/couples-import.md
+    - Mod Integrations & Patches: players/integrations.md
+    - MCM Reference: players/mcm-reference.md
+  - For Mod Authors:
+    - Add-on Framework: authors/add-on-framework.md
+    - Papyrus ModEvents: authors/modevents.md
+    - StorageUtil & State Data: authors/state-data.md
+    - Pregnancy Ranks (Factions): authors/pregnancy-ranks.md
+    - Item Slots & Conflicts: authors/item-slots.md
+    - Building from Source: authors/building.md
 
 markdown_extensions:
   - admonition
@@ -59,6 +75,11 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
+
+validation:
+  links:
+    not_found: warn
+    anchors: warn
 
 plugins:
   - search

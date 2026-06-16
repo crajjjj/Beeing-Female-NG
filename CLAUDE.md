@@ -32,9 +32,14 @@ For a normal bugfix release, only `BF_Version` and `BF_VersionInt` change. The o
 
 ## Documentation Site (MkDocs / GitHub Pages)
 
-The repo publishes a docs site to GitHub Pages via [.github/workflows/docs.yml](.github/workflows/docs.yml). Config: [mkdocs.yml](mkdocs.yml) (Material theme). Sources: [docs/index.md](docs/index.md) and [docs/user-guide.md](docs/user-guide.md).
+The repo publishes a docs site to GitHub Pages via [.github/workflows/docs.yml](.github/workflows/docs.yml). Config: [mkdocs.yml](mkdocs.yml) (Material theme).
 
-`docs/index.md` and `docs/user-guide.md` are committed **copies** of `README.md` and `USER_GUIDE.md`. When editing the root files, mirror the change into `docs/` (the only intentional diff is the User Guide link in `docs/index.md`, which points to `user-guide.md` instead of `USER_GUIDE.md`). The CI build runs `mkdocs build --strict`, so broken cross-page links will fail the deploy.
+The `docs/` folder is the **authoritative, standalone source** for the site — a multi-page structure split by audience:
+- `docs/index.md` — landing page linking the two tracks.
+- `docs/players/*.md` — the player-facing guide (getting-started, cycle-and-conception, pregnancy-and-birth, children, hud-widgets, tattoos, npc-pregnancy, couples-import, integrations, mcm-reference).
+- `docs/authors/*.md` — the mod-author / patcher guide (add-on-framework, modevents, state-data, pregnancy-ranks, item-slots, building).
+
+`README.md` and `USER_GUIDE.md` are **not** mirrored copies anymore: README is a slim overview that links to the site, and USER_GUIDE is a pointer. Edit the relevant `docs/` page directly; do not re-sync content into the root files. The `nav:` in `mkdocs.yml` must list every page. The CI build runs `mkdocs build --strict`, so broken cross-page links (or pages missing from `nav`) will fail the deploy — use relative `.md` links (e.g. `../authors/state-data.md#anchor`).
 
 ## Important: CK-Filled Properties
 
