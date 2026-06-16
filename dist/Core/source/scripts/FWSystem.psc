@@ -1335,7 +1335,7 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 						males = FWUtility.ActorArrayAppend(males,JsonUtil.FormListGet(JsonFile,"Affairs",ca) as actor,4)
 					endwhile
 				endif
-				if cfg.ImpregnatePartners && ca>0
+				if cfg.ImpregnatePartners && cp>0
 					; Partners and friends have a low priority, so add 2 of each to the RandomArray
 					while cp>0
 						cp-=1
