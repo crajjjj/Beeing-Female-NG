@@ -56,7 +56,7 @@ Contraception does **not** directly block pregnancy. Instead, it attacks stored 
 3. If it misses the kill but contraception is above 20%, it still reduces the sperm amount slightly.
 4. If all sperm is reduced below the minimum threshold, conception cannot occur.
 
-At 98% contraception, each sperm entry has roughly a 96% chance of being eliminated per tick. However, this is **per entry, per tick** -- with multiple donors or high sperm amounts, some may survive a single check. The check runs once per cycle update (roughly hourly in game time), so surviving sperm will face additional checks on subsequent ticks.
+At 98% contraception, each sperm entry has roughly a 98% chance of being eliminated per tick. However, this is **per entry, per tick** -- with multiple donors or high sperm amounts, some may survive a single check. The check runs once per cycle update (roughly hourly in game time), so surviving sperm will face additional checks on subsequent ticks.
 
 !!! important
     Contraception and the "Can get pregnant this cycle" flag are independent systems. The cycle flag is rolled once at the start of each cycle and determines whether conception checks happen at all. If the flag is off, you cannot get pregnant regardless of sperm. If it is on, contraception must defeat the sperm probabilistically.

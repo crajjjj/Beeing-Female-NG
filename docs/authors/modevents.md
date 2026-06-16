@@ -27,6 +27,9 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
     - `ConceptionChance` (numArg = 1 player, 2 follower, 3 npc): update auto-impregnation flags for the sender based on target group.
 - `AddActorSperm` and `AddSperm` (ModEvent): push two Actor forms (woman first, donor second). Both must be valid actors; adds sperm without using a command string.
 
+!!! note "Already-tracked vs. auto-tracking commands"
+    Two listeners back the `BeeingFemale` command event. The central system handles the conception/state commands (`AddContraception`, `AddFertility`, `DrinkFertilityTonic`, `AddSperm`, `AddSpermImpregnate`, `WashOutSperm`, `ChangeState`, `InfoBox`, `DamageBaby`, `HealBaby`, `CanBecomePregnant`, `CanBecomePMS`) and will **start tracking** the female if she isn't already. The remaining commands (`Update`, `Belly`, `Birth`, `Dispel`, `CheckAbortus`, `ConceptionChance`, `TestScale`) are handled by the per-actor cycle ability, so they only do something on a female who is **already tracked** (has the BeeingFemale ability) — on an untracked actor they are no-ops.
+
 ## Events BF emits
 
 - `BeeingFemaleConception` (ModEvent): pushed as `Mother` (Form), `ChildCount` (Int), `Father0` (Form), `Father1` (Form), `Father2` (Form). Fathers may be `None` if unknown.
