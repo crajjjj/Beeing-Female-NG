@@ -750,6 +750,15 @@ function InitChild()
 		ParentActor = _Mother
 	endIf
 
+	; Seed the base maturing duration in game days. _SizeDuration was never
+	; initialized anywhere, so it defaulted to 0 -> modifiedSizeDuration is 0 in
+	; UpdateSize -> the child snapped to full size, and with "grow into adults"
+	; enabled it transitioned to an adult on its first growth tick (the kid and
+	; the adult appearing together at birth). Pass none for the UNSCALED base; the
+	; per-actor/race MatureTimeScale is applied separately in UpdateSize, so this
+	; matches how custom children resolve their duration.
+	_SizeDuration = Manager.ActorCustomMatureTimeInHours(none) / 24.0
+
 	FW_log.WriteLog("FWChildActor - InitChild: The child " + self + " is determined by " + ParentActor + " (" + GetActorBaseNameOrNone(ParentActor) + "), whose race is " + ChildRace)
 	
 	bool bool_AllowPCDialogue = false

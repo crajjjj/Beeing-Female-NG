@@ -3115,6 +3115,13 @@ actor function GrowChildToAdult(Actor child)
 
 	StorageUtil.FormListAdd(none, "FW.Babys", adult)
 
+	; Hide the replaced child immediately. The FWChildActor cleanup path defers the
+	; actual Delete by ~3s (MarkForDelete), and a persistent reference (e.g. a
+	; HearthFires adoption alias) or a cell change before then can otherwise leave
+	; the kid standing next to the new adult. Disable works even on persistent
+	; refs, so the player never sees both at once.
+	child.Disable(true)
+
 	; Remove the child through its own cleanup path (also drops its FW.Babys entry)
 	FWChildActor fwchild = child as FWChildActor
 	ChildSettings.RemovePlayerChild(child)
