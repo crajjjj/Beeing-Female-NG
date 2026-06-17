@@ -373,6 +373,9 @@ event OnUpdateGameTime()
 		
 		
 		;find a player child item and grow/spawn child if time comes
+		; Drop identity entries with no backing item (sold/dropped/destroyed) before hatching, so a
+		; surviving twin still hatches and a removed one leaves no orphan. Player is always loaded.
+		FWUtility.PruneOrphanBabyIdentities(PlayerRef)
 		int babyitemCount = StorageUtil.FormListCount(none,"FW.Babys")
 		FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - player babyitemCount: " + babyitemCount)
 		
@@ -384,10 +387,9 @@ event OnUpdateGameTime()
 				FW_log.WriteLog("FWAbilityBeeingFemale::ChildArmor - armor entry in FW.Babys " + childArmor.GetName())
 			EndIf
 			
-			; Intentional: baby items hatch into child actors for the PLAYER only.
-			; NPC mothers' baby items stay items forever (and are purged from
-			; FW.Babys on game load when the player does not carry them).
-			if childArmor && PlayerRef.IsEquipped(childArmor)
+			; Player baby items hatch while simply CARRIED (equipped or in inventory). NPC mothers
+			; hatch via the dedicated !IsPlayer branch below (only when the player is the father).
+			if childArmor && PlayerRef.GetItemCount(childArmor) > 0
 				int idx = StorageUtil.FormListFind(PlayerRef, "FW.BabyItemArmor", childArmor)
 				if idx >= 0
 					; Identity recorded at birth - per-baby dob/father (FIFO for twins)
@@ -415,6 +417,28 @@ event OnUpdateGameTime()
 	;if !IsPlayer && currentState<4 && ActorRef.Is3DLoaded()
 	if IsPlayer ;Tkc (Loverslab): optimization
 	else;if !IsPlayer
+	 ; NPC mother hatches her own carried baby into the mother's child when the PLAYER is the father.
+	 ; Identity lives on the mother (FW.BabyItem*), so this reads locally. Guarded on Is3DLoaded so an
+	 ; unloaded actor's unreliable inventory read can neither falsely prune nor mis-spawn.
+	 int idCount = StorageUtil.FormListCount(ActorRef, "FW.BabyItemArmor")
+	 if idCount > 0 && ActorRef.Is3DLoaded()
+		FWUtility.PruneOrphanBabyIdentities(ActorRef)
+		idCount = StorageUtil.FormListCount(ActorRef, "FW.BabyItemArmor")
+		float npcMatureHours = System.Manager.ActorCustomMatureTimeInHours(ActorRef)
+		float npcSizeDuration
+		if npcMatureHours > 0.0
+			npcSizeDuration = (npcMatureHours / 24.0) / 5.0
+		endif
+		while idCount > 0
+			idCount -= 1 ; iterate downward: safe against removal at the current index
+			Actor itemFather = StorageUtil.FormListGet(ActorRef, "FW.BabyItemFather", idCount) as Actor
+			Armor npcArm = StorageUtil.FormListGet(ActorRef, "FW.BabyItemArmor", idCount) as Armor
+			if itemFather == PlayerRef && npcArm && (ActorRef.IsEquipped(npcArm) || ActorRef.GetItemCount(npcArm) > 0)
+				float npcItemDob = StorageUtil.FloatListGet(ActorRef, "FW.BabyItemDOB", idCount)
+				ProcessBabyItemTransitionToChild(ActorRef, PlayerRef, npcSizeDuration, npcArm, npcItemDob, idCount, true)
+			endif
+		endwhile
+	 endif
 	 if currentState<4
 	  if ActorRef.Is3DLoaded()
 		if numChilds>0
@@ -437,7 +461,7 @@ event OnUpdateGameTime()
 	EndIf
 endEvent
 
-Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeDuration, Armor arm, float dob, int identityIdx = -1)
+Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeDuration, Armor arm, float dob, int identityIdx = -1, bool bMothersChild = false)
 	if dob == 0.0
 		FW_log.WriteLog("FWChildArmor: ProcessBabyItemTransitionToChild: DOB is 0")
 		return
@@ -460,7 +484,7 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 			babyName = StorageUtil.StringListGet(mother, "FW.BabyItemName", identityIdx)
 			babyRace = StorageUtil.FormListGet(mother, "FW.BabyItemRace", identityIdx) as Race
 		endif
-		Actor newChild = System.SpawnChildActor(mother, father, babyRace, gender, babyName)
+		Actor newChild = System.SpawnChildActor(mother, father, babyRace, gender, babyName, bMothersChild)
 		if newChild
 			if identityIdx >= 0
 				FWUtility.RemoveBabyItemIdentityAt(mother, identityIdx)

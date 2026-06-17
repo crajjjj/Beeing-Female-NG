@@ -252,6 +252,39 @@ function ClearBabyItemIdentity(actor Mother) global
 	StorageUtil.FloatListClear(Mother, "FW.BabyItemDOB")
 endFunction
 
+; Reconcile identity entries against how many of each baby-item base the carrier actually holds.
+; Keeps the oldest GetItemCount(base) entries per base (FIFO) and prunes the surplus, dropping one
+; matching base from FW.Babys per pruned entry. Heals orphan entries left behind when a baby item is
+; sold/dropped/destroyed without hatching (twins on a shared base, or the whole stack removed). The
+; caller must only invoke this when the carrier's inventory read is trustworthy (player, or an NPC
+; that Is3DLoaded) - an unloaded actor can report a false zero count and wrongly prune a valid baby.
+function PruneOrphanBabyIdentities(actor Carrier) global
+	if !Carrier
+		return
+	endif
+	int i = StorageUtil.FormListCount(Carrier, "FW.BabyItemArmor")
+	while i > 0
+		i -= 1
+		Form armBase = StorageUtil.FormListGet(Carrier, "FW.BabyItemArmor", i)
+		if armBase
+			; rank = how many entries with this same base occur at indices <= i (1-based)
+			int rank = 0
+			int j = 0
+			while j <= i
+				if StorageUtil.FormListGet(Carrier, "FW.BabyItemArmor", j) == armBase
+					rank = rank + 1
+				endif
+				j = j + 1
+			endwhile
+			; Going downward, the newest surplus entry is pruned first; the oldest are kept.
+			if rank > Carrier.GetItemCount(armBase)
+				RemoveBabyItemIdentityAt(Carrier, i)
+				StorageUtil.FormListRemove(none, "FW.Babys", armBase, false)
+			endif
+		endif
+	endwhile
+endFunction
+
 race function GetLastChildFatherRace(actor Mother) global
 	if !Mother
 		return none

@@ -72,6 +72,8 @@ Baby items (BabySpawn "item" mode) record each baby's identity on the **mother**
 - `FW.BabyItemRace` (FormList): race context resolved at birth (preserves creature father race across unloads).
 - `FW.BabyItemFather` (FormList) / `FW.BabyItemDOB` (FloatList): per-baby father and birth timestamp.
 
+A baby item hatches while merely **carried** (the carrier's `GetItemCount(base) > 0`, equipped or not). The player's items hatch into the player's children; an NPC mother's item hatches into the **mother's** own child (placed by her, not a player follower) only when `FW.BabyItemFather` equals the player and she is `Is3DLoaded`. Before each hatch pass, `FWUtility.PruneOrphanBabyIdentities(carrier)` reconciles these lists against inventory: per base form it keeps the oldest `GetItemCount(base)` entries (FIFO) and drops the surplus (plus one matching `FW.Babys` entry each), so a baby item that is sold/dropped/destroyed leaves no orphan entry and produces no child. Only call it for a carrier whose inventory read is trustworthy (the player, or an `Is3DLoaded` NPC) -- an unloaded actor can report a false zero and wrongly prune a valid baby.
+
 ## Access examples
 
 ```papyrus

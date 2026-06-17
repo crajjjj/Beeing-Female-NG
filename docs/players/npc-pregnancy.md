@@ -11,6 +11,8 @@ NPCs can go through the same cycle and pregnancy system as the player. Key setti
 
 NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time.
 
+When baby spawn mode is "Item/Actor" and **you are the father**, an NPC mother will hatch the baby item she carries into her own child (a normal NPC near her, not your follower) once it matures while she is loaded -- see [Baby Items Growing to Children](children.md#baby-items-growing-to-children).
+
 ## NPC Auto-Insemination (Couples System)
 
 When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This simulates NPCs having an ongoing intimate life with their partners.

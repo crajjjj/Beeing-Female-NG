@@ -70,9 +70,15 @@ Notes:
 
 ## Baby Items Growing to Children
 
-When the baby spawn mode is set to "Item/Actor" (mode 2), humanoid babies are spawned as inventory items (carried by the mother). For the **player character only**, these baby items will automatically convert into child actor NPCs once the growth time has elapsed. This does not apply to NPC mothers -- their baby items remain as items.
+When the baby spawn mode is set to "Item/Actor" (mode 2), humanoid babies are spawned as inventory items (carried by the mother). Once the growth time has elapsed, the item converts into a child actor NPC. The item is auto-equipped at birth, but it only needs to be **carried** -- simply having it in inventory is enough, and unequipping it does not pause growth.
 
-The baby's identity is fixed at birth: the name and sex announced when the baby is born are the ones the hatched child will have, and the growth clock starts at birth, not when you first equip the item. Twins hatch in birth order, each with their own name and timer. (Baby items born in older versions of the mod predate this tracking -- they still hatch, but with a newly rolled name and sex, the old behavior.)
+Who hatches the baby depends on the parents:
+
+- **Player mother:** the baby item hatches into your child.
+- **Player father + NPC mother:** if you (a male player) are the recorded father, the NPC mother hatches the baby she is carrying into **her** child, spawned next to her. This child belongs to the mother -- it is a normal NPC, **not** a player follower or an adoptable child. (The mother must be loaded/nearby for it to hatch.)
+- **NPC mother + non-player father:** the baby item stays an item -- NPC-only families do not spawn child actors from items.
+
+The baby's identity is fixed at birth: the name and sex announced when the baby is born are the ones the hatched child will have, and the growth clock starts at birth, not when you first equip the item. Twins hatch in birth order, each with their own name and timer. If you **sell, drop, or destroy** a baby item before it hatches, that baby is lost -- no child is produced for the missing item, though a surviving twin still hatches normally. (Baby items born in older versions of the mod predate this tracking -- they still hatch, but with a newly rolled name and sex, the old behavior.)
 
 ## Child Commands
 

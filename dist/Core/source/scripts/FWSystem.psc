@@ -3290,14 +3290,17 @@ endFunction
 
 ; gender / childName: optional overrides used when a baby item hatches, so the
 ; child keeps the sex and name the item was born with. -1 / "" = roll as usual.
-actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = none, int gender = -1, string childName = "")
+actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = none, int gender = -1, string childName = "", bool bMothersChild = false)
 	Mother = SanitizeMotherActor(Mother)
 	Father = SanitizeFatherActor(Father)
 	if Mother == none
 		FW_log.WriteLog("FWSystem - SpawnChildActor: Mother is invalid; aborting spawn")
 		return none
 	endIf
-	bool bIsPlayerChild = IsPlayerChild(Mother, Father)
+	; bMothersChild: spawn a normal NPC child belonging to the mother even though the player is the
+	; father - skips player-teammate/follower/adoption setup (used when a male player's NPC partner
+	; hatches her own baby item; the child stays with her rather than following the player).
+	bool bIsPlayerChild = IsPlayerChild(Mother, Father) && !bMothersChild
 
 
 	; Decide who will determine the baby actor model
@@ -3341,7 +3344,7 @@ actor function SpawnChildActor(Actor Mother, Actor Father, Race FatherRace = non
 			Father.SetRelationshipRank(newChild, 2)
 		endif
 	
-		if Mother == PlayerRef ||Father == PlayerRef
+		if (Mother == PlayerRef ||Father == PlayerRef) && !bMothersChild
 			; set Fraktion
 			if(ChildFollowerFaction;/!=none/;) ;Tkc (Loverslab): optimization
 				newChild.SetFactionRank(ChildFollowerFaction, ChildFollowerFactionRank)
