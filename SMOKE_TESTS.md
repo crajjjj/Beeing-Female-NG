@@ -40,6 +40,11 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 3.6 | P2 | NPC pregnancy disabled in MCM | `cfg.NPCCanBecomePregnant = false` → NPCs skipped, no error | FWController |
 | 3.7 | P1 | `BeeingFemaleConception` mod event | Fires with correct Mother, ChildCount, Father0–2 args | FWController |
 | 3.8 | P1 | Sperm expiry after 50+ game days | Entries older than `SpermDeleteTime` pruned via `RemoveSpermMirrorAt`, lists stay consistent | FWSaveLoad, FWUtility |
+| 3.11 | P1 | Mild Fertility Tonic (magnitude ~2) | `ApplyFertilityTonic` floors magnitude to 2.0 and adds `FW.Fertility` (Gate 2 boost: +6.25%/pt at ovulation, +1%/pt luteal). On an INFERTILE cycle (state <4, `canBecomePregnant`==false) it grants ONE extra `ConceiveChance` Gate 1 roll — a nudge, not a guarantee; does nothing if the cycle is already fertile | FWController `ApplyFertilityTonic`, FWFertilityItem |
+| 3.12 | P1 | Potent Fertility Tonic (magnitude ~4) | Same Gate 2 boost PLUS `setCanBecomePregnant(true)` forces the current cycle fertile for the rest of its window | FWController `ApplyFertilityTonic` |
+| 3.13 | P2 | Fertility stacking & decay | `AddFertilityTimed` caps at `MaxFertility=8.0`; re-dosing soon adds a prorated slice (floor +1) and refreshes `FW.FertilityTime`; decays over `GetPillDuration` like contraception; `AddFertility` alone never forces fertile (Gate 1 untouched) | FWController `AddFertilityTimed`/`getFertilityTimed` |
+| 3.14 | P2 | Tonic reflected in chance preview/widgets | `getRelativePregnancyChance(includeFertility=true)` adds the boost; Baby-Health widget cache key includes quantized fertility; MCM Info page shows `~<ovulation chance>%` only while a tonic is active | FWController, FWBabyHealthWidget, FWSystemConfig |
+| 3.15 | P2 | Tonic does not cancel contraception | Active contraception still runs `ContraceptionSpermKillTimed` first; a dosed actor must let contraception lapse before the tonic can help | FWController |
 
 ## 4. Pregnancy & Birth (States 4–8)
 
@@ -167,6 +172,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 14.2 | P2 | SlaveTats birth count tattoos | MCM toggle off by default. Enable → tattoos composed from 1/2/3/4/8/12 denominations. Disable → removed immediately. Requires SlaveTats.esp | FWController, FWSystemConfig |
 | 14.3 | P2 | SlaveTats semen circle | Regular semen circle when cum inside, hearts variant during ovulation. Applied on AddSperm, updated on WashOut, removed on toggle-off. MCM Refresh re-applies even when `FW.SemenTattooState` is unchanged (force flag) | FWController, FWSystemConfig |
 | 14.4 | P2 | SlaveTats womb state tattoo ("BF Womb tattoo" pack, section "BF PW") | Exactly one tattoo at a time, swapped only on state change (`FW.WombTattooState`): baseline/ovulation; semen fill tiers by summed viable amount (normal 3/9/full, ovulation 3/11/full/full2); fertilization for first day of trimester 1 then phases 1–3; 2/3/4Babies from trimester 2 when multiples (`FW.NumChilds`, not the lifetime `FW.NumBabys` tally); Birth in labor; back to baseline in recovery. Player only (gate inside `ApplyWombTattoo`); updates each tick and on sperm/birth events. Toggle-off removes the current tattoo; MCM Refresh re-applies even when `FW.WombTattooState` is unchanged (force flag). Textures (BC7 2048) ship via the optional FOMOD "SlaveTats Tattoo Packs" step, visible/pre-selected only when SlaveTats.esp is active | FWController, FWSystemConfig, FWAbilityBeeingFemale, ModuleConfig.xml |
+| 14.5 | P2 | Womb tattoo NPC opt-in (`Global_WombTattooNPCs`) | Default OFF → womb tattoo player-only. Set `=true` in `Default Global Settings.ini` → `ApplyWombTattoo` also broadcasts to tracked female NPCs (gated by `WombTattooNPCsAllowed`). MCM "Refresh Tattoos" runs `RefreshWombTattooNPCs`: re-applies to NPCs when ON, strips leftover overlays from them when OFF. Player handled separately. Requires SlaveTats.esp | FWController `ApplyWombTattoo`/`RefreshWombTattooNPCs`, FWAddOnManager |
 
 ## 15. HUD Widgets
 
@@ -186,6 +192,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 16.2 | P2 | Couple JSON persistence | `BeeingFemale/Couples/<ModID>_<FormID>.json` created with Husband, Affairs, Partners | FWCoupleWidget |
 | 16.3 | P2 | Stale husband form (mod removed) | `GetFormValue` returns None while `HasFormValue` true → should not cause infinite 5s polling | FWCoupleWidget |
 | 16.4 | P2 | Widget disabled by default | New install: `CFG_Enabled = false`, hotkeys do nothing | FWCoupleWidget |
+| 16.5 | P1 | Auto-insemination uses partners independently of affairs | Daily couples pass: a woman with assigned Partners but NO Affairs still gets her partners in the weighted donor pool (2× each). Previously the Partners branch was gated on the Affairs count (`ca>0`) so partners-only couples were skipped | FWSystem (daily impregnation) |
 
 ## 17. MCM Configuration
 
@@ -207,6 +214,8 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 18.3 | P1 | External `BeeingFemale` → `DamageBaby`/`HealBaby` | Unborn health modified within bounds | FWController |
 | 18.4 | P2 | Emitted `BeeingFemaleConception` | Args (Mother, ChildCount, Fathers) correct and parseable by external mods | FWController |
 | 18.5 | P2 | Emitted `BeeingFemaleLabor` | Args correct, fires at start of `GiveBirth` (before child spawning loop) | FWController |
+| 18.6 | P2 | External `BeeingFemale` → `AddFertility` | Raw Gate 2 boost added via `AddFertility`; does NOT touch the per-cycle fertile flag; capped at 8 | FWController `AddFertility`, FWSystem |
+| 18.7 | P2 | External `BeeingFemale` → `DrinkFertilityTonic` | Routes through `ApplyFertilityTonic`: numArg <3.5 = mild (boost + one Gate 1 nudge), ≥3.5 = potent (boost + forces this cycle fertile) — parity with the in-game potion | FWController `ApplyFertilityTonic`, FWSystem |
 
 ## 19. SPID Item Distribution
 
@@ -218,6 +227,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 19.4 | P2 | Merchant stock | `JobMerchantFaction` members have all consumable types (2–6 units, 100%) | SPID INI |
 | 19.5 | P2 | `_BF_ContraceptionHighest` requires addon | Only appears when `BeeingFemaleBasicAddOn.esp` loaded; absent without it | SPID INI |
 | 19.6 | P2 | Males receive no items | No male distribution rules — confirm males are clean | SPID INI |
+| 19.7 | P2 | Fertility Tonics distributed | `_BF_FertilityTonicMild`/`_BF_FertilityTonicPotent` seeded to female NPCs (loot, same odds as ContraceptionLow/Medium) and `JobMerchantFaction` vendors (6/4 units, 100%), referenced by EditorID (FormIDs assigned by `BF_GenerateFertilityPotion.pas`) | SPID INI |
 
 ## 20. C++ Native Plugin
 
@@ -269,6 +279,11 @@ MCM "Children grow into adults" (Children page, default OFF) or add-on `GrowUpTo
 | 22.21 | P1 | `GrowUpToAdult = -1` hard block | Actor-level `-1` keeps that parent's children child forever even with the MCM toggle ON; race-level `-1` likewise; actor `1` overrides race `-1`; legacy `=true` INIs still read as 1 | FWAddOnManager `ActorGrowUpToAdult` |
 | 22.22 | P2 | Grow-up notification | Player children show "<name> has grown into an adult" on both transition paths; NPC×NPC children stay silent | FWSystem `GrowChildToAdult` |
 | 22.23 | P1 | Children-page grow/hatch selector | Dropdown lists the player's not-yet-grown NPC-race children (with status) and carried baby items (recorded names; twins map to their own FIFO identity entries); button disabled until a selection is made and asks for confirmation; mid-growth in-place child force-grows WITH final scale and stopped growth machinery; baby item hatches into the recorded baby and the item is consumed; legacy item hatches old-style; selection resets when leaving the page; creatures and grown adults are not listed | FWSystemConfig `BuildGrowTargets`/`TextGrowSelected`, FWSystem `ForceGrowChildToAdult` |
+| 22.24 | P0 | Born children grow over the configured Mature Time | `InitChild` seeds `_SizeDuration` from `ActorCustomMatureTimeInHours(none)/24` (unscaled base days); `UpdateSize` applies `ActorMatureTimeScale` separately. A newborn no longer snaps to full size — or, with grow-up ON, to an adult — on its first growth tick. Was: `_SizeDuration` never assigned → 0 → `modifiedSizeDuration` 0 → instant. Affected FWChildActor-script children only; custom/plain-actor children were always fine | FWChildActor `InitChild`/`UpdateSize` |
+| 22.25 | P1 | Grow-up never leaves kid + adult together | `GrowChildToAdult` (Path B) calls `child.Disable(true)` immediately after the adult is placed, before the deferred `DeleteChild` (MarkForDelete, ~3s). Even if the real `Delete` is blocked (HearthFires adoption alias) or interrupted by a cell change, the child is hidden at once | FWSystem `GrowChildToAdult` |
+| 22.26 | P1 | Grown-adult protection (`Global_ProtectGrownAdult`) | Global-only INI tri-state applied at transition: `1` = `SetProtected(true)`; `-1` = `SetProtected(false)`+`SetEssential(false)` (fully killable); `0` (default) = leave the ESP base flag untouched. A base shared with a LIVING parent (parent-clone fallback) is never flipped | FWSystem `ApplyAdultFactions`, FWAddOnManager `GrownAdultProtectMode` |
+| 22.27 | P2 | Living grown-up in the info window | Info spell / MCM on a LIVING grown-up shows normal male/female NPC info (cycle/pregnancy/virility), not the child card, with lineage appended inline ("(child of A & B)"); a DEAD grown-up keeps the child card (lineage + death age) | FWController `showRankedInfoBox` |
+| 22.28 | P2 | Deceased children in MCM Children tab | Dead children (incl. dead grown adults) show "Dead" via `GetChildGrowthStatus`; the display loop and the click handler both include dead entries so row indexes stay aligned; "Remove deceased children" runs `PruneDeceasedChildren` (player's dead children only, backwards iteration, Disable+Delete, dropped from `FW.Babys`) | FWSystemConfig `GetChildGrowthStatus`/`PruneDeceasedChildren` |
 
 ---
 
@@ -309,7 +324,9 @@ These are confirmed or high-confidence issues found during code inspection. Each
 | 23.29 | P2 | **Neon-red body glow from blood effect shaders** — LE-era EFSH records render additively-bright under SE bloom: `_BFVaginalBleedingLow` (0x6EB8), `High` (0x6EB9), `Big` (0xAF63), `_BFVaginalWater` (0xBFA0) in BeeingFemale.esm. Fix is record-side (xEdit override: darken Fill color keys, lower Fill/Edge Full Alpha Ratios) or darken `textures\beeingfemale\VaginalBlood*.dds`. Script-side inverted imod throttle in BFA_VisualEffects (red screen flash stacking) **FIXED** | BeeingFemale.esm EFSH, BFA_VisualEffects | Most visible during menstruation without hygiene items and at birth/abortus |
 | 23.31 | ~P1~ | ~~**Grown adults got no follower factions** — `ApplyAdultFactions` relied on the CK `ChildFollowerFaction*` properties, which ship UNFILLED in the ESM (VMAD formids None), so no vanilla "Follow me" dialogue ever appeared~~ **FIXED** — vanilla PotentialFollowerFaction (0x5C84D, rank 0) + CurrentFollowerFaction (0x5C84E, rank -1) added directly; the CK slots remain honored if an add-on ESP fills them. Existing grown adults need the factions via console or a re-transition | FWSystem `ApplyAdultFactions` | Affects every adult grown before the fix |
 | 23.30 | ~P1~ | ~~**NPC hygiene auto-equip never worked** — `EquipNapkin`/`EquipTampon` equipped the BLOODY variant, which the actor never owns (`EquipItem` on a not-owned form is a silent no-op), so NPCs carried tampons but bled all period; the unconditional tick call could also re-equip the player's soiled napkin~~ **FIXED** — equip the Normal variant (the flow roll soils it naturally); auto-equip gated to NPCs, the player keeps the panty widget as the prompt | FWAbilityBeeingFemale `EquipNapkin`/`EquipTampon` | NPCs now actually wear hygiene items during menstruation |
+| 23.32 | ~P1~ | ~~**Auto-insemination skipped partners-only couples** — the regular-partners branch in the daily impregnation guarded on the Affairs count (`ca>0`) instead of the Partners count, so assigned partners were only added to the donor pool when the woman also had an affair~~ **FIXED** — guard uses `cp>0` | FWSystem (daily impregnation) | Assigned partners now used independently |
+| 23.33 | ~P0~ | ~~**FWChildActor `_SizeDuration` never initialized** — defaulted to 0 → `modifiedSizeDuration` 0 → child snapped to full size and, with grow-up ON, transitioned at birth (kid + adult appearing together)~~ **FIXED** — `InitChild` seeds it from the configured mature time; `GrowChildToAdult` also `Disable`s the replaced child immediately as a safety net | FWChildActor, FWSystem | Affected built-in child actors only, not child-model packs |
 
 ---
 
-*Last updated: 2026-06-12*
+*Last updated: 2026-06-17*
