@@ -491,8 +491,13 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 			endif
 			; Register like SpawnChild does, so the MCM Children tab lists the child
 			StorageUtil.FormListAdd(none, "FW.Babys", newChild)
-			; Removes one entry per hatched baby; twins keep their remaining entries
-			StorageUtil.FormListRemove(none, "FW.Babys", arm, false)
+			; Only the player path iterates FW.Babys, so only it consumes the base entry here.
+			; FW.Babys holds shared armor BASE forms; removing on the NPC path could delete another
+			; mother's (or the player's) entry for the same base. The NPC mother's leftover base entry
+			; is harmless (player doesn't carry it) and is cleaned by the game-load FW.Babys purge.
+			if !bMothersChild
+				StorageUtil.FormListRemove(none, "FW.Babys", arm, false)
+			endif
 			mother.UnequipItem(arm)
 			mother.RemoveItem(arm, 1, true)
 		else

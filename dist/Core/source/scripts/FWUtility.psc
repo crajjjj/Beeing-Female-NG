@@ -253,11 +253,15 @@ function ClearBabyItemIdentity(actor Mother) global
 endFunction
 
 ; Reconcile identity entries against how many of each baby-item base the carrier actually holds.
-; Keeps the oldest GetItemCount(base) entries per base (FIFO) and prunes the surplus, dropping one
-; matching base from FW.Babys per pruned entry. Heals orphan entries left behind when a baby item is
-; sold/dropped/destroyed without hatching (twins on a shared base, or the whole stack removed). The
-; caller must only invoke this when the carrier's inventory read is trustworthy (player, or an NPC
-; that Is3DLoaded) - an unloaded actor can report a false zero count and wrongly prune a valid baby.
+; Keeps the oldest GetItemCount(base) entries per base (FIFO) and prunes the surplus. Heals orphan
+; entries left behind when a baby item is sold/dropped/destroyed without hatching (twins on a shared
+; base, or the whole stack removed). The caller must only invoke this when the carrier's inventory
+; read is trustworthy (player, or an NPC that Is3DLoaded) - an unloaded actor can report a false zero
+; count and wrongly prune a valid baby.
+; Note: this does NOT touch FW.Babys. That global list stores armor BASE forms shared across all
+; mothers, so removing "one" by base could delete another mother's live entry. Stale FW.Babys armor
+; entries are harmless (the hatch gate skips bases the carrier no longer holds) and are cleaned by the
+; game-load FW.Babys purge.
 function PruneOrphanBabyIdentities(actor Carrier) global
 	if !Carrier
 		return
@@ -279,7 +283,6 @@ function PruneOrphanBabyIdentities(actor Carrier) global
 			; Going downward, the newest surplus entry is pruned first; the oldest are kept.
 			if rank > Carrier.GetItemCount(armBase)
 				RemoveBabyItemIdentityAt(Carrier, i)
-				StorageUtil.FormListRemove(none, "FW.Babys", armBase, false)
 			endif
 		endif
 	endwhile
