@@ -38,6 +38,8 @@ Sperm is deposited during sex events (SexLab or OStim) or manually via mod event
 | Lore Friendly | On | Only allow same-species conception |
 | Wash-Out Delay | 6 hours | How long before sperm "arrives" and can be affected |
 
+Playing a **male** character? Virility and fathering children work a little differently — see [Playing as a Male Character](male-player.md).
+
 ## Contraception
 
 Contraception is a percentage (0--98%) that reduces your chance of getting pregnant. It comes from consumable pills found on merchants or looted from NPCs.
