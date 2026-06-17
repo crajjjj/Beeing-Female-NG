@@ -1,7 +1,11 @@
+Next-gen SKSE rewrite (CommonLibSSE-NG) of Beeing Female: menstrual cycles, pregnancy, childbirth & child actors. Female and male players and NPCs support. OStim + reworked SexLab, baby-to-child-to-NPC growth, couples import, SPID items, tattoos, multiple patches and add-ons, and a deep MCM framework. Runs on SE, AE & VR.
+
+
+
 [center][size=5][b]🌸 Beeing Female NG 🌸[/b][/size]
 [size=3]🩸 Menstruation & 🤰 Pregnancy Simulation[/size][/center]
 
-[b]Beeing Female NG[/b] is a next-generation life-simulation mod featuring menstrual cycles, pregnancy, childbirth, and post-birth systems — designed for both players and NPCs.
+[b]Beeing Female NG[/b] is a next-generation life-simulation mod featuring menstrual cycles, pregnancy, childbirth, and post-birth systems — designed for both female and male players and NPCs.
 
 It also includes a flexible follower system (unlimited followers), new items, and a wide range of configurable gameplay mechanics.
 
@@ -55,6 +59,7 @@ Beeing Female is built around a [b]🧩 modular add-on framework[/b] and a broad
 [/*]
 [*][b]🧍 Player & NPC Support[/b]
 [list]
+[*]Works for both female and male characters (males get virility tracking and can father children)[/*]
 [*]Per-race & per-actor overrides[/*]
 [*]Cycle timing, fertility chance & scaling[/*]
 [*]Protection & exclusion flags[/*]
@@ -148,8 +153,8 @@ Beeing Female NG is designed to work as a modular platform. Most integrations ar
 [/list]
 [/*]
 [*]📣 Improved compatibility via events & factions[/*]
-[*]Fertiltiy potions
-⏱️ Configurable labor pains duration (default: 4 hours)[/*]
+[*]🧪 Fertility potions[/*]
+[*]⏱️ Configurable labor pains duration (default: 4 hours)[/*]
 [*]👶 BabyItem grows into ChildActor (PC only)
 [list]
 [*]Growth uses matureTime / 5[/*]

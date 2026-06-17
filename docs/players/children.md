@@ -72,6 +72,8 @@ Notes:
 
 When the baby spawn mode is set to "Item/Actor" (mode 2), humanoid babies are spawned as inventory items (carried by the mother). Once the growth time has elapsed, the item converts into a child actor NPC. The item is auto-equipped at birth, but it only needs to be **carried** -- simply having it in inventory is enough, and unequipping it does not pause growth.
 
+> **Keep the baby equipped, though.** A baby item only "comes alive" while it is worn. An *equipped* baby drinks milk and makes sounds -- cooing, babbling, giggling, hiccups, crying -- and reacts to the world around it: the weather, nearby objects it likes, fears, or finds surprising, items you pick up, spells you cast, and taking a hit in combat. Stuffed away in your inventory it is silent and inert; it still grows on schedule, but you miss all of that. (Baby sounds require **Children May Cry** on the Children page.)
+
 Who hatches the baby depends on the parents:
 
 - **Player mother:** the baby item hatches into your child.
