@@ -12,14 +12,29 @@ Toggle visibility with the configured hotkey (the **Widget Controller**):
 
 ## The widgets
 
-| Widget | Shows |
-|--------|-------|
-| State | Current cycle/pregnancy phase, progress bar, elapsed time |
-| Baby Health | Pregnancy chance (cycle) or unborn health (pregnant) |
-| Contraception | Active contraception level and time remaining |
-| Panty | Hygiene reminder during menstruation |
+| Icon | Widget | Shows |
+|:----:|--------|-------|
+| ![State widget icon](../assets/widgets/widget-state.png){ width="44" } | State | Current cycle/pregnancy phase, progress bar, elapsed time |
+| ![Baby Health widget icon](../assets/widgets/widget-baby-health.png){ width="44" } | Baby Health | Pregnancy chance (cycle) or unborn health (pregnant) |
+| ![Contraception widget icon](../assets/widgets/widget-contraception.png){ width="44" } | Contraception | Active contraception level and time remaining |
+| ![Panty widget icon](../assets/widgets/widget-panty.png){ width="44" } | Panty | Hygiene reminder during menstruation |
+
+!!! note "Widget icons are extracted from the mod's own widget art"
+    The icons above are rendered from the shipped widget files (`BeeingFemaleWid1`–`Wid5.swf`). In-game they sit inside the meter bar frame; the **Baby Health** widget in particular dims to a faint outline when there is no relevant data, which can read as a barely-visible greyed icon.
 
 **State widget** — the current cycle or pregnancy phase for the player (or a tracked NPC target). For **female** actors it shows the phase name (Follicular, Ovulation, Luteal, Menstruation, 1st/2nd/3rd Trimester, Labor Pains, Replenish), a matching icon, a fill bar for progress through the phase, and elapsed time since it began. For **male** actors it shows virility percentage and estimated time to full recovery. Hidden in immersive message mode.
+
+The State widget swaps its icon to match the current phase. The recurring icons are:
+
+| Icon | Meaning |
+|:----:|---------|
+| ![Womb icon](../assets/widgets/phase-cycle-womb.png){ width="40" } | Cycle / womb (follicular & luteal phases) |
+| ![Ovulation icon](../assets/widgets/phase-ovulation.png){ width="40" } | Ovulation — fertile window |
+| ![Menstruation icon](../assets/widgets/phase-menstruation.png){ width="40" } | Menstruation |
+| ![Sperm icon](../assets/widgets/phase-sperm.png){ width="40" } | Viable sperm present |
+| ![Pregnancy icon](../assets/widgets/phase-pregnancy.png){ width="40" } | Pregnancy (trimesters) |
+| ![Labor icon](../assets/widgets/phase-labor.png){ width="40" } | Labor / birth |
+| ![Replenish icon](../assets/widgets/phase-replenish.png){ width="40" } | Replenish — post-birth recovery |
 
 **Baby Health widget** — dual-mode. In a cycle phase (states 0–3) it shows your relative **pregnancy chance** as a percentage; while pregnant (states 4–7) it shows **unborn baby health** (0–100, or `0` once abortus has triggered). It stays hidden until baby health drops to 8 or below (alert-only), unless already in a non-cycle state under immersive settings.
 
