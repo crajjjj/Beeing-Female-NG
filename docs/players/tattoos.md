@@ -9,6 +9,10 @@ If SlaveTats is installed, three optional tattoo features are available (enable 
 
 Shows tally marks for total babies born. Uses denominations (1, 2, 3, 4, 8, 12) to compose the count. Updates after each birth and when toggling the MCM option.
 
+| 1 | 2 | 3 | 4 | 8 | 12 |
+|:--:|:--:|:--:|:--:|:--:|:--:|
+| ![1 baby](../assets/tattoos/tracker-1.png) | ![2 babies](../assets/tattoos/tracker-2.png) | ![3 babies](../assets/tattoos/tracker-3.png) | ![4 babies](../assets/tattoos/tracker-4.png) | ![8 babies](../assets/tattoos/tracker-8.png) | ![12 babies](../assets/tattoos/tracker-12.png) |
+
 ## Semen Circle Tattoo
 
 Shows a circle tattoo when viable sperm is present. Two variants:
@@ -17,6 +21,10 @@ Shows a circle tattoo when viable sperm is present. Two variants:
 - **Hearts circle** -- sperm is inside during ovulation (conception possible)
 
 The tattoo automatically clears when all sperm expires or is washed out.
+
+| Regular circle | Hearts circle |
+|:--:|:--:|
+| ![Regular semen circle](../assets/tattoos/circle-regular.png){ width="170" } | ![Hearts semen circle](../assets/tattoos/circle-hearts.png){ width="170" } |
 
 ## Womb State Tattoo
 
@@ -27,5 +35,15 @@ A single womb-diagram tattoo that mirrors the full reproductive state and update
 - **Fertilization** -- shown for the first day after conception
 - **Pregnancy phases 1-3** -- one image per trimester; from the second trimester, twins/triplets/quadruplets get their own art
 - **Birth** -- during labor, then back to baseline after recovery
+
+| Baseline | Ovulation | Semen fill |
+|:--:|:--:|:--:|
+| ![Baseline womb](../assets/tattoos/womb-normal.png){ width="150" } | ![Ovulation](../assets/tattoos/womb-ovulation.png){ width="150" } | ![Semen fill](../assets/tattoos/womb-semen-full.png){ width="150" } |
+| **Fertilization** | **Pregnancy 1** | **Pregnancy 2** |
+| ![Fertilization](../assets/tattoos/womb-fertilization.png){ width="150" } | ![Pregnancy phase 1](../assets/tattoos/womb-phase1.png){ width="150" } | ![Pregnancy phase 2](../assets/tattoos/womb-phase2.png){ width="150" } |
+| **Pregnancy 3** | **Twins** | **Triplets** |
+| ![Pregnancy phase 3](../assets/tattoos/womb-phase3.png){ width="150" } | ![Twins](../assets/tattoos/womb-twins.png){ width="150" } | ![Triplets](../assets/tattoos/womb-triplets.png){ width="150" } |
+| **Quadruplets** | **Birth** | |
+| ![Quadruplets](../assets/tattoos/womb-quads.png){ width="150" } | ![Birth](../assets/tattoos/womb-birth.png){ width="150" } | |
 
 Exactly one tattoo from the set is shown at a time, and it updates on every cycle tick. **Player only by default.** Because it re-applies on every cycle/semen change, broadcasting it to tracked NPCs is expensive (and the belly overlay is rarely visible on clothed actors), so it is gated behind an INI opt-in: set `Global_WombTattooNPCs=true` in `Default Global Settings.ini` (and enable that add-on) to extend it to tracked female NPCs. If you later turn the option off, press **Refresh Tattoos** (MCM → Children) once to strip the womb overlay back off any NPCs that still have it.
