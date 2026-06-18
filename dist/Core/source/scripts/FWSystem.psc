@@ -2910,6 +2910,18 @@ endFunction
 Faction _PotentialMarriageFaction
 Form _GrownAdultTunic
 Form _GrownAdultShoes
+; The grow-up fallback may clone a parent's base when no AdultActor_* mapping
+; exists. A humanoid child (it only reaches grow-up because its race has
+; ActorTypeNPC) must never clone a creature parent - that snaps the child into a
+; beast. Skip creature bases so the child instead stays a grown child via
+; AbortGrowUp, consistent with how it looked the whole time.
+bool function IsHumanoidBase(ActorBase ab)
+	if ab == none
+		return false
+	endif
+	race r = ab.GetRace()
+	return r && r.HasKeywordString("ActorTypeNPC")
+endFunction
 actor function GrowChildToAdult(Actor child)
 	if child == none
 		return none
@@ -2990,17 +3002,21 @@ actor function GrowChildToAdult(Actor child)
 	ActorBase adultBase = Manager.GetAdultActor(cfgParent, childRace, sex, bIsPlayerChild)
 	if adultBase == none
 		bFromAddOnList = false
-		; Fallback gate: never clone the player's base or a unique NPC's base -
-		; a second actor on a unique base confuses quest aliases and follower
-		; frameworks. Generic shared bases are safe (the engine clones those
-		; routinely). Rejected parents fall through to AbortGrowUp's retry path;
-		; the AdultActor_* INI keys are the supported way to cover those races.
+		; Fallback gate: never clone the player's base, a unique NPC's base, or a
+		; creature base - a second actor on a unique base confuses quest aliases
+		; and follower frameworks, and a creature base would snap a humanoid child
+		; into a beast (see IsHumanoidBase). Generic shared humanoid bases are safe
+		; (the engine clones those routinely). Rejected parents fall through to
+		; AbortGrowUp's retry path; the AdultActor_* INI keys are the supported way
+		; to cover those races.
 		if sameSexParent && sameSexParent != PlayerRef
 			ActorBase sameBase = sameSexParent.GetLeveledActorBase()
-			if sameBase && !sameBase.IsUnique()
-				adultBase = sameBase
-			elseif sameBase
+			if sameBase && sameBase.IsUnique()
 				FW_log.WriteLog("FWSystem - GrowChildToAdult: same-sex parent base " + sameBase + " is unique - not cloning")
+			elseif sameBase && !IsHumanoidBase(sameBase)
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: same-sex parent base " + sameBase + " is a creature - not cloning into a humanoid child")
+			elseif sameBase
+				adultBase = sameBase
 			endif
 		elseif sameSexParent
 			FW_log.WriteLog("FWSystem - GrowChildToAdult: same-sex parent is the player - not cloning")
@@ -3008,10 +3024,14 @@ actor function GrowChildToAdult(Actor child)
 		if adultBase == none && otherParent && otherParent != PlayerRef
 			; Only accept the opposite-sex parent's base when its sex matches the child
 			ActorBase otherBase = otherParent.GetLeveledActorBase()
-			if otherBase && !otherBase.IsUnique() && otherBase.GetSex() == sex
-				adultBase = otherBase
+			if otherBase && otherBase.IsUnique()
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent base " + otherBase + " rejected (unique)")
+			elseif otherBase && otherBase.GetSex() != sex
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent base " + otherBase + " rejected (sex mismatch)")
+			elseif otherBase && !IsHumanoidBase(otherBase)
+				FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent base " + otherBase + " rejected (creature)")
 			elseif otherBase
-				FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent base " + otherBase + " rejected (unique or sex mismatch)")
+				adultBase = otherBase
 			endif
 		elseif adultBase == none && otherParent
 			FW_log.WriteLog("FWSystem - GrowChildToAdult: opposite-sex parent is the player - not cloning")

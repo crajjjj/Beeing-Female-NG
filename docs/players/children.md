@@ -32,9 +32,7 @@ Growth in Beeing Female's **core** is **scale-based** -- on its own the mod only
 
 - **With a child model pack** (BFACCA_SE_Opt, BFASE_RSChildren_SE_Opt, or similar): the child is spawned using a proper child-race actor base from the pack. These packs are designed so that at full scale the child looks appropriately grown. Some packs provide staged models that swap appearance at growth milestones.
 
-- **Without a child model pack**: the mod falls back to using the parent's adult actor base scaled down small. As the child grows, the scale increases and at scale 1.0 they look like a normal adult NPC. This works but the child will look like a small adult during the growth period rather than an actual child.
-
-- **With the base BeeingFemale.esm fallback actors**: the ESP ships default child actor bases (child-race NPCs). These will always look like children regardless of scale -- reaching scale 1.0 means a normal-sized child, not an adult. On their own they will **not** visually transform into adults -- for that, see "Growing Into Adults" below.
+- **Without a child model pack**: the mod uses the default child actors that ship in BeeingFemale.esm -- Nord child bases wired as the global fallback (`FallBack_*BabyActor` on the `BF_BabyItemList` quest). The newborn looks like a Nord-style child and keeps child proportions as it scales (scale 1.0 is a full-size *child*, not an adult); for non-Nord races the recorded race is still correct, so a later grow-up still produces the right adult. On their own these **never** visually transform into adults -- for that, see "Growing Into Adults" below. (Only if those fallback actors are cleared does the mod instead scale down the parent's own adult base, the old "small adult" look.)
 
 If you want children that visibly grow from child to adult appearance, install a child model addon pack and/or enable the grow-up feature described below. Without either, the growth system only affects the actor's scale, not their visual model.
 
@@ -49,6 +47,28 @@ Where the adult's appearance comes from:
 
 - The shipped **"BF Adult Pack"** add-on (`Data/BeeingFemale/AddOn/Default Adult Actors.ini` plus the ESL-flagged `BeeingFemaleAdultPack.esp`) gives each of the 10 vanilla races 10 dedicated adult bases per sex. They are generated from Skyrim's character-creation presets, so the engine computes their faces live (no FaceGen files, no dark-face bug), but unlike the raw presets they carry proper names, a real class, a race-fitting follower voice, a farm-clothes outfit, and a sandbox AI package so unrecruited adults wander around instead of standing frozen. Delete or disable that INI and the adult will instead be spawned as a copy of their same-sex parent -- but only when that parent uses a generic actor base. The player and unique NPCs (named followers, spouses) are never cloned; if no usable base remains, the transition is skipped and the child stays a grown child (add an `AdultActor_*` INI entry for the race to cover this).
 - Add-on authors can supply their own adult bases, voices, and clothing with `AdultActor_Male/Female`, `AdultActorVoice_Male/Female`, and `AdultOutfit_Male/Female` keys in race or actor add-on INIs -- same format as the existing `BabyActor_*` keys, resolving from any installed plugin. Without an outfit key, add-on adults get a basic roughspun tunic. See the [Add-on Framework](../authors/add-on-framework.md#adult-actor-add-ons-grow-up-feature) for the full key reference.
+
+### Grow-up outcomes by stage, race, and sex
+
+An offspring can pass through three stages: **Baby item** (only in the Item/Actor spawn mode, humanoid -- it hatches into the child actor), **Child actor** (the spawned, growing child), and **Adult actor** (only when "Children grow into adults" is enabled). "Without patches" is base Beeing Female only -- the BF Adult Pack and the Nord fallback child are part of the base; no RS Children or BFACCA. "With patches" adds the child-model pack for that race (**RS Children** for humanoids, **BFACCA** for creatures). The listed parent's race is assumed to have won the race roll.
+
+| Offspring race group | Sex | Patches | Baby item | Child actor | Adult actor |
+|----------------------|-----|---------|-----------|-------------|-------------|
+| Human / Beast (Nord, Imperial, Khajiit, Argonian, …) | ♂ | Without | Boy item → hatches | Nord fallback boy (child-shaped) | ♂ adult of its recorded race (BF Adult Pack) |
+| Human / Beast | ♀ | Without | Girl item → hatches | Nord fallback girl | ♀ adult of its recorded race (BF Adult Pack) |
+| Human / Beast | ♂ | With | Boy item → hatches | Real ♂ child of its own race | ♂ adult of its race |
+| Human / Beast | ♀ | With | Girl item → hatches | Real ♀ child of its own race | ♀ adult of its race |
+| Creature (wolf, sabre cat, custom, …) | ♂ | Without | — (never an item) | Nord fallback boy | Stays a grown child |
+| Creature | ♀ | Without | — | Nord fallback girl | Stays a grown child |
+| Creature | ♂ | With (BFACCA) | — | Real creature child | Full-size creature; never transitions |
+| Creature | ♀ | With (BFACCA) | — | Real creature child | Full-size creature; never transitions |
+
+- The **Baby item** column applies only when Baby Spawn is "Item/Actor"; in "Actor" mode the child actor appears directly, and creatures always spawn as actors (never an item).
+- Without RS Children, **non-Nord humanoids borrow the Nord child** as a stand-in model -- the recorded race is still correct, so the grown adult matches.
+- **Sex** only picks the ♂/♀ variant at each stage; with the Adult Pack present it does not change the outcome.
+- With the **`MixWithCopyActorBase`** add-on setting, a configurable share of children instead spawn as a scaled-down copy of the parent's own base (a "small adult", or a small creature) rather than the child model shown above.
+
+> **Where the grown adult comes from:** the BF Adult Pack (or an `AdultActor_*` entry) when the race is covered; otherwise a copy of the **same-sex parent's** base. That copy is never made from the player, a unique NPC (named followers, spouses -- it would break quest aliases and follower frameworks), or a creature. When the only candidate is one of those, the child simply stays a grown child.
 
 What grown adults can and cannot do:
 
