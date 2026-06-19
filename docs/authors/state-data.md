@@ -5,19 +5,23 @@ Beeing Female NG stores most runtime state in StorageUtil values (prefix `FW.`).
 ## Reading State and Sperm Info
 
 ```papyrus
-; Current state (0..8)
+; Current cycle/pregnancy state (0..8) -- read straight from StorageUtil
 int s = StorageUtil.GetIntValue(PlayerRef, "FW.CurrentState", 0)
 
-; Check if there is significant sperm stored
-int sa = StorageUtil.FormListCount(PlayerRef, "FW.SpermName")
-bool isCumInside = false
-while sa > 0
-	sa -= 1
-	float amo = StorageUtil.FloatListGet(PlayerRef, "FW.SpermAmount", sa)
-	if amo > 0.3
-		isCumInside = true
-	endif
-endwhile
+; Whether the actor currently has conception-relevant sperm. Prefer BF's own
+; check over scanning FW.SpermAmount yourself -- HasRelevantSperm applies the
+; same amount / timing / traveling-sperm rules BF uses internally.
+FWController bf = Game.GetFormFromFile(0x182A, "BeeingFemale.esm") as FWController
+bool isCumInside = bf.HasRelevantSperm(PlayerRef)
+```
+
+If Beeing Female is an **optional** dependency, do not type a property or variable to `FWController` directly -- that hard-binds your script to BF at load time, and it will fail to load when BF is absent. Keep a plain `Quest` handle and do the cast inside a small `Global` helper, so the `FWController` type resolves only lazily when BF is actually installed:
+
+```papyrus
+; In a separate script -- compiles without BF present; the cast resolves only when called
+bool function HasRelevantSperm(Quest fwControllerQuest, Actor akTarget) Global
+	return (fwControllerQuest as FWController).HasRelevantSperm(akTarget)
+endFunction
 ```
 
 ## StorageUtil Keys
