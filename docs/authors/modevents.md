@@ -26,6 +26,7 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
     - `Dispel` (numArg unused): dispel the BeeingFemale effect on the sender.
     - `ConceptionChance` (numArg = 1 player, 2 follower, 3 npc): update auto-impregnation flags for the sender based on target group.
 - `AddActorSperm` and `AddSperm` (ModEvent): push two Actor forms (woman first, donor second). Both must be valid actors; adds sperm without using a command string.
+- `dhlp-Suspend` / `dhlp-Resume` (SendModEvent): the shared DHLP scene-coordination convention used by Devious Devices, Conditional Expressions Extended, and similar mods. While one or more `dhlp-Suspend` events are outstanding (more suspends than resumes), BF **defers the start of the birth scene** — it will not strip, lock, animate, or move the mother until the matching `dhlp-Resume` arrives. The wait is capped (~15 minutes) so a mod that forgets to resume can never block birth forever, and the counter resets on every game load. BF ignores its own broadcast of these events (see below), so emitting them from your mod only affects BF, never causes it to suspend itself.
 
 !!! note "Already-tracked vs. auto-tracking commands"
     Two listeners back the `BeeingFemale` command event. The central system handles the conception/state commands (`AddContraception`, `AddFertility`, `DrinkFertilityTonic`, `AddSperm`, `AddSpermImpregnate`, `WashOutSperm`, `ChangeState`, `InfoBox`, `DamageBaby`, `HealBaby`, `CanBecomePregnant`, `CanBecomePMS`) and will **start tracking** the female if she isn't already. The remaining commands (`Update`, `Belly`, `Birth`, `Dispel`, `CheckAbortus`, `ConceptionChance`, `TestScale`) are handled by the per-actor cycle ability, so they only do something on a female who is **already tracked** (has the BeeingFemale ability) — on an untracked actor they are no-ops.
@@ -35,6 +36,7 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
 - `BeeingFemaleConception` (ModEvent): pushed as `Mother` (Form), `ChildCount` (Int), `Father0` (Form), `Father1` (Form), `Father2` (Form). Fathers may be `None` if unknown.
 - `BeeingFemaleLabor` (ModEvent): pushed as `Mother` (Form), `ChildCount` (Int), `Father0` (Form), `Father1` (Form), `Father2` (Form). Fired on labor start and on direct `GiveBirth` calls.
 - `BeeingFemale` (ModEvent): command-style event; see the ChangeState subscription example below if you want to listen for `ChangeState` commands.
+- `dhlp-Suspend` / `dhlp-Resume` (SendModEvent): broadcast around the **birth scene** so DHLP-aware mods back off while the mother is stripped / locked / animated. `dhlp-Suspend` fires once when a birth commits; `dhlp-Resume` fires once when the last in-progress birth finishes (the pair is reference-counted, so overlapping NPC births stay balanced and an interrupted birth still resumes). BF sends these from its own quest, so its own listener filters them out by `sender` — your mod sees them like any other suspend/resume. If your mod manages facial expressions, posing, or camera, treat a BF `dhlp-Suspend` as "do not touch this actor until `dhlp-Resume`".
 
 ## Examples
 

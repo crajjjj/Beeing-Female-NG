@@ -2917,6 +2917,7 @@ state LaborPains_State
 		FWUtility.ActorRemoveSpell(ActorRef,Effect_Presswehen)
 		Manager.RemoveCME(ActorRef,8)
 		; Defensive cleanup in case birth was interrupted.
+		System.DHLPResume(ActorRef)
 		StorageUtil.FormListRemove(none,"FW.GivingBirth", ActorRef)
 		;System.InstantBornChilds(ActorRef)
 	endFunction

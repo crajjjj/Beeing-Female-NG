@@ -847,6 +847,29 @@ endFunction
 
 ; This function will force the birth for the given pregnant woman
 ; The given Woman must be pregnant already
+; True when the mother is locked into a pose/animation the birth lay-down
+; sequence would fight: occupying furniture (chairs, crafting stations, and
+; ZAP/DD bound furniture like crosses & pillories) or wearing heavy bondage
+; (armbinder, yoke, ...). When true, GiveBirth uses the non-animated birth path
+; instead of forcing a broken / T-posing idle on top of the restraint.
+; The DD keyword is resolved lazily so DD stays a soft dependency (None when
+; DD isn't installed -> the check is simply skipped).
+bool function IsBirthAnimationBlocked(actor Mother)
+	if !Mother
+		return false
+	endif
+	if Mother.GetFurnitureReference() ; sitting / crafting / bound to furniture
+		FW_log.WriteLog("FWController.IsBirthAnimationBlocked: " + Mother + " is occupying furniture - birth animation will be skipped (silent birth)")
+		return true
+	endif
+	Keyword kwHeavyBondage = Keyword.GetKeyword("zad_DeviousHeavyBondage")
+	if kwHeavyBondage && Mother.WornHasKeyword(kwHeavyBondage)
+		FW_log.WriteLog("FWController.IsBirthAnimationBlocked: " + Mother + " is in heavy bondage - birth animation will be skipped (silent birth)")
+		return true
+	endif
+	return false
+endFunction
+
 function GiveBirth(actor Mother)
 
 	;System.Trace("FW Debug: FWController.GiveBirth",Mother)
@@ -868,6 +891,29 @@ function GiveBirth(actor Mother)
 		endif
 		return;
 	EndIf
+
+	; --- DHLP: respect other mods that hold the actor in a scene ---
+	; Wait out any active dhlp-Suspend (Devious Devices, defeat, OStim
+	; listeners, ...) before we strip / lock / animate. The re-entrancy guard
+	; below still de-dupes concurrent triggers (the claim happens after this
+	; wait), and the wait is capped so a leaked suspend from a misbehaving mod
+	; can never block birth forever (~15 min: 90 * 10s).
+	int dhlpWaited = 0
+	if System.IsDHLPSuspended()
+		FW_log.WriteLog("FWController.GiveBirth: DHLP suspend active for " + Mother + " - deferring birth scene start")
+	endif
+	while System.IsDHLPSuspended() && dhlpWaited < 90
+		Utility.Wait(10.0)
+		dhlpWaited += 1
+	endWhile
+	if dhlpWaited > 0
+		if System.IsDHLPSuspended()
+			FW_log.WriteLog("FWController.GiveBirth: DHLP suspend still active after ~" + (dhlpWaited * 10) + "s cap - proceeding with birth for " + Mother)
+		else
+			FW_log.WriteLog("FWController.GiveBirth: DHLP suspend cleared after ~" + (dhlpWaited * 10) + "s - resuming birth for " + Mother)
+		endif
+	endif
+
 	if StorageUtil.FormListFind(none,"FW.GivingBirth", Mother) >= 0
 		float birthStart = StorageUtil.GetFloatValue(Mother, "FW.GivingBirthTime", 0.0)
 		if birthStart > 0.0 && (GameDaysPassed.GetValue() - birthStart) < 0.25
@@ -883,6 +929,9 @@ function GiveBirth(actor Mother)
 	; unlock the script, so a second trigger must hit the guard above first
 	StorageUtil.FormListAdd(none,"FW.GivingBirth", Mother) ;Tkc (Loverslab): Mother added to the GivingBirth list to detect her when is giving birth by papyrus condition or from esp
 	StorageUtil.SetFloatValue(Mother, "FW.GivingBirthTime", GameDaysPassed.GetValue())
+
+	; Birth is now committed - tell DHLP-aware mods to suspend while it plays.
+	System.DHLPSuspend(Mother)
 
 	int laborEvent = ModEvent.Create("BeeingFemaleLabor")
 	if laborEvent
@@ -1002,7 +1051,12 @@ function GiveBirth(actor Mother)
 		Utility.Wait(3)
 	endIf
 	Form[] dropedItems
-	if(cfg.PlayAnimations)
+	; Skip the lay-down birth animation when the mother is committed to another
+	; pose the engine won't let us override (furniture / heavy bondage). Fall back
+	; to the non-animated birth so we never force a broken idle on the restraint.
+	bool blocked = IsBirthAnimationBlocked(Mother)
+	bool playAnim = cfg.PlayAnimations && !blocked
+	if(playAnim)
 		dropedItems = System.StripActor(Mother)
 	
 		bool useBed = System.LayDown(Mother)
@@ -1012,8 +1066,14 @@ function GiveBirth(actor Mother)
 	endif
 	
 	if Mother==PlayerRef
-		FWUtility.LockPlayer()
-		Manager.StartCamera()
+		; Skip taking over player control (AI-driven / chargen lock / camera) when
+		; another system already owns the player (DD bondage, furniture). Layering
+		; our global control toggles on top risks a stuck AI-driven / no-controls
+		; softlock, and UnlockPlayer below would clobber their control state.
+		if !blocked
+			FWUtility.LockPlayer()
+			Manager.StartCamera()
+		endif
 	else
 		Mother.SetDontMove(true)
 	endIf
@@ -1032,7 +1092,7 @@ function GiveBirth(actor Mother)
 		my_BirthPain = false
 	endIf
 	
-	if(cfg.PlayAnimations)
+	if(playAnim)
 		Utility.Wait(3*IntervalLaborScale)
 		Debug.SendAnimationEvent(Mother, "Birth_S1")
 		
@@ -1064,7 +1124,7 @@ function GiveBirth(actor Mother)
 			System.Mimik(Mother, "Pained", 30)
 		endIf
 
-		if(cfg.PlayAnimations)
+		if(playAnim)
 			Debug.SendAnimationEvent(Mother, "Birth_S2");
 			Utility.Wait(1)
 			int j = 8
@@ -1125,7 +1185,7 @@ function GiveBirth(actor Mother)
 			; Child is death >.<
 		endIf
 		
-		if(cfg.PlayAnimations)
+		if(playAnim)
 			Utility.Wait(1)
 			Debug.SendAnimationEvent(Mother, "Birth_S1")
 		endif
@@ -1152,7 +1212,7 @@ function GiveBirth(actor Mother)
 	Utility.Wait(2)
 	; Clear expressions
 	
-	if(cfg.PlayAnimations)
+	if(playAnim)
 		System.GetUp(Mother)
 		System.UnstripActor(Mother,dropedItems)
 	endif
@@ -1160,8 +1220,12 @@ function GiveBirth(actor Mother)
 	Mother.EvaluatePackage()
 	
 	if Mother==PlayerRef
-		FWUtility.UnlockPlayer()
-		Manager.StopCamera()
+		; Only release what we took: if birth was blocked we never locked, so
+		; leave the player's control state to whoever owns it (DD, furniture).
+		if !blocked
+			FWUtility.UnlockPlayer()
+			Manager.StopCamera()
+		endif
 	else
 		Mother.SetDontMove(false)
 		
@@ -1183,6 +1247,8 @@ function GiveBirth(actor Mother)
 	ApplyBabyTrackerTattoos(Mother)
 	ApplyWombTattoo(Mother)
 
+	; Birth scene finished - let DHLP-aware mods resume.
+	System.DHLPResume(Mother)
 	StorageUtil.FormListRemove(none,"FW.GivingBirth", Mother) ; Tkc (Loverslab) : end of givingbirth anim, remove the Mother
 	StorageUtil.UnsetFloatValue(Mother, "FW.GivingBirthTime")
 endFunction

@@ -632,6 +632,17 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 	RegisterForModEvent("AddSperm", "onAddActorSperm")
 	RegisterForModEvent("BeeingFemale", "onBeeingFemaleCommand")
 	RegisterForModEvent("consolecommand", "onBeeingFemaleConsole")
+	; DHLP-Suspend coordination: defer the birth scene while another mod
+	; (Devious Devices, defeat scenes, OStim listeners, ...) holds an actor in
+	; an exclusive scene. Counters are transient and reset on every load.
+	RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend")
+	RegisterForModEvent("dhlp-Resume", "OnDhlpResume")
+	dhlpSuspendCount = 0
+	; Drop any stale "mid-birth, suspend emitted" markers left by a session that
+	; ended (save/reload) before the matching resume could run - the scenes they
+	; paired with are gone, so the obligation is void. Prevents a desynced
+	; suspend/resume on the next birth for those mothers.
+	StorageUtil.FormListClear(none, "FW.DHLPEmitted")
 	LoadState=27
 	RegisterForSingleUpdateGameTime(1)
 	LoadState=28
@@ -974,6 +985,72 @@ endFunction
 ; FemaleActor.SendModEvent("BeeingFemale", "ChangeState", 3) ; This will change the state to 'Menstruation'
 ; FemaleActor.SendModEvent("BeeingFemale", "InfoBox", 100) ; This will open the info window with all informations
 ; FemaleActor.SendModEvent("BeeingFemale", "DamageBaby", 30) ; This will make 30 damage to the baby
+;--------------------------------------------------------------
+; DHLP-Suspend coordination
+;   RESPECT: we listen to "dhlp-Suspend" / "dhlp-Resume" so the birth scene
+;            defers while another mod (Devious Devices, defeat scenes, OStim
+;            listeners, ...) holds an actor in an exclusive scene.
+;   EMIT:    GiveBirth broadcasts the same events around the birth scene so
+;            DHLP-aware mods (e.g. Conditional Expressions Extended) back off
+;            while the mother is being stripped / locked / animated.
+;   Our own emissions arrive with sender == Self and are ignored, so they
+;   never inflate our own suspend counter.
+;--------------------------------------------------------------
+; Plain (non-property) member var on purpose: per-session, re-zeroed in
+; OnGameLoad - a suspend counter that survived a reload would stick (the scene
+; that raised it is gone and its matching resume never arrives).
+int dhlpSuspendCount		; external suspends currently active (>0 => suspended)
+; The set of mothers we're currently broadcasting a suspend for is a global
+; StorageUtil FormList ("FW.DHLPEmitted", same pattern/lifecycle as
+; "FW.GivingBirth"); its count is our emit refcount. Cleared in OnGameLoad so an
+; interrupted birth can't leave a stale marker that desyncs the next suspend/resume.
+
+Event OnDhlpSuspend(string eventName, string strArg, float numArg, Form sender)
+	if sender == (Self as Form) ; ignore our own birth broadcast
+		return
+	endif
+	dhlpSuspendCount += 1
+EndEvent
+
+Event OnDhlpResume(string eventName, string strArg, float numArg, Form sender)
+	if sender == (Self as Form)
+		return
+	endif
+	dhlpSuspendCount -= 1
+	if dhlpSuspendCount < 0
+		dhlpSuspendCount = 0
+	endif
+EndEvent
+
+bool Function IsDHLPSuspended()
+	return dhlpSuspendCount > 0
+EndFunction
+
+; Broadcast dhlp-Suspend while a birth scene runs. A per-mother flag plus a
+; refcount keep the suspend/resume pair balanced across overlapping NPC births
+; and interrupted births, so listeners only resume once the last birth ends.
+Function DHLPSuspend(actor Mother)
+	if !Mother || StorageUtil.FormListFind(none, "FW.DHLPEmitted", Mother) >= 0
+		return ; not a real actor, or we're already broadcasting a suspend for her
+	endif
+	StorageUtil.FormListAdd(none, "FW.DHLPEmitted", Mother)
+	if StorageUtil.FormListCount(none, "FW.DHLPEmitted") == 1
+		SendModEvent("dhlp-Suspend") ; first concurrent birth -> tell others to back off
+	endif
+EndFunction
+
+Function DHLPResume(actor Mother)
+	; Idempotent: both the normal GiveBirth tail and the LaborPains defensive
+	; cleanup call this, but only the one that finds her in the list does work.
+	if !Mother || StorageUtil.FormListFind(none, "FW.DHLPEmitted", Mother) < 0
+		return
+	endif
+	StorageUtil.FormListRemove(none, "FW.DHLPEmitted", Mother)
+	if StorageUtil.FormListCount(none, "FW.DHLPEmitted") == 0
+		SendModEvent("dhlp-Resume") ; last in-progress birth finished -> let others resume
+	endif
+EndFunction
+
 ; FemaleActor.SendModEvent("BeeingFemale", "HealBaby", 60) ; This will heal the baby with 60 Health points
 Event onBeeingFemaleCommand(string hookName, string argString, float argNum, form sender)
 	if hookName=="BeeingFemale" && (sender as Actor);/!=none/; ;Tkc (Loverslab): optimization
@@ -3766,9 +3843,109 @@ function showBornMessage(actor Mother, actor Father, int sex)
 endFunction
 
 function Mimik(actor a, string ExpressionName = "", int Strength = 50, bool bClear = true)
-	if a.Is3DLoaded() ;Tkc (Loverslab): fix when women npc on start of giving birth was moved to other location and log started spam with "ERROR:  (########): Does not have face animation data, and therefore cannot have their expression".
-		Manager.OnMimik(a, ExpressionName, Strength, bClear)
+	; Drive birth faces through MFG Fix (MfgConsoleFuncExt) directly instead of
+	; SexLab, so they work for OStim (and any) setups too - only MFG Fix is
+	; needed, which both SexLab and OStim already rely on. Global calls on the
+	; Hidden script resolve lazily, so this is not a load-time hard dependency.
+	; Faces are applied as expression[32] presets in one smooth atomic call
+	; (ApplyExpressionPresetSmooth), per the Conditional Expressions Extended
+	; reference. Preset indices are ABSOLUTE (see GetPainedPreset / GetHappyPreset).
+	if !a || !a.Is3DLoaded() ;Tkc (Loverslab): fix - avoid "...does not have face animation data..." log spam when the actor's 3D isn't loaded
+		return
 	endif
+	; Detect a mouth that's being held open by something else (gags drive mouth
+	; openness via the Aah/BigAah phonemes) BEFORE we reset anything. Gags force it
+	; wide (~60-100); our own grimace phoneme stays <= ~40, so this threshold spots
+	; an externally forced mouth without tripping on our own. If forced, we leave
+	; the phonemes alone (reset only modifiers) and never set our own mouth phoneme.
+	bool mouthForced = MfgConsoleFunc.GetPhoneme(a, 0) > 50 || MfgConsoleFunc.GetPhoneme(a, 1) > 50
+	if bClear
+		if mouthForced
+			MfgConsoleFuncExt.ResetModifiers(a) ; keep phonemes (forced mouth) intact
+		else
+			MfgConsoleFuncExt.ResetMfg(a)       ; phonemes + modifiers
+		endif
+	endif
+	float scale = Strength / 100.0 ; ApplyExpressionPreset multiplies preset values by these (Strength 0-100 -> 0.0-1.0)
+	if ExpressionName == "Pained"
+		MfgConsoleFuncExt.ApplyExpressionPresetSmooth(a, GetPainedPreset(), mouthForced, 0, scale, scale, scale)
+	elseif ExpressionName == "Happy"
+		MfgConsoleFuncExt.ApplyExpressionPresetSmooth(a, GetHappyPreset(), mouthForced, 0, scale, scale, scale)
+	else
+		; No expression name -> also clear the mood (the reset above only handles
+		; phonemes/modifiers).
+		a.ClearExpressionOverride()
+	endif
+endFunction
+
+; Randomly varied labor grimace as an expression[32] preset so birth doesn't show
+; the same face every time. Indices are ABSOLUTE: [0-15] phonemes, [16-29]
+; modifiers, [30] mood id, [31] mood strength. Per-call Strength is applied by the
+; caller via the *StrModifier multipliers; abOpenMouth (mouthForced) makes the
+; native skip the phonemes so a gag's open mouth is left alone.
+float[] function GetPainedPreset()
+	float[] e = new float[32]
+	int variant = Utility.RandomInt(1, 4)
+	if variant == 1
+		; clenched: furrowed brows + squint, suffering
+		e[18] = 1.0  ; BrowDownLeft
+		e[19] = 1.0  ; BrowDownRight
+		e[28] = 0.75 ; SquintLeft
+		e[29] = 0.75 ; SquintRight
+		e[0]  = 0.5  ; Aah (open mouth)
+		e[30] = 11.0 ; Mood Sad
+		e[31] = 1.0
+	elseif variant == 2
+		; strained: brows drawn in, eyes screwed shut
+		e[20] = 1.0  ; BrowInLeft
+		e[21] = 1.0  ; BrowInRight
+		e[28] = 1.0  ; SquintLeft
+		e[29] = 1.0  ; SquintRight
+		e[1]  = 0.5  ; BigAah (wide open)
+		e[30] = 8.0  ; Mood Anger
+		e[31] = 0.75
+	elseif variant == 3
+		; wincing: brows down, looking down
+		e[18] = 0.75 ; BrowDownLeft
+		e[19] = 0.75 ; BrowDownRight
+		e[24] = 0.5  ; LookDown
+		e[11] = 0.5  ; Oh
+		e[30] = 11.0 ; Mood Sad
+		e[31] = 1.0
+	else
+		; gritted teeth: brows down, slight squint, anger
+		e[18] = 1.0  ; BrowDownLeft
+		e[19] = 1.0  ; BrowDownRight
+		e[28] = 0.5  ; SquintLeft
+		e[29] = 0.5  ; SquintRight
+		e[6]  = 0.75 ; Eh (gritted)
+		e[30] = 8.0  ; Mood Anger
+		e[31] = 1.0
+	endif
+	return e
+endFunction
+
+; Randomly varied happy/relieved face for the post-birth beat. Same preset layout
+; as GetPainedPreset; the smile phoneme is skipped by abOpenMouth when gagged.
+float[] function GetHappyPreset()
+	float[] e = new float[32]
+	int variant = Utility.RandomInt(1, 3)
+	if variant == 1
+		e[30] = 10.0 ; Mood Happy
+		e[31] = 1.0
+	elseif variant == 2
+		; beaming: dialogue happy + raised brows
+		e[30] = 2.0  ; Dialogue Happy
+		e[31] = 1.0
+		e[22] = 0.5  ; BrowUpLeft
+		e[23] = 0.5  ; BrowUpRight
+	else
+		; smiling: mood happy + a smile shape
+		e[30] = 10.0 ; Mood Happy
+		e[31] = 1.0
+		e[4]  = 0.5  ; DST (teeth/smile shape)
+	endif
+	return e
 endFunction
 
 string function getRandomChildName(int sex) global
