@@ -58,14 +58,13 @@ An offspring can pass through three stages: **Baby item** (only in the Item/Acto
 | Human / Beast | ♀ | Without | Girl item → hatches | Nord fallback girl | ♀ adult of its recorded race (BF Adult Pack) |
 | Human / Beast | ♂ | With | Boy item → hatches | Real ♂ child of its own race | ♂ adult of its race |
 | Human / Beast | ♀ | With | Girl item → hatches | Real ♀ child of its own race | ♀ adult of its race |
-| Creature (wolf, sabre cat, custom, …) | ♂ | Without | — (never an item) | Nord fallback boy | Stays a grown child |
-| Creature | ♀ | Without | — | Nord fallback girl | Stays a grown child |
-| Creature | ♂ | With (BFACCA) | — | Real creature child | Full-size creature; never transitions |
-| Creature | ♀ | With (BFACCA) | — | Real creature child | Full-size creature; never transitions |
+| Creature (wolf, sabre cat, custom, …) | ♂ | Without | — spawns directly as a child actor | Nord fallback boy | Stays a grown child |
+| Creature | ♀ | Without | — spawns directly as a child actor | Nord fallback girl | Stays a grown child |
+| Creature | ♂ | With (BFACCA) | — spawns directly as a child actor | Real creature child | Full-size creature; never transitions |
+| Creature | ♀ | With (BFACCA) | — spawns directly as a child actor | Real creature child | Full-size creature; never transitions |
 
 - The **Baby item** column applies only when Baby Spawn is "Item/Actor"; in "Actor" mode the child actor appears directly, and creatures always spawn as actors (never an item).
 - Without RS Children, **non-Nord humanoids borrow the Nord child** as a stand-in model -- the recorded race is still correct, so the grown adult matches.
-- **Sex** only picks the ♂/♀ variant at each stage; with the Adult Pack present it does not change the outcome.
 - With the **`MixWithCopyActorBase`** add-on setting, a configurable share of children instead spawn as a scaled-down copy of the parent's own base (a "small adult", or a small creature) rather than the child model shown above.
 
 > **Where the grown adult comes from:** the BF Adult Pack (or an `AdultActor_*` entry) when the race is covered; otherwise a copy of the **same-sex parent's** base. That copy is never made from the player, a unique NPC (named followers, spouses -- it would break quest aliases and follower frameworks), or a creature. When the only candidate is one of those, the child simply stays a grown child.
