@@ -3866,7 +3866,11 @@ function Mimik(actor a, string ExpressionName = "", int Strength = 50, bool bCle
 			MfgConsoleFuncExt.ResetMfg(a)       ; phonemes + modifiers
 		endif
 	endif
-	float scale = Strength / 100.0 ; ApplyExpressionPreset multiplies preset values by these (Strength 0-100 -> 0.0-1.0)
+	; Map 0-100 Strength to a *visible* intensity. Straight Strength/100 made light
+	; contractions (20-30) barely a frown, so floor the intensity at 0.7 (even a
+	; light wave is a strong grimace) and scale up to 1.0 at full Strength - stays
+	; within the 0-100 morph range, no over-drive. Tune 0.7 (floor) / 0.3 (span).
+	float scale = 0.7 + (Strength / 100.0) * 0.3
 	if ExpressionName == "Pained"
 		MfgConsoleFuncExt.ApplyExpressionPresetSmooth(a, GetPainedPreset(), mouthForced, 0, scale, scale, scale)
 	elseif ExpressionName == "Happy"
