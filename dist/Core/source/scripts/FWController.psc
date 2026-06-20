@@ -1091,22 +1091,22 @@ function GiveBirth(actor Mother)
 	if(DamageScale <= 0)
 		my_BirthPain = false
 	endIf
+	FW_log.WriteLog("FWController.GiveBirth: DamageScale=" + DamageScale + ", my_BirthPain=" + my_BirthPain) ; TEMP diagnostic
 	
 	if(playAnim)
 		Utility.Wait(3*IntervalLaborScale)
 		Debug.SendAnimationEvent(Mother, "Birth_S1")
-		
+		System.Mimik(Mother, "Pained", 85)
+		System.PlayPainSound(Mother)
 		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 85)
-			System.PlayPainSound(Mother)
 			System.doDamage(Mother, 8 * DamageScale ,10)
 		endIf
 		Utility.Wait(3*IntervalLaborScale)
 	endif
-	
+
+	System.Mimik(Mother, "Pained", 90)
+	System.PlayPainSound(Mother, 40)
 	if(my_BirthPain)
-		System.Mimik(Mother, "Pained", 90)
-		System.PlayPainSound(Mother,40)
 		System.DoDamage(Mother, 11 * DamageScale ,10)
 	endIf
 	; Raise the birth count (baby count is incremented per live birth in the loop below)
@@ -1115,40 +1115,32 @@ function GiveBirth(actor Mother)
 	if(my_BirthPain)
 		System.ActorAddSpellOpt(Mother,Effect_VaginalBloodLow,false,true)
 	endIf
-	
+
 	while NumChilds > 0
 		NumChilds -= 1
 		Utility.Wait(4*IntervalBabyScale)
 
-		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 75)
-		endIf
+		System.Mimik(Mother, "Pained", 75)
 
 		if(playAnim)
 			Debug.SendAnimationEvent(Mother, "Birth_S2");
 			Utility.Wait(1)
 			int j = 8
 			Debug.SendAnimationEvent(Mother, "Birth_S3");
-			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 80)
-			endIf
+			System.Mimik(Mother, "Pained", 80)
 			while j > 0
+				System.PlayPainSound(Mother)
 				if(my_BirthPain)
-					System.PlayPainSound(Mother)
 					System.DoDamage(Mother,9 * DamageScale,10)
 				endIf
 				Utility.Wait(2*IntervalBabyScale)
 				j -= 1
 			endWhile
-			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 70)
-			endIf
+			System.Mimik(Mother, "Pained", 70)
 
 			;Debug.SendAnimationEvent(Mother, "Birth_S3");
 			Utility.Wait(2*IntervalBabyScale)
-			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 100)
-			endIf
+			System.Mimik(Mother, "Pained", 100)
 		else
 			if(my_BirthPain)
 				int j = 4
@@ -1162,8 +1154,8 @@ function GiveBirth(actor Mother)
 			endIf
 		endif
 
+		System.PlayPainSound(Mother, 60)
 		if(my_BirthPain)
-			System.PlayPainSound(Mother,60)
 			System.DoDamage(Mother,18 * DamageScale,9)
 		endIf
 		
@@ -1191,10 +1183,8 @@ function GiveBirth(actor Mother)
 		endif
 		Utility.Wait(2)
 
-		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 100)
-		endIf
-		
+		System.Mimik(Mother, "Pained", 100)
+
 		StorageUtil.SetIntValue(Mother,"FW.NumChilds",NumChilds)
 		if NumChilds ;Tkc (Loverslab): optimization
 			SetBelly(Mother,false)

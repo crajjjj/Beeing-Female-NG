@@ -1907,7 +1907,7 @@ bool function CheckForCondome(actor Woman, actor Man)
 	return Manager.CheckForCondome(Woman, Man)
 endFunction
 
-Sound _painSound ; cached fallback pain sound (_BFFemalePainSound SNDR in BeeingFemale.esm)
+Sound _painSound ; cached fallback pain sound (_BFFemalePainSoundSoun SOUN in BeeingFemale.esm)
 
 function PlayPainSound(Actor A,float Strength=30.0)
 	if A.Is3DLoaded()
@@ -1921,10 +1921,11 @@ function PlayPainSound(Actor A,float Strength=30.0)
 				; pain sound so OStim/non-SexLab setups still get labor sounds. Lazily
 				; resolved + cached; the SNDR randomises across FemalePainSound/000-009.wav.
 				if !_painSound
-					_painSound = Game.GetFormFromFile(0x0005D6E7, "BeeingFemale.esm") as Sound
+					Form _pf = Game.GetFormFromFile(0x0006D553, "BeeingFemale.esm")
+					_painSound = _pf as Sound
 				endif
 				if _painSound
-					_painSound.Play(A)
+					_painSound.PlayAndWait(A)
 				endif
 			endif
 		endif
