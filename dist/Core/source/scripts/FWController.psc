@@ -1097,7 +1097,7 @@ function GiveBirth(actor Mother)
 		Debug.SendAnimationEvent(Mother, "Birth_S1")
 		
 		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 50)
+			System.Mimik(Mother, "Pained", 85)
 			System.PlayPainSound(Mother)
 			System.doDamage(Mother, 8 * DamageScale ,10)
 		endIf
@@ -1105,7 +1105,7 @@ function GiveBirth(actor Mother)
 	endif
 	
 	if(my_BirthPain)
-		System.Mimik(Mother, "Pained", 60)
+		System.Mimik(Mother, "Pained", 90)
 		System.PlayPainSound(Mother,40)
 		System.DoDamage(Mother, 11 * DamageScale ,10)
 	endIf
@@ -1121,7 +1121,7 @@ function GiveBirth(actor Mother)
 		Utility.Wait(4*IntervalBabyScale)
 
 		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 30)
+			System.Mimik(Mother, "Pained", 75)
 		endIf
 
 		if(playAnim)
@@ -1130,7 +1130,7 @@ function GiveBirth(actor Mother)
 			int j = 8
 			Debug.SendAnimationEvent(Mother, "Birth_S3");
 			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 40)
+				System.Mimik(Mother, "Pained", 80)
 			endIf
 			while j > 0
 				if(my_BirthPain)
@@ -1141,13 +1141,13 @@ function GiveBirth(actor Mother)
 				j -= 1
 			endWhile
 			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 20)
+				System.Mimik(Mother, "Pained", 70)
 			endIf
 
 			;Debug.SendAnimationEvent(Mother, "Birth_S3");
 			Utility.Wait(2*IntervalBabyScale)
 			if(my_BirthPain)
-				System.Mimik(Mother, "Pained", 80)
+				System.Mimik(Mother, "Pained", 100)
 			endIf
 		else
 			if(my_BirthPain)
@@ -1192,7 +1192,7 @@ function GiveBirth(actor Mother)
 		Utility.Wait(2)
 
 		if(my_BirthPain)
-			System.Mimik(Mother, "Pained", 80)
+			System.Mimik(Mother, "Pained", 100)
 		endIf
 		
 		StorageUtil.SetIntValue(Mother,"FW.NumChilds",NumChilds)
@@ -1203,7 +1203,7 @@ function GiveBirth(actor Mother)
 		endIf
 		Utility.Wait(3*IntervalBabyScale)
 	endWhile
-	System.Mimik(Mother, "Happy", 30)
+	System.Mimik(Mother, "Happy", 80)
 	
 	StorageUtil.UnsetFloatValue(Mother,"FW.UnbornHealth")
 	FWUtility.ClearChildFathers(Mother)
