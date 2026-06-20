@@ -1907,11 +1907,26 @@ bool function CheckForCondome(actor Woman, actor Man)
 	return Manager.CheckForCondome(Woman, Man)
 endFunction
 
+Sound _painSound ; cached fallback pain sound (_BFFemalePainSound SNDR in BeeingFemale.esm)
+
 function PlayPainSound(Actor A,float Strength=30.0)
 	if A.Is3DLoaded()
-		If Manager.OnPlayPainSound(A, Strength);Tkc (Loverslab): optimization
-		else;If Manager.OnPlayPainSound(A, Strength)==false
-		;	 TODO: Play a pain sound
+		; Global_PlayPainSounds (global add-on INI, default true) gates the audible
+		; pain sound; set it false to silence labor/cycle pain sounds. The detection
+		; event below is gameplay noise, not the played sound, so it's left alone.
+		if StorageUtil.GetIntValue(none, "FW.AddOn.Global_PlayPainSounds", 1) == 1
+			If Manager.OnPlayPainSound(A, Strength);Tkc (Loverslab): optimization
+			else;If Manager.OnPlayPainSound(A, Strength)==false
+				; No addon handled it (e.g. SexLab absent) - play BF's own bundled female
+				; pain sound so OStim/non-SexLab setups still get labor sounds. Lazily
+				; resolved + cached; the SNDR randomises across FemalePainSound/000-009.wav.
+				if !_painSound
+					_painSound = Game.GetFormFromFile(0x0005D6E7, "BeeingFemale.esm") as Sound
+				endif
+				if _painSound
+					_painSound.Play(A)
+				endif
+			endif
 		endif
 		A.CreateDetectionEvent(A, FWUtility.RangedFloat(Strength, 30, 100) as int)
     endif

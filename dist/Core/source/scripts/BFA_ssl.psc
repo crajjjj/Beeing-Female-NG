@@ -413,19 +413,23 @@ Function processPair(Actor Female, Actor Male, bool bool_cameInsideAnal)
 endfunction
 
 bool function OnPlayPainSound(actor ActorRef, float Strength)
+	; Disabled: SexLab's voice.Moan pain sound never actually played here ("it is not
+	; working", per the original author). Return false so FWSystem.PlayPainSound falls
+	; back to BF's own bundled female pain sound, which works for SexLab and non-SexLab
+	; (OStim) setups alike. (Old SexLab path kept below, commented, for reference.)
+	return false
+	;/
 	if bSexLab ;Tkc (Loverslab): optimization
-		;Trace("BF: OnPlayPainSound > bSexLab=true")
 	else;if bSexLab==false
-		;Trace("BF: OnPlayPainSound > bSexLab=false")
 		return false
 	endif
 	sslBaseVoice voice = SexLab.PickVoice(ActorRef)
-	;Trace("BF: OnPlayPainSound > voice="+voice as string)
 	if voice
 		voice.Moan(ActorRef, Strength as int, true);it is not working
 		return true
 	endif
 	return false
+	/;
 endFunction
 
 ;/sslBaseVoice property SSLVoice auto hidden ;Tkc (Loverslab): sexlab sslBaseVoice module

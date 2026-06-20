@@ -366,6 +366,14 @@ function RefreshAddOnH(int type=127)
 							LoadGlobalAddOnValue(n, "Global_WidgetFlashShowTime")
 							LoadGlobalAddOnValue(n, "Global_WidgetNoFlashShowTime")
 
+							; Pain sounds (labor / cycle pains). Default true; always store 0/1 so
+							; toggling back to true re-enables. Read with default 1 -> sounds play unless disabled.
+							if(FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_PlayPainSounds", true))
+								StorageUtil.SetIntValue(none, "FW.AddOn.Global_PlayPainSounds", 1)
+							else
+								StorageUtil.SetIntValue(none, "FW.AddOn.Global_PlayPainSounds", 0)
+							endif
+
 							if(FWUtility.getIniCBool("AddOn", n, "AddOn", "Global_DisablePregnancy", false))
 								trace("FWAddOnManager - Activating Global_DisablePregnancy")	
 								StorageUtil.SetIntValue(none, "FW.AddOn.Global_DisablePregnancy", 1)
