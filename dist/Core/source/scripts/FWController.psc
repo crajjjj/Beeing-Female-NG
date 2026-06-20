@@ -1091,7 +1091,7 @@ function GiveBirth(actor Mother)
 	if(DamageScale <= 0)
 		my_BirthPain = false
 	endIf
-	FW_log.WriteLog("FWController.GiveBirth: DamageScale=" + DamageScale + ", my_BirthPain=" + my_BirthPain) ; TEMP diagnostic
+	FW_log.WriteLog("FWController.GiveBirth: DamageScale=" + DamageScale + ", my_BirthPain=" + my_BirthPain)
 	
 	if(playAnim)
 		Utility.Wait(3*IntervalLaborScale)
