@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
+  <moduleName>BF Dremora Adults</moduleName>
+  <installSteps order="Explicit">
+    <installStep name="BF Dremora Adults">
+      <optionalFileGroups order="Explicit">
+        <group name="Dremora Adults" type="SelectAll">
+          <plugins order="Explicit">
+            <plugin name="BF Dremora Adults">
+              <description>Beeing Female NG add-on. Makes Dremora children (vanilla and Dragonborn/DLC2 Dremora) grow into Dark Elf adults - the closest vanilla lookalike - using the Adult Pack bases that ship with Beeing Female NG, so no extra mods are needed. Shows up on the BF MCM AddOn page (Race section), enabled. Requires Beeing Female NG.</description>
+              <files>
+                <folder source="BeeingFemale" destination="BeeingFemale" priority="0" />
+              </files>
+              <typeDescriptor>
+                <type name="Required" />
+              </typeDescriptor>
+            </plugin>
+          </plugins>
+        </group>
+      </optionalFileGroups>
+    </installStep>
+  </installSteps>
+</config>
