@@ -27,6 +27,17 @@ When enabled (MCM toggle), low baby health can trigger miscarriage at any point 
 
 These damage the mother *after* the pregnancy has ended -- they are not a cause of unborn baby health loss. Higher difficulty increases the damage; on the *Painless* difficulty there is none.
 
+### Switching Babies ("NTR")
+
+An optional, **off-by-default** mechanic: while a female is *already* pregnant, sex with another male can reassign an unborn child's father to that new male. The pregnancy does not restart -- only the recorded father changes, which is what determines the child's inherited race and traits at birth. The roll is repeated on each pregnancy tick throughout all three trimesters, but never once labor has begun.
+
+It is gated by **two** independent switches that must *both* be on:
+
+1. The MCM toggle **"Allow switching babies in belly"** (Pregnancy page), default **off**. With it off, every add-on's swap setting is ignored.
+2. An installed add-on that marks a male (by actor or race) as able to swap -- `Allow_NTR_baby` with a non-zero chance (see the [author guide](../authors/add-on-framework.md#switching-babies-ntr)). With the toggle on but no such add-on present, nothing happens.
+
+When both are active, each eligible male's configured chance is rolled per child, *reduced* by the current father's own swap setting -- so a father configured the same way "defends" his child. Estrus Chaurus impregnation always takes priority and is never overridden.
+
 ## Birth
 
 When the third trimester ends, labor begins (State 7). Birth is a multi-stage process:

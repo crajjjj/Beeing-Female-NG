@@ -15,6 +15,7 @@ Beeing Female NG ships an INI-driven add-on framework that lets external mods ex
 - Global/default tunables for cycle timings, pregnancy chance, belly/breast scaling, pain, multiple births, and baby spawn pacing.
 - Per-race or per-actor overrides (pregnancy scales, duration multipliers, protected child flags, etc.).
 - Custom baby actor/item/armor selection for parent race/actor (with fallback behavior).
+- Per-race/per-actor "switching babies" (NTR) settings that let a male reassign an already-pregnant female's child (see [Switching Babies (NTR)](#switching-babies-ntr)).
 - Custom adult actor/voice selection for the grow-up feature (`AdultActor_*` — see [Adult Actor Add-ons](#adult-actor-add-ons-grow-up-feature) below).
 - Integration hooks via misc add-ons (SexLab/OStim/Bathing in Skyrim).
 - Add-on event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffectApply`, camera start/stop.
@@ -56,6 +57,23 @@ Use an actor add-on INI to customize pregnancy/cycle behavior for specific actor
 5. Edit the per-actor settings you need (durations, pain scales, pregnancy chance, etc.).
 
 After saving the INI, enable the add-on in the BeeingFemale MCM if it is not enabled by default.
+
+## Switching Babies (NTR)
+
+A male marked in a race or actor add-on can reassign an already-pregnant female's unborn child to himself when he deposits sperm -- the player-facing "switching babies in belly" mechanic. The keys go on the **male's** entry (per actor takes precedence over per race).
+
+| Key | Meaning |
+|-----|---------|
+| `Allow_NTR_baby` | `true` lets this male swap an already-pregnant female's child to his own. Default `false`. **Gated by the player's "Allow switching babies in belly" MCM toggle** (Pregnancy page, off by default): with that toggle off, this key is ignored entirely. |
+| `Sperm_NTR_baby_Prob` | Swap chance (used only when `Allow_NTR_baby=true`). A `0-99` roll succeeds if it lands below `Sperm_NTR_baby_Prob` minus the *current* father's own `Sperm_NTR_baby_Prob` -- so a father with his own value resists being swapped out. `0` or negative disables the swap. Default `0`. |
+
+Behavior notes:
+
+- The roll runs **per child** on each pregnancy tick across all three trimesters; once the female is in labor pains, no swap occurs.
+- Only the father record (`FW.ChildFather`) changes -- the pregnancy is *not* restarted. The new father determines the child's inherited race/traits at birth.
+- Estrus Chaurus impregnation (and the Spider / Dwemer add-ons) takes priority and is never overridden by an NTR swap.
+
+See the commented `Allow_NTR_baby` / `Sperm_NTR_baby_Prob` block in `dist/Core/BeeingFemale/AddOn/CustomActor AddOn Example.ini` for a ready-to-copy template.
 
 ## Adult Actor Add-ons (Grow-Up Feature)
 
