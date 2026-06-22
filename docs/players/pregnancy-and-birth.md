@@ -48,7 +48,7 @@ A baby's sex is **not** fixed in advance -- it is a weighted random roll made **
 - `0` -- always a girl
 - `53` -- the default
 
-> The slider only takes effect when **Baby Spawn** is set to **Actor** (Children page). In *Item/Actor* or *Gem* spawn modes it does not govern the result.
+> The same roll applies to **both** the **Actor** and **Item/Actor** baby-spawn modes (Children page). **Gem** mode produces a soul gem rather than a child, so no sex is decided there. (The in-game slider tooltip still says "Actor only," but that text is outdated — current versions roll Item/Actor babies the same way.)
 
 The chance is read from the **father**, so a mod author can bias or fix it for a specific NPC or race with the `ProbChildSexDetermMale` add-on key (see the [author guide](../authors/add-on-framework.md#child-sex)).
 

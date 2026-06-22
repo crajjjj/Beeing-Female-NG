@@ -82,7 +82,9 @@ A race or actor add-on can bias — or fully fix — the sex of children fathere
 
 | Key | Meaning |
 |-----|---------|
-| `ProbChildSexDetermMale` | Percent chance (0–100) that a child fathered by this actor/race is **male**. `100` = always a boy, `0` = always a girl. Resolution: actor entry → race entry → the global MCM **"Child sex determinator"** slider (default `53`). Rolled per child **at birth**, and only when the player's **Baby Spawn** mode is **Actor**. |
+| `ProbChildSexDetermMale` | Percent chance (0–100) that a child fathered by this actor/race is **male**. `100` = always a boy, `0` = always a girl. Resolution: actor entry → race entry → the global MCM **"Child sex determinator"** slider (default `53`). Rolled per child **at birth**, for both the **Actor** and **Item/Actor** spawn modes (not **Gem**, which produces no child). |
+
+> Edge case: in Actor mode the rolled sex is used to pick the child's `ActorBase`, then re-read from that base. If a custom `BabyActor_*` pool for the chosen race offers only one sex, the available base's sex can override the roll.
 
 The `CustomActor AddOn Example.ini` template illustrates this key (its sample `Dragonborn:1FB99` actor block uses `ProbChildSexDetermMale=100`), but that file ships **disabled** (`enabled=false`) — it has no effect until a player enables it in the MCM.
 
