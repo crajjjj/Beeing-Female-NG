@@ -114,6 +114,8 @@ Talk to a child to give orders:
 | Pick that up | Child loots a nearby container or item |
 | Sleep | Child goes to bed if one is nearby |
 
+> Child won't follow you out of a modded cell (camp, player home, dungeon)? See [A child is stuck in a modded cell](troubleshooting.md#a-child-is-stuck-in-a-modded-cell-wont-follow-or-teleport).
+
 ## MCM Settings (Children Page)
 
 | Setting | Default | What It Does |
