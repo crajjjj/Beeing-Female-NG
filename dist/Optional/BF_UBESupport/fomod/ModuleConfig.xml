@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
+  <moduleName>BF UBE Support</moduleName>
+  <installSteps order="Explicit">
+    <installStep name="BF UBE Support">
+      <optionalFileGroups order="Explicit">
+        <group name="UBE Support" type="SelectAll">
+          <plugins order="Explicit">
+            <plugin name="BF UBE Support">
+              <description>Beeing Female NG add-on for the UBE custom races (Breton/Imperial/Nord/Redguard/Dark Elf/High Elf/Wood Elf/Orc plus 2 custom races, including vampire variants). For each race it assigns the matching carried baby sling and a matching adult base from the bundled BF Adult Pack, so children born to UBE parents - including the player's - reliably grow into adults. Shows up on the BF MCM AddOn page (Race section), enabled. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</description>
+              <files>
+                <folder source="BeeingFemale" destination="BeeingFemale" priority="0" />
+              </files>
+              <typeDescriptor>
+                <type name="Required" />
+              </typeDescriptor>
+            </plugin>
+          </plugins>
+        </group>
+      </optionalFileGroups>
+    </installStep>
+  </installSteps>
+</config>

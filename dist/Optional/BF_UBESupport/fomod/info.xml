@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fomod>
+  <Name>BF UBE Support</Name>
+  <Author>crajjjj</Author>
+  <Version>1.0</Version>
+  <Description>Beeing Female NG add-on: UBE custom-race support. Assigns the carried baby sling to each UBE race and gives grown children a matching adult base (from the bundled Adult Pack) so they mature reliably. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</Description>
+</fomod>
