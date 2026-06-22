@@ -38,6 +38,22 @@ It is gated by **two** independent switches that must *both* be on:
 
 When both are active, each eligible male's configured chance is rolled per child, *reduced* by the current father's own swap setting -- so a father configured the same way "defends" his child. Estrus Chaurus impregnation always takes priority and is never overridden.
 
+## Baby Sex
+
+A baby's sex is **not** fixed in advance -- it is a weighted random roll made **at the moment of birth**, rolled independently for each child. There is no way to know it while pregnant (no in-game ultrasound). By default there is a **53% chance of a boy** (so 47% of a girl).
+
+**Where to change it:** MCM → **Beeing Female → Pregnancy page → "Child sex determinator"**. The slider is the **percent chance the baby is a boy**:
+
+- `100` -- always a boy
+- `0` -- always a girl
+- `53` -- the default
+
+> The slider only takes effect when **Baby Spawn** is set to **Actor** (Children page). In *Item/Actor* or *Gem* spawn modes it does not govern the result.
+
+The chance is read from the **father**, so a mod author can bias or fix it for a specific NPC or race with the `ProbChildSexDetermMale` add-on key (see the [author guide](../authors/add-on-framework.md#child-sex)).
+
+Once born, the sex is permanent: it is announced in the birth message and shown afterward in the **MCM Children** tab / the child's info window. For *Item* spawn mode, the announced sex is what the baby item hatches into.
+
 ## Birth
 
 When the third trimester ends, labor begins (State 7). Birth is a multi-stage process:

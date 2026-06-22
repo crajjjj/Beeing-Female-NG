@@ -16,6 +16,7 @@ Beeing Female NG ships an INI-driven add-on framework that lets external mods ex
 - Per-race or per-actor overrides (pregnancy scales, duration multipliers, protected child flags, etc.).
 - Custom baby actor/item/armor selection for parent race/actor (with fallback behavior).
 - Per-race/per-actor "switching babies" (NTR) settings that let a male reassign an already-pregnant female's child (see [Switching Babies (NTR)](#switching-babies-ntr)).
+- Per-race/per-actor child-sex bias via `ProbChildSexDetermMale` (see [Child Sex](#child-sex)).
 - Custom adult actor/voice selection for the grow-up feature (`AdultActor_*` — see [Adult Actor Add-ons](#adult-actor-add-ons-grow-up-feature) below).
 - Integration hooks via misc add-ons (SexLab/OStim/Bathing in Skyrim).
 - Add-on event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffectApply`, camera start/stop.
@@ -74,6 +75,16 @@ Behavior notes:
 - Estrus Chaurus impregnation (and the Spider / Dwemer add-ons) takes priority and is never overridden by an NTR swap.
 
 See the commented `Allow_NTR_baby` / `Sperm_NTR_baby_Prob` block in `dist/Core/BeeingFemale/AddOn/CustomActor AddOn Example.ini` for a ready-to-copy template.
+
+## Child Sex
+
+A race or actor add-on can bias — or fully fix — the sex of children fathered by that NPC/race. The key goes on the **male's** entry.
+
+| Key | Meaning |
+|-----|---------|
+| `ProbChildSexDetermMale` | Percent chance (0–100) that a child fathered by this actor/race is **male**. `100` = always a boy, `0` = always a girl. Resolution: actor entry → race entry → the global MCM **"Child sex determinator"** slider (default `53`). Rolled per child **at birth**, and only when the player's **Baby Spawn** mode is **Actor**. |
+
+The `CustomActor AddOn Example.ini` template illustrates this key (its sample `Dragonborn:1FB99` actor block uses `ProbChildSexDetermMale=100`), but that file ships **disabled** (`enabled=false`) — it has no effect until a player enables it in the MCM.
 
 ## Adult Actor Add-ons (Grow-Up Feature)
 
