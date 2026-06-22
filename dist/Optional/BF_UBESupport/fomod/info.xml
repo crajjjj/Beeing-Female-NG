@@ -2,6 +2,6 @@
 <fomod>
   <Name>BF UBE Support</Name>
   <Author>crajjjj</Author>
-  <Version>1.0</Version>
-  <Description>Beeing Female NG add-on: UBE custom-race support. Assigns the carried baby sling to each UBE race and gives grown children a matching adult base (from the bundled Adult Pack) so they mature reliably. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</Description>
+  <Version>1.1</Version>
+  <Description>Beeing Female NG add-on: UBE custom-race support. Assigns the carried baby sling to each UBE race and gives grown children a matching adult base (from the bundled Adult Pack) so they mature reliably. Includes BF_UBESupport_Patch.esp so BF's worn items (slings, panties, tampons, bleed/fluid) render on UBE mothers. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</Description>
 </fomod>

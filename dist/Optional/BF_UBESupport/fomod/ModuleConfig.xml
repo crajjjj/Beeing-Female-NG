@@ -7,9 +7,10 @@
         <group name="UBE Support" type="SelectAll">
           <plugins order="Explicit">
             <plugin name="BF UBE Support">
-              <description>Beeing Female NG add-on for the UBE custom races (Breton/Imperial/Nord/Redguard/Dark Elf/High Elf/Wood Elf/Orc plus 2 custom races, including vampire variants). For each race it assigns the matching carried baby sling and a matching adult base from the bundled BF Adult Pack, so children born to UBE parents - including the player's - reliably grow into adults. Shows up on the BF MCM AddOn page (Race section), enabled. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</description>
+              <description>Beeing Female NG add-on for the UBE custom races (Breton/Imperial/Nord/Redguard/Dark Elf/High Elf/Wood Elf/Orc plus 2 custom races, including vampire variants). For each race it assigns the matching carried baby sling and a matching adult base from the bundled BF Adult Pack, so children born to UBE parents - including the player's - reliably grow into adults. Also installs BF_UBESupport_Patch.esp, which makes BF's worn items (baby slings, panties, tampons, bleed/fluid effects) actually render on UBE mothers by adding the UBE races to those armor addons. Shows up on the BF MCM AddOn page (Race section), enabled. Requires Beeing Female NG and the UBE race plugin (UBE_AllRace.esp).</description>
               <files>
                 <folder source="BeeingFemale" destination="BeeingFemale" priority="0" />
+                <file source="BF_UBESupport_Patch.esp" destination="BF_UBESupport_Patch.esp" priority="0" />
               </files>
               <typeDescriptor>
                 <type name="Required" />

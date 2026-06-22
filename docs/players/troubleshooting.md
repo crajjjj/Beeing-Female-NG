@@ -5,6 +5,7 @@ When something misbehaves, the logs almost always say why. This page lists where
 !!! tip "Quick links"
     - Mod missing from the MCM? Work through the checklist in [Getting Started](getting-started.md#the-mod-does-not-show-up-in-the-mcm).
     - A hygiene item keeps getting knocked off? See [Item Slots & Conflicts](../authors/item-slots.md) (quick fix: switch to tampons).
+    - Birth happens but no animation plays? See [Birth animations not playing](#birth-animations-not-playing) (usually: run FNIS/Nemesis, then enable **Play Animations**).
 
 ## Where the logs are
 
@@ -80,6 +81,69 @@ If you give birth in (or leave a child in) a cell added by another mod — a pla
 > Note: simply re-picking **"Follow me"** while standing next to the child usually won't get it out of such a cell — the order is set, but the AI still has no path to the exit. The teleport scroll (#2) or `moveto player` (#1) are what actually relocate it.
 
 **Avoid:** importing a *still-a-child* actor into a follower framework (NFF/EFF/AFT) to force it out. While a child, BF manages its AI directly and the two systems conflict; and at the grow-up transition the child actor is replaced by a new adult actor, leaving the framework with a stale reference. Wait until the child becomes an adult, then import freely — that is fully supported.
+
+## Birth animations not playing
+
+If the mother gives birth but just stands there — no lying down, no labor animation — work through these in order. The birth itself (baby spawn, recovery, events) still happens regardless; only the *visuals* are affected.
+
+There are **two separate animation layers**, and they fail for different reasons:
+
+- **Core birth events** — `LayDownBirth`, `Birth_S1/S2/S3`, `GetupBirth`. These are custom animations BF triggers with `Debug.SendAnimationEvent`.
+- **OAR labor pack** (optional) — the alternate lying-down labor loop, an [Open Animation Replacer](https://www.nexusmods.com/skyrimspecialedition/mods/92109) set BF ships under `meshes/.../OpenAnimationReplacer/BFL/`.
+
+### 1. Run your behavior tool (FNIS / Nemesis / Pandora)
+
+**This is the most common cause.** BF's birth animations are custom animations registered through `FNIS_BeeingFemale_List.txt`. The engine only knows about them after you **run your behavior generator and let it patch** — otherwise BF fires the birth event but nothing is registered to it, so the actor just stands there.
+
+- **FNIS users:** run **GenerateFNISforUsers.exe**, confirm Beeing Female appears in the mod list, then launch.
+- **Nemesis / Pandora users:** run the engine, tick its boxes, **Update/Launch**, then start the game.
+
+Re-run it whenever you install or update BF. (BF does **not** hard-block if you skip this — it just can't show the animation.)
+
+### 2. Turn on "Play Animations" in the MCM
+
+**MCM → Beeing Female → Settings page → "Play Animations."** It must be **enabled**. With it off, BF skips all birth animation events on purpose (the birth still completes silently). The reset-to-default state for this toggle is *off*, so a fresh profile may need it switched on.
+
+Next to that toggle the MCM shows the **animation version** (e.g. `1`). If it reads a mismatch like `0/1`, the behavior patch isn't registered — go back to step 1. Note this readout only updates **in third person** (an engine limitation of animation-variable checks), so check it there.
+
+### 3. Furniture or heavy bondage = deliberate silent birth
+
+BF **intentionally** skips the animation if, when labor fires, the mother is:
+
+- **occupying furniture** — a chair, bed, crafting station, or any furniture-bound idle, or
+- **in heavy Devious Devices bondage** — armbinder, yoke, etc.
+
+Forcing a birth animation on top of those breaks both, so BF gives birth without it. The Papyrus log says exactly which:
+
+```
+FWController.IsBirthAnimationBlocked: <actor> is occupying furniture - birth animation will be skipped (silent birth)
+FWController.IsBirthAnimationBlocked: <actor> is in heavy bondage - birth animation will be skipped (silent birth)
+```
+
+**Fix:** get the mother off furniture / out of restraints before the third trimester ends.
+
+### 4. The actor must be loaded (and use third person to *see* your own)
+
+Animations only play on an actor whose 3D is loaded. A mother in an unloaded or distant cell won't animate — move closer, or wait for her to load.
+
+For your **own** character the animation still plays in first person — you just can't see it, because the camera is looking out *through* your character rather than at her body. Switch to third person to actually watch it. (This is also why the animation-version readout in step 2 only updates in third person.)
+
+### 5. OAR labor variants, and the "NOT IsChild" condition
+
+This is **only** about the optional variety pack **"Labor Animations - Beeing Female"** (by Laethas) — 24 OAR alternates that *replace* the base `Birth_S1/S2/S3` for variety. It's not what makes birth animate (that's steps 1–2). First confirm **Open Animation Replacer** is loading (`SKSE\skse64.log` → `OpenAnimationReplacer`).
+
+All 24 variants gate on the same `IsChild` (negated) + `IsFemale` + `Random` conditions. OAR's `IsChild` keys off the actor's **race** (the engine child flag), not apparent age — and some custom races carry that flag, so a mother on such a race fails it and OAR skips every variant. You'll then get the **plain** base birth (if your behavior tool registered it), or **nothing** if you rely on the OAR pack alone.
+
+**Fix:** disable the `IsChild` condition across the whole set — easiest in OAR's in-game editor (open **"Labor Animations - Beeing Female"** → disable `IsChild` on each `Labor N`; saved to an update-safe `user.json`), or by removing the `IsChild` block from each `BFL/700001`…`700024/config.json`. Risk is minimal — these are cosmetic, and BF only triggers labor on tracked fertile females anyway.
+
+### 6. Still nothing? Capture a log
+
+Enable Papyrus logging (above), trigger a birth, then search `Papyrus.0.log` for:
+
+- `FWController.GiveBirth:` — the line includes `playAnimations=true/false`. If it says `false` with no furniture/bondage line nearby, the MCM toggle (step 2) is off.
+- `IsBirthAnimationBlocked` — confirms a furniture/bondage skip (step 3).
+
+Attach that with the items below.
 
 ## Reporting a problem
 
