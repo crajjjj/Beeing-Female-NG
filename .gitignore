@@ -550,3 +550,4 @@ dist/Core/Interface/translations/SexLabAroused_rename.bat
 skyrimse.ppj
 **/dependencies
 .claude/settings.local.json
+.claude/skills/extract-doc-icons/SKILL.md
