@@ -1245,9 +1245,11 @@ Event onAddActorSperm(string hookName, Actor Woman, Actor Donor)
 endEvent
 
 float fLastUpdateGameTime
+int _inseminateRemaining = 0 ; queued off-screen inseminations, drained a few per game-hour
 event OnUpdateGameTime()
 	if cfg.ImpregnateActive
 		CheckGiveSpermToNPCs()
+		GiveSpermBatch()
 	endif
 	RegisterForSingleUpdateGameTime(1)
 endEvent
@@ -1297,7 +1299,6 @@ function CheckGiveSpermToNPCs()
 		return
 	endif
 	float Dur = (cur - fLastUpdateGameTime)
-	float HoursSinceSex = 0.0
 	if(Dur>0.01)
 		bool bFound = false
 		if Dur>1
@@ -1318,34 +1319,73 @@ function CheckGiveSpermToNPCs()
 			endif
 		endif
 		
-		int success=0
 		if bFound
-			float cur24Time = ModuloOne(cur)
-			if cur24Time>=cfg.ImpregnateTime
-				HoursSinceSex = cur24Time - cfg.ImpregnateTime
-			else
-				HoursSinceSex = cur24Time + (24 - cfg.ImpregnateTime)
-			endif
-			int c = StorageUtil.FormListCount(none,"FW.SavedNPCs")
-			int i = cfg.ImpregnateCount
-			while i >0
-				i-=1
-				int rnd = Utility.RandomInt(1,c) - 1
-				actor f = StorageUtil.FormListGet(none,"FW.SavedNPCs",rnd) as Actor
-				if f;/!=none/; ;Tkc (Loverslab): optimization
-					Message("["+(cfg.ImpregnateCount - i)+"/"+cfg.ImpregnateCount+"] "+FWUtility.StringReplace(Content.CheckGiveSperm,"{0}",f.GetLeveledActorBase()),MSG_Debug, MSG_Trace)
-					if CheckGiveSpermToNPC(f, (GameDaysPassed.GetValue() - HoursSinceSex) + Utility.RandomFloat(-0.0318,0.0208))
-						success+=1
-					endif
-				endif
-			endWhile
-		endif
-		if(success>0)
-			Message(FWUtility.StringReplace(Content.SpermAdded,"{0}",success),MSG_Debug)
+			; Queue the day's inseminations instead of running all ImpregnateCount
+			; in this one frame; GiveSpermBatch() drains them a few per game-hour.
+			_inseminateRemaining = cfg.ImpregnateCount
 		endif
 		fLastUpdateGameTime = GameDaysPassed.GetValue()
 	endif
 	bCheckGiveSpermToNPCs= false
+endFunction
+
+; Drains the queued per-day inseminations a few at a time, once per game-hour
+; tick, so a full ImpregnateCount run never lands in a single frame.
+function GiveSpermBatch()
+	if _inseminateRemaining <= 0
+		return
+	endif
+	int c = StorageUtil.FormListCount(none,"FW.SavedNPCs")
+	if c <= 0
+		_inseminateRemaining = 0
+		return
+	endif
+	; A few per game-hour tick. Any leftover when the next daily trigger refreshes
+	; the count is intentionally dropped - these off-screen inseminations are
+	; best-effort, not critical, so simple pacing beats guaranteed delivery.
+	int batch = 3
+	while batch > 0 && _inseminateRemaining > 0
+		batch -= 1
+		_inseminateRemaining -= 1
+		actor f = StorageUtil.FormListGet(none,"FW.SavedNPCs", Utility.RandomInt(1,c) - 1) as Actor
+		if f
+			CheckGiveSpermToNPC(f, GameDaysPassed.GetValue())
+		endif
+	endWhile
+endFunction
+
+; True if the actor can't take part in auto-insemination: a creature while
+; creature-sperm is off, a spouse while spouse-impregnation is off, or a follower.
+; One rule, shared by the mother and father gates.
+bool function _participantBlocked(actor a)
+	if a.GetRace().HasKeyword(ActorTypeCreature) && !cfg.CreatureSperm
+		return true
+	endif
+	if a.IsInFaction(PlayerMarriedFaction) && !cfg.ImpregnatePlayerSpouse
+		return true
+	endif
+	return a.IsInFaction(FollowerFaction)
+endFunction
+
+; True if m is an acceptable father for woman f: present, not in the player's
+; location, rested, a valid male, not f's enemy, and not blocked above.
+bool function _isValidFatherCandidate(actor m, actor f, Location PlayerLoc)
+	if !m
+		return false
+	endif
+	if PlayerLoc && m.IsInLocation(PlayerLoc)
+		return false
+	endif
+	if Controller.GetDaysSinceLastSex(m) <= 0.3
+		return false
+	endif
+	if IsValidateMaleActor(m) <= 0
+		return false
+	endif
+	if m.GetRelationshipRank(f) < 0
+		return false
+	endif
+	return !_participantBlocked(m)
 endFunction
 
 bool function CheckGiveSpermToNPC(actor f, float GameTime)
@@ -1357,24 +1397,7 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 		return false
 	endif
 	
-	bool IsCreatureF = f.GetRace().HasKeyword(ActorTypeCreature)
-	bool IsSpouseF = f.IsInFaction(PlayerMarriedFaction)
-	bool IsFollowerF = f.IsInFaction(FollowerFaction)
-	;if IsCreatureF && cfg.CreatureSperm==false
-	if IsCreatureF ;Tkc (Loverslab): optimization
-	 if cfg.CreatureSperm	
-	 else;if cfg.CreatureSperm==false
-		return false
-	 endif
-	endif
-	;if IsSpouseF && cfg.ImpregnatePlayerSpouse==false
-	if IsSpouseF ;Tkc (Loverslab): optimization
-	 if cfg.ImpregnatePlayerSpouse
-	 else;if cfg.ImpregnatePlayerSpouse==false
-		return false
-	 endif
-	endif
-	if IsFollowerF
+	if _participantBlocked(f)
 		return false
 	endif
 	
@@ -1397,76 +1420,38 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 				string JsonFile = "../../../BeeingFemale/Couples/" + FWUtility.GetJsonFile(f)
 				
 				Actor[] males
-				int ca = JsonUtil.FormListCount(JsonFile,"Affairs")
-				int cp = JsonUtil.FormListCount(JsonFile,"Partners")
-				int cn = StorageUtil.FormListCount(f,"FW.LastSeenNPCs")
-				; Ok, lets add some male NPCs
+				; Husband (weight 10), affairs (4 each), partners (2 each), last-seen (1 each).
 				if cfg.ImpregnateHusband && JsonUtil.HasFormValue(JsonFile,"Husband")
-					; Husbands have a high priority, so add 10 to the RandomArray
 					males = FWUtility.ActorArrayAppend(males,JsonUtil.GetFormValue(JsonFile,"Husband") as actor,10)
 				endif
-				if cfg.ImpregnateAffairs && ca>0
-					; Affairs have a middle priority, so add 4 of each to the RandomArray
-					while ca>0
-						ca-=1
-						males = FWUtility.ActorArrayAppend(males,JsonUtil.FormListGet(JsonFile,"Affairs",ca) as actor,4)
-					endwhile
+				if cfg.ImpregnateAffairs
+					males = FWUtility.ActorArrayAppendJsonList(males,JsonFile,"Affairs",4)
 				endif
-				if cfg.ImpregnatePartners && cp>0
-					; Partners and friends have a low priority, so add 2 of each to the RandomArray
-					while cp>0
-						cp-=1
-						males = FWUtility.ActorArrayAppend(males,JsonUtil.FormListGet(JsonFile,"Partners",cp) as actor,2)
-					endwhile
+				if cfg.ImpregnatePartners
+					males = FWUtility.ActorArrayAppendJsonList(males,JsonFile,"Partners",2)
 				endif
-				if cfg.ImpregnateLastNPC && cn>0
-					; Partners and friends have the lowest priority, so add 1 of each to the RandomArray
-					while cn>0
-						cn-=1
-						males = FWUtility.ActorArrayAppend(males,StorageUtil.FormListGet(f,"FW.LastSeenNPCs",cn) as actor)
-					endwhile
+				if cfg.ImpregnateLastNPC
+					males = FWUtility.ActorArrayAppendStorageList(males,f,"FW.LastSeenNPCs",1)
+				endif
+				; No pooled candidate? Fall back to a male in the SAME LOCATION as the woman.
+				if males.length==0 && cfg.ImpregnateLastNPC
+					actor cand = Game.FindRandomActorFromRef(f, 3000)
+					if cand && cand!=PlayerRef && cand.IsInLocation(f.GetCurrentLocation())
+						males = FWUtility.ActorArrayAppend(males, cand, 1)
+					endif
 				endif
 				
-				; Get one of the random NPCs, do 3 tries
+				; Pick a valid father, up to 3 tries
 				if males.length>0
 					int try=3
 					while try>0
 						try-=1
-						int rnd = Utility.RandomInt(0,males.length - 1)
-						actor m = males[rnd]
-						if m;/!=none/; ;Tkc (Loverslab): optimization
-							bool bMInPlayerLoc = false
-							if PlayerLoc;/!=none/; ;Tkc (Loverslab): optimization
-								bMInPlayerLoc = m.IsInLocation(PlayerLoc)
-							else
-								bMInPlayerLoc = false
-							endif
-							
-							if bMInPlayerLoc ;Tkc (Loverslab): optimization
-							else;if !bMInPlayerLoc ; Check if he is not in the players location
-								if Controller.GetDaysSinceLastSex(m)>0.3
-									if IsValidateMaleActor(m)>0 ; Check if's validate
-										if m.GetRelationshipRank(f)>=0 ; They shouldn't be enemys
-											bool IsCreatureM = m.GetRace().HasKeyword(ActorTypeCreature)
-											bool IsSpouseM = m.IsInFaction(PlayerMarriedFaction)
-											bool IsFollowerM = m.IsInFaction(FollowerFaction)
-											if IsCreatureM==false || cfg.CreatureSperm;/==true/; ;Tkc (Loverslab): optimization
-												if IsSpouseM==false || cfg.ImpregnatePlayerSpouse;/==true/; ;Tkc (Loverslab): optimization
-													if IsFollowerM ;Tkc (Loverslab): optimization
-													else;if IsFollowerM==false
-														Controller.AddSperm(f,m) ; Add Sperm
-														try = 0 ; Exit the while
-														res = true ; return, that it was successful
-														;Message("    - "+m.GetLeveledActorBase().GetName()+" was validated successfuly",MSG_Debug, MSG_Trace)
-														;Message("Add sperm to " + f.GetLeveledActorBase().GetName() + " from " + m.GetLeveledActorBase().GetName() + " at "+GameTime,MSG_High)
-														Message(FWUtility.MultiStringReplace(Content.SpermAdded,f.GetLeveledActorBase().GetName(),m.GetLeveledActorBase().GetName()),MSG_High)
-													endif
-												endif
-											endif
-										endif
-									endif
-								endif
-							endif
+						actor m = males[Utility.RandomInt(0,males.length - 1)]
+						if _isValidFatherCandidate(m, f, PlayerLoc)
+							Controller.AddSperm(f,m) ; Add Sperm
+							res = true
+							try = 0 ; Exit the while
+							Message(FWUtility.MultiStringReplace(Content.SpermAdded,f.GetLeveledActorBase().GetName(),m.GetLeveledActorBase().GetName()),MSG_High)
 						endif
 					endWhile
 				endif

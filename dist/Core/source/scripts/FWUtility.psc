@@ -787,6 +787,28 @@ Actor[] function ActorArrayResize(Actor[] OldArray, int NewSize) global
 	return PapyrusUtil.ResizeActorArray(OldArray, NewSize)
 endFunction
 
+; Appends Count copies of each actor in a StorageUtil form list (Owner/ListKey) to OldArray (capped at 128).
+Actor[] function ActorArrayAppendStorageList(Actor[] OldArray, Form Owner, string ListKey, int Count=1) global
+	Actor[] res = OldArray
+	int i = StorageUtil.FormListCount(Owner, ListKey)
+	while i > 0
+		i -= 1
+		res = ActorArrayAppend(res, StorageUtil.FormListGet(Owner, ListKey, i) as Actor, Count)
+	endWhile
+	return res
+endFunction
+
+; Appends Count copies of each actor in a JsonUtil form list (JsonFile/ListKey) to OldArray (capped at 128).
+Actor[] function ActorArrayAppendJsonList(Actor[] OldArray, string JsonFile, string ListKey, int Count=1) global
+	Actor[] res = OldArray
+	int i = JsonUtil.FormListCount(JsonFile, ListKey)
+	while i > 0
+		i -= 1
+		res = ActorArrayAppend(res, JsonUtil.FormListGet(JsonFile, ListKey, i) as Actor, Count)
+	endWhile
+	return res
+endFunction
+
 ; Removes duplicate actors in-place style and returns a compacted array.
 Actor[] function ActorArrayUnique(Actor[] a) global
 	return PapyrusUtil.RemoveDupeActor(a)

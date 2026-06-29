@@ -807,21 +807,28 @@ float function timeRemaining()
 	endIf
 endFunction
 
+Keyword ActorTypeNPCKw ; lazily cached ActorTypeNPC keyword for the nearby-NPC scan
+
 function getLastSeenNPCs()
-	int Searches = 5
-	;actor p = Game.GetPlayer()
-	actor a = Game.FindClosestActorFromRef(ActorRef, 2500)
-	if a==PlayerRef ;Tkc (Loverslab): optimization
-	else;if a!=PlayerRef
-		addLastSeenNPC(a)
+	; FW.LastSeenNPCs is read only by the auto-insemination "last seen" father
+	; source. When that source is off, skip the scan entirely instead of building
+	; a list nothing will consume.
+	if !cfg.ImpregnateActive || !cfg.ImpregnateLastNPC
+		return
 	endif
-	while Searches>0
-		Searches -=1
-		a = Game.FindRandomActorFromRef(ActorRef, 2500)
-		if a==PlayerRef ;Tkc (Loverslab): optimization
-		else;if a!=PlayerRef
+	; One PO3 scan returns nearby humanoid NPCs by keyword (ActorTypeNPC excludes
+	; creatures for free), instead of firing six separate vanilla scans.
+	if !ActorTypeNPCKw
+		ActorTypeNPCKw = Game.GetFormFromFile(0x00013794, "Skyrim.esm") as Keyword ; ActorTypeNPC
+	endif
+	ObjectReference[] nearby = FindAllReferencesWithKeyword(ActorRef, ActorTypeNPCKw, 2500.0, true)
+	int n = 0
+	while n < nearby.length && n < 10
+		actor a = nearby[n] as actor
+		if a && a != PlayerRef
 			addLastSeenNPC(a)
 		endif
+		n += 1
 	endWhile
 	; Clear old values
 	int c = StorageUtil.FormListCount(ActorRef,"FW.LastSeenNPCs")
@@ -832,7 +839,7 @@ function getLastSeenNPCs()
 		float tt = StorageUtil.FloatListGet(ActorRef,"FW.LastSeenNPCsTime",c)
 		actor ta = StorageUtil.FormListGet(ActorRef,"FW.LastSeenNPCs",c) as actor
 		if ta==none || ta.IsDead()
-			StorageUtil.FormListRemoveAt(ActorRef, "FW.LastSeenNPCsTime", c)
+			StorageUtil.FloatListRemoveAt(ActorRef, "FW.LastSeenNPCsTime", c)
 			StorageUtil.FormListRemoveAt(ActorRef, "FW.LastSeenNPCs", c)
 		elseif tt < t - 2
 			Location Loc = ta.GetCurrentLocation()
