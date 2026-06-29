@@ -817,8 +817,6 @@ float function timeRemaining()
 	endIf
 endFunction
 
-Keyword ActorTypeNPCKw ; lazily cached ActorTypeNPC keyword for the nearby-NPC scan
-
 function getLastSeenNPCs()
 	; FW.LastSeenNPCs is read only by the auto-insemination "last seen" father
 	; source. When that source is off, skip the scan entirely instead of building
@@ -826,15 +824,13 @@ function getLastSeenNPCs()
 	if !cfg.ImpregnateActive || !cfg.ImpregnateLastNPC
 		return
 	endif
-	; One PO3 scan returns nearby humanoid NPCs by keyword (ActorTypeNPC excludes
-	; creatures for free), instead of firing six separate vanilla scans.
-	if !ActorTypeNPCKw
-		ActorTypeNPCKw = Keyword.GetKeyword("ActorTypeNPC")
-	endif
-	ObjectReference[] nearby = FindAllReferencesWithKeyword(ActorRef, ActorTypeNPCKw, 2500.0, true)
+	; PapyrusUtil's ScanCellNPCs (already a hard dependency) returns living actors
+	; in the cell directly - no PO3, no keyword, no ObjectReference->Actor cast.
+	; Creatures are filtered by addLastSeenNPC's male validation below.
+	Actor[] nearby = MiscUtil.ScanCellNPCs(ActorRef, 2500.0)
 	int n = 0
 	while n < nearby.length && n < 10
-		actor a = nearby[n] as actor
+		actor a = nearby[n]
 		if a && a != PlayerRef
 			addLastSeenNPC(a)
 		endif

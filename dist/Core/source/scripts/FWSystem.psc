@@ -1511,11 +1511,17 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 				if cfg.ImpregnateLastNPC
 					males = FWUtility.ActorArrayAppendStorageList(males,f,"FW.LastSeenNPCs",1)
 				endif
-				; No pooled candidate? Fall back to a male in the SAME LOCATION as the woman.
+				; No pooled candidate? Fall back to a male near the woman. PapyrusUtil's
+				; ScanCellNPCs (already a hard dependency) returns living actors directly -
+				; no PO3 and no ObjectReference->Actor cast; creatures are filtered by the
+				; father validation below.
 				if males.length==0 && cfg.ImpregnateLastNPC
-					actor cand = Game.FindRandomActorFromRef(f, 3000)
-					if cand && cand!=PlayerRef && cand.IsInLocation(f.GetCurrentLocation())
-						males = FWUtility.ActorArrayAppend(males, cand, 1)
+					Actor[] nearby = MiscUtil.ScanCellNPCs(f, 3000.0)
+					if nearby.length > 0
+						actor cand = nearby[Utility.RandomInt(0, nearby.length - 1)]
+						if cand && cand!=PlayerRef && cand!=f && cand.IsInLocation(f.GetCurrentLocation())
+							males = FWUtility.ActorArrayAppend(males, cand, 1)
+						endif
 					endif
 				endif
 				

@@ -133,13 +133,7 @@ Event OnSleepStart(float afSleepStartTime, float afDesiredSleepEndTime)
 			radius = 2300 ;1900
 		endif
 		;actor p = Game.GetPlayer() ;Tkc (Loverslab): optimization
-		if CheckSexPartnerOnSleep(Game.FindClosestActorFromRef(PlayerRef, radius),PlayerRef)
-			;System.Message("Found a SexActor when you lay down: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All) ;Tkc (Loverslab): commented for more localization friendly
-		elseif CheckSexPartnerOnSleep(Game.FindRandomActorFromRef(PlayerRef, radius),PlayerRef)
-			;System.Message("Found a SexActor when you lay down: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All) ;Tkc (Loverslab): commented for more localization friendly
-		;elseif CheckSexPartnerOnSleep(Game.FindRandomActorFromRef(PlayerRef, radius),PlayerRef) ;Tkc (Loverslab): optimization. identical condition with previous
-		;	System.Message("Found a SexActor when you lay down: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All)
-		endif
+		findSleepPartner(radius)
 		
 		if PlayerRef.GetLeveledActorBase().GetSex()==1 || (aSexPartnerOnSleep && aSexPartnerOnSleep.GetLeveledActorBase().GetSex()==1)
 			aSexPartnerOnSleep = Manager.OnSleepSexStart(PlayerRef,aSexPartnerOnSleep)
@@ -162,13 +156,7 @@ Event OnSleepStop(bool abInterrupted)
 		else;if bSexPartnerOnSleep==false
 		if aSexPartnerOnSleep
 		else;aSexPartnerOnSleep==none
-			if CheckSexPartnerOnSleep(Game.FindClosestActorFromRef(PlayerRef, radius),PlayerRef)
-				;System.Message("Found a SexActor when you get up: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All) ;Tkc (Loverslab): commented for more localization friendly
-			elseif CheckSexPartnerOnSleep(Game.FindRandomActorFromRef(PlayerRef, radius),PlayerRef)
-				;System.Message("Found a SexActor when you get up: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All) ;Tkc (Loverslab): commented for more localization friendly
-			;elseif CheckSexPartnerOnSleep(Game.FindRandomActorFromRef(PlayerRef, radius),PlayerRef) ;Tkc (Loverslab): optimization. identical condition with previous
-			;	System.Message("Found a SexActor when you get up: " + aSexPartnerOnSleep.GetLeveledActorBase().GetName(), System.MSG_All)
-			endif
+			findSleepPartner(radius)
 		endif
 		endif
 		
@@ -279,6 +267,23 @@ event OnUpdate()
 		
 	endif
 endEvent
+
+; Finds a sleep sex partner near the player within radius. Prefers the closest
+; actor (cheap, and thematically the partner beside you); if that isn't a valid
+; partner, scans every living actor in the cell. The result is recorded through
+; CheckSexPartnerOnSleep's bSexPartnerOnSleep/aSexPartnerOnSleep side effects -
+; callers must ensure those flags are clear before calling.
+function findSleepPartner(int radius)
+	if CheckSexPartnerOnSleep(Game.FindClosestActorFromRef(PlayerRef, radius), PlayerRef)
+		return
+	endif
+	Actor[] sleepActors = MiscUtil.ScanCellNPCs(PlayerRef, radius)
+	int si = 0
+	while si < sleepActors.length && !bSexPartnerOnSleep
+		CheckSexPartnerOnSleep(sleepActors[si], PlayerRef)
+		si += 1
+	endWhile
+endFunction
 
 bool function CheckSexPartnerOnSleep(actor a,actor aPlayerRef=none)
 	if a==aPlayerRef
