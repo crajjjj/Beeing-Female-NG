@@ -11,6 +11,8 @@ NPCs can go through the same cycle and pregnancy system as the player. Key setti
 
 NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time.
 
+To keep the tracked-NPC list from growing without bound over a long playthrough, an NPC the player has not been near for **3 in-game days** is quietly dropped from active tracking, and re-discovered with a fresh cycle the next time you meet her. Cleanup never touches a woman with anything in progress -- she is kept while **pregnant, in labor, recovering, miscarrying, on contraception, or carrying sperm**. The only visible effect is that an idle, non-pregnant NPC's exact cycle position is not remembered across a long absence; pregnancies and conceptions are always preserved.
+
 When baby spawn mode is "Item/Actor" and **you are the father**, an NPC mother will hatch the baby item she carries into her own child (a normal NPC near her, not your follower) once it matures while she is loaded -- see [Baby Items Growing to Children](children.md#baby-items-growing-to-children).
 
 ## NPC Auto-Insemination (Couples System)

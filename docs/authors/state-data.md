@@ -32,6 +32,7 @@ The most important keys (prefix `FW.`) are:
 - `FW.CurrentState` (Int, per-actor: mother): current cycle state index (0-8).
 - `FW.StateEnterTime` (Float, per-actor: mother): game days timestamp when the current state started.
 - `FW.LastUpdate` (Float, per-actor: mother): last update timestamp for the actor.
+- `FW.LastLoaded` (Float, per-actor: mother): game days timestamp of when the actor was last 3D-loaded; drives idle-NPC untracking (see [Tracking lifecycle](#tracking-lifecycle)).
 - `FW.Flags` (Int, per-actor: mother): bit flags for cycle options (e.g., can become pregnant/PMS).
 - `FW.NumChilds` (Int, per-actor: mother): number of unborn children.
 - `FW.ChildFather` (FormList, stored on mother): list of fathers (one entry per child, matching `FW.NumChilds`).
@@ -53,6 +54,14 @@ The most important keys (prefix `FW.`) are:
 - `FW.BornChildFather` (FormList, per-actor: mother): list of fathers for born children.
 - `FW.BornChildTime` (FloatList, per-actor: mother): timestamps for born children.
 - `FW.LastBornChildTime` (Float, per-actor: mother/father): last birth time for a parent.
+
+### Tracking lifecycle
+
+Tracked females are **not** kept forever. When the player has been away from a non-pregnant, idle woman for `IdleUntrackDays` (3) in-game days, BF removes her cycle spell, drops her from `FW.SavedNPCs`, and clears only her transient cycle keys (`FW.CurrentState`, `FW.StateEnterTime`, `FW.LastUpdate`, `FW.Flags`, `FW.LastLoaded`). This bounds the tracked-actor count and stops her background cycle ticks over a long playthrough.
+
+Deliberately **preserved** across an untrack: lifetime history (`FW.NumBirth`, `FW.NumBabys`) and the donor/lineage mirrors (`FW.SpermRace`, `FW.ChildFatherRace`). A woman is **never** dropped while pregnant, in labor, recovering, mid-miscarriage (`FW.Abortus > 1`), contracepting, carrying sperm (`FW.SpermName`), or pregnant by another mod (Chaurus/Estrus). Dead women are fully purged (`FWSaveLoad.Delete`) and have their spell stripped.
+
+An untracked woman is re-discovered by the cloak and given a **fresh** cycle (via `CreateFemaleActor`) on her next encounter -- her exact prior cycle position is not restored. If your add-on caches per-actor BF data, treat tracking as transient: re-read on the BF events rather than assuming a woman stays in `FW.SavedNPCs`.
 
 Born children (entries in `FW.Babys`) carry their own per-actor keys:
 
