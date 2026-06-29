@@ -19,7 +19,7 @@ When baby spawn mode is "Item/Actor" and **you are the father**, an NPC mother w
 
 When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This simulates NPCs having an ongoing intimate life with their partners.
 
-**How it works:** Once per in-game day (at a configurable time), the system picks several random tracked females and attempts to inseminate them with a suitable male partner.
+**How it works:** Once per in-game day (at a configurable time), the system queues several random tracked females (the **Count** setting) and works through them a few per game-hour rather than all in one frame. This is best-effort -- any not reached before the next day's check are simply skipped.
 
 **Partner selection is weighted by relationship:**
 
@@ -31,6 +31,8 @@ When enabled in MCM (Impregnate page), the mod can automatically inseminate trac
 | Last Seen NPCs | 1x | Males the female was recently near (automatic) |
 
 A male is picked randomly from this weighted pool (e.g. a husband is 10 times more likely to be chosen than a random nearby NPC). The system tries up to 3 times to find a valid male.
+
+**Fallback when no partner is known:** if a female's pool is empty (no husband, affairs, partners, or recently-seen males) and **Last Seen NPCs** is enabled, the mod falls back to a random valid male in **her own** current location -- so an NPC with no configured relationships can still be inseminated by whoever happens to be nearby, subject to the same validity rules below.
 
 **A male is valid if:**
 
@@ -69,4 +71,6 @@ You can bulk-import couple data from JSON files via MCM (first page, "Couples Im
 | Partners | On | Include regular partners in partner pool |
 | Last Seen NPCs | Off | Include recently nearby males |
 | Time | Configurable | What time of day the daily check runs |
-| Count | 3 | How many NPCs to attempt per daily check |
+| Count | 3 | How many NPCs to queue per daily check (spread across game-hour ticks) |
+
+> The recently-seen-males list (the 1x pool source) is populated using [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854); without it installed, that list stays empty. The husband/affairs/partners pools and the same-location fallback do not need it.
