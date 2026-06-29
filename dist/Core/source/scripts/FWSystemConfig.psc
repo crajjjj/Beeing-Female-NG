@@ -95,12 +95,12 @@ int   Property Trimster3Duration = 10 Auto Hidden
 int   Property ReplanishDuration = 30 Auto Hidden
 int   Property MultipleThreshold = 85 Auto Hidden
 bool  property abortus = true auto hidden
-int   Property VisualScaling = 1 Auto Hidden
-int   Property VisualScalingKind = 0 Auto Hidden
+int   Property VisualScaling = 4 Auto Hidden ; default: SLIF when installed, BodyMorph otherwise (resolved at runtime / index 4 in both MCM lists)
+int   Property VisualScalingKind = 1 Auto Hidden ; default: Linear growth
 bool  property BellyScale = true auto Hidden
 bool  property BreastScale = true auto Hidden
-float Property BellyMaxScale = 4.2 Auto Hidden
-float Property BreastsMaxScale = 0.4 Auto Hidden
+float Property BellyMaxScale = 1.0 Auto Hidden ; BodyMorph baseline; OnConfigInit raises to the SLIF magnitude when SLIF is installed
+float Property BreastsMaxScale = 1.0 Auto Hidden ; BodyMorph baseline; OnConfigInit raises to the SLIF magnitude when SLIF is installed
 int   Property WeightGainMax = 50 Auto Hidden
 int   Property MaxBabys = 3 Auto Hidden
 int   Property BabySpawn = 1 Auto Hidden
@@ -193,12 +193,12 @@ int Trimster3DurationDef = 10
 int ReplanishDurationDef = 10
 int MultipleThresholdDef = 85 ; 1 : n
 bool abortusDef = true
-int VisualScalingDef = 1
-int VisualScalingKindDef = 0
+int VisualScalingDef = 4
+int VisualScalingKindDef = 1
 bool  BellyScaleDef = true
 bool  BreastScaleDef = true
-float BellyMaxScaleDef = 4.2
-float BreastsMaxScaleDef = 0.4
+float BellyMaxScaleDef = 1.0
+float BreastsMaxScaleDef = 1.0
 int WeightGainMaxDef = 50
 int MaxBabysDef = 3
 float WashOutChanceDef = 0.0
@@ -2403,6 +2403,17 @@ endEvent
 
 Event OnConfigInit()
 	ResetConfigArrays()
+	; Default scaling backend is SLIF when installed, BodyMorph otherwise - both map to
+	; VisualScaling 4 (TestScale promotes 4->BodyMorph when SLIF is absent, and the MCM
+	; option list shows index 4 as SLIF or BodyMorph to match). The belly/breast sliders
+	; ship at the BodyMorph baseline (property default 1.0); when SLIF is present, raise
+	; them to the SLIF magnitudes so the shipped default looks right for that backend.
+	if Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+		BellyMaxScale = 7.5
+		BreastsMaxScale = 10.0
+		BellyMaxScaleDef = 7.5
+		BreastsMaxScaleDef = 10.0
+	endif
 EndEvent
 
 Event OnVersionUpdate(int version)
@@ -4849,16 +4860,28 @@ EndState
 
 
 
+; Effective scaling backend for slider defaults/ranges. VisualScaling 4 means SLIF, but
+; with no SLIF installed it runs as BodyMorph (5) - mirror TestScale's promotion so the
+; slider default value and range match the backend that will actually be used.
+int function EffectiveVisualScaling()
+	int vs = VisualScaling
+	if vs == 4 && !Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+		vs = 5
+	endif
+	return vs
+endFunction
+
 ; - Slider Options
 State SliderBellyScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BellyMaxScale)
-		if VisualScaling == 4 ; SLIF: multiplicative bone scale, 7.5x reads as ~max realistic pregnancy
+		int vs = EffectiveVisualScaling()
+		if vs == 4 ; SLIF: multiplicative bone scale, 7.5x reads as ~max realistic pregnancy
 			BellyMaxScaleDef = 7.5
 			SetSliderDialogDefaultValue(BellyMaxScaleDef)
 			SetSliderDialogRange(0, 10)
 			SetSliderDialogInterval(0.1)
-		elseif VisualScaling == 5 ; BodyMorph: NiOverride.SetBodyMorph slider, 1.0 = morph fully applied
+		elseif vs == 5 ; BodyMorph: NiOverride.SetBodyMorph slider, 1.0 = morph fully applied
 			BellyMaxScaleDef = 1.0
 			SetSliderDialogDefaultValue(BellyMaxScaleDef)
 			SetSliderDialogRange(0, 3)
@@ -4881,9 +4904,10 @@ State SliderBellyScaleMax
 	EndEvent
 
 	Event OnDefaultST()
-		if VisualScaling == 4
+		int vs = EffectiveVisualScaling()
+		if vs == 4
 			BellyMaxScaleDef = 7.5
-		elseif VisualScaling == 5
+		elseif vs == 5
 			BellyMaxScaleDef = 1.0
 		else
 			BellyMaxScaleDef = 4.2
@@ -4904,12 +4928,13 @@ EndState
 State SliderBreastScaleMax
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(BreastsMaxScale)
-		if VisualScaling == 4 ; SLIF
+		int vs = EffectiveVisualScaling()
+		if vs == 4 ; SLIF
 			BreastsMaxScaleDef = 10
 			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
 			SetSliderDialogRange(0, 20)
 			SetSliderDialogInterval(0.1)
-		elseif VisualScaling == 5 ; BodyMorph (BreastsSH / BreastsNewSH morphs, 1.0 = fully applied)
+		elseif vs == 5 ; BodyMorph (BreastsSH / BreastsNewSH morphs, 1.0 = fully applied)
 			BreastsMaxScaleDef = 1.0
 			SetSliderDialogDefaultValue(BreastsMaxScaleDef)
 			SetSliderDialogRange(0, 3)
@@ -4934,9 +4959,10 @@ State SliderBreastScaleMax
 	EndEvent
 
 	Event OnDefaultST()
-		if VisualScaling == 4
+		int vs = EffectiveVisualScaling()
+		if vs == 4
 			BreastsMaxScaleDef = 10
-		elseif VisualScaling == 5
+		elseif vs == 5
 			BreastsMaxScaleDef = 1.0
 		else
 			BreastsMaxScaleDef = 0.4
