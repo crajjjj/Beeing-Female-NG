@@ -37,6 +37,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Beeing Female vs. Fertility Mode Reloaded: comparison-fertility-mode.md
   - For Players:
     - Getting Started: players/getting-started.md
     - Troubleshooting & Logs: players/troubleshooting.md
