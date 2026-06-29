@@ -94,7 +94,7 @@ Both cover the core loop; they diverge in breadth and depth.
 | PO3 (Papyrus Extender) | **Required** — nearby-NPC scans, hit events | **Required** — discovery, death cleanup |
 | Recommended (both) | BodySlide (body morphs) · Papyrus Tweaks NG (script performance) | BodySlide · Papyrus Tweaks NG |
 | Data storage | StorageUtil / JsonUtil (PapyrusUtil) | JContainers |
-| SexLab | ✅ + Devious Devices awareness | ✅ + Separate Orgasm (SLSO) |
+| SexLab | ✅ SLSO, SexLab P+ cum events, hentairim tags, **Devious Devices** chastity awareness | ✅ SLSO |
 | OStim | ✅ player **and NPC↔NPC** | ✅ player **and NPC↔NPC** |
 | Other | Bathing in Skyrim, SlaveTats (optional) | DAR/OAR "Immersive Effects" add-ons |
 
