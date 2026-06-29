@@ -819,7 +819,7 @@ function getLastSeenNPCs()
 	; One PO3 scan returns nearby humanoid NPCs by keyword (ActorTypeNPC excludes
 	; creatures for free), instead of firing six separate vanilla scans.
 	if !ActorTypeNPCKw
-		ActorTypeNPCKw = Game.GetFormFromFile(0x00013794, "Skyrim.esm") as Keyword ; ActorTypeNPC
+		ActorTypeNPCKw = Keyword.GetKeyword("ActorTypeNPC")
 	endif
 	ObjectReference[] nearby = FindAllReferencesWithKeyword(ActorRef, ActorTypeNPCKw, 2500.0, true)
 	int n = 0
