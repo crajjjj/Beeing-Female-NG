@@ -96,6 +96,8 @@ Both cover the core loop; they diverge in breadth and depth.
 | Data storage | StorageUtil / JsonUtil (PapyrusUtil) | JContainers |
 | SexLab | ✅ SLSO, SexLab P+ cum events, hentairim tags, **Devious Devices** chastity awareness | ✅ SLSO |
 | OStim | ✅ player **and NPC↔NPC** | ✅ player **and NPC↔NPC** |
+| Estrus family | ✅ Defers its cycle to active **Estrus Chaurus / Spider / Dwemer** pregnancies | ❌ |
+| DHLP | ✅ Respects & emits `dhlp-Suspend` / `dhlp-Resume` around birth | ❌ |
 | Other | Bathing in Skyrim, SlaveTats (optional) | DAR/OAR "Immersive Effects" add-ons |
 
 ## Which should you run?
