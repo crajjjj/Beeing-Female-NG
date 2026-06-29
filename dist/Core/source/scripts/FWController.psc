@@ -286,6 +286,7 @@ bool function CreateFemaleActor(actor woman, bool force_new=false)
 	StorageUtil.SetIntValue(woman,"FW.CurrentState",stateID)
 	StorageUtil.SetFloatValue(woman,"FW.StateEnterTime",stateEnterTime)
 	StorageUtil.SetFloatValue(woman,"FW.LastUpdate",currentTime)
+	StorageUtil.SetFloatValue(woman,"FW.LastLoaded",currentTime)
 	StorageUtil.SetIntValue(woman,"FW.Flags",flag)
 
 	if hasSaved==false || force_new;/==true/;

@@ -226,7 +226,13 @@ endEvent
 
 Event OnEffectFinish(Actor akTarget, Actor akCaster)
 	if bInitSpell;/==true/;
-		ResetBelly()
+		; Keep a dead woman's belly - a corpse shouldn't visibly deflate. Live
+		; removals (idle-untrack / dispel) are only ever non-pregnant here, so
+		; skipping ResetBelly for the dead is a no-op for them.
+		if ActorRef && ActorRef.IsDead() ;Tkc-style: avoid the negation
+		else
+			ResetBelly()
+		endif
 		onExitState()
 	endif
 	; Defensive cleanup in case birth was interrupted.
@@ -291,6 +297,10 @@ endEvent
 event OnUpdateGameTime()
 	float startTime = GameDaysPassed.GetValue()
 	float currentTime = GameDaysPassed.GetValue()
+	if ActorRef.Is3DLoaded()
+		; Idle-untrack timer: mark when she was last loaded (see FWSystem.TryUntrackIdleFemale).
+		StorageUtil.SetFloatValue(ActorRef,"FW.LastLoaded",currentTime)
+	endif
 	string ActorCurrentState = Self.GetState()
 	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime start - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState)
 	;if System.IsActorPregnantByChaurus(ActorRef) && (Self.GetState() != "PregnantChaurus_State")
@@ -1969,7 +1979,10 @@ Event OnDeath(Actor akKiller)
 		Controller.DamageBaby(ActorRef,92)
 	else
 		FWSaveLoad.Delete(ActorRef)
-	endif	
+		; Death leaves the ability behind (no OnEffectFinish fires on death), so strip
+		; it here - this also triggers OnEffectFinish's ResetBelly/onExitState cleanup.
+		ActorRef.RemoveSpell(BeeingFemaleSpell)
+	endif
 endEvent
 
 

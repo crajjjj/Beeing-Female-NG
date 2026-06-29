@@ -65,6 +65,11 @@ Spell Property BeeingMaleSpell Auto
 FWAbilityBeeingFemale Property Player Auto hidden
 FWAbilityBeeingMale Property PlayerMale Auto hidden
 
+; Idle-NPC untracking: drop offscreen, idle tracked females to bound the tracked
+; count and stop their cycle ticks (see TryUntrackIdleFemale / FWSystem.OnUpdate).
+bool  Property IdleUntrackEnabled = true AutoReadOnly
+float Property IdleUntrackDays    = 3.0  AutoReadOnly
+
 ImageSpaceModifier Property AbortusImod  Auto
 ImageSpaceModifier Property AbortusFever Auto
 Imagespacemodifier property iModPainLow auto
@@ -792,14 +797,87 @@ event OnUpdate()
 		if female ;Tkc (Loverslab): optimization
 		 if female==PlayerRef
 		 else;female!=PlayerRef
-			float t = Utility.GetCurrentRealTime()
-			Data.Update(female)
+			if IdleUntrackEnabled && TryUntrackIdleFemale(female)
+				; female dropped from tracking this tick - skip the refresh
+			else
+				float t = Utility.GetCurrentRealTime()
+				Data.Update(female)
+			endif
 		 endif
 		endif
 	endif
 	RegisterForSingleUpdate(cfg.UpdateInterval)
 endEvent
 
+
+; Drops a tracked female from active tracking when she's been offscreen for
+; IdleUntrackDays game-days with nothing in flight. Returns true if removed.
+; Keeps pregnant/labor/recovering, mid-miscarriage, contracepting, sperm-bearing
+; and foreign-pregnancy (Chaurus/Estrus) women so no offscreen progression or
+; conception window is lost. BF NG's per-actor analogue of FMR's 48h cleanup.
+bool function TryUntrackIdleFemale(actor woman)
+	; Only drop someone offscreen now - a stale FW.LastLoaded on a loaded actor
+	; would otherwise churn her spell off and right back on.
+	if woman.Is3DLoaded()
+		return false
+	endif
+	; Dead women: full canonical purge (Delete) + strip the cycle spell, mirroring
+	; FWAbilityBeeingFemale.OnDeath for the case where OnDeath never fired.
+	if woman.IsDead()
+		FWSaveLoad.Delete(woman)
+		woman.RemoveSpell(BeeingFemaleSpell)
+		return true
+	endif
+	; 0-3 = plain cycle phases (the only safe-to-drop states); 4-19 = trimesters/
+	; labor/recovery and the foreign-pregnancy holds.
+	if StorageUtil.GetIntValue(woman,"FW.CurrentState",0) >= 4
+		return false
+	endif
+	; Carrying despite a stale/desynced CurrentState - never drop a pregnancy.
+	if StorageUtil.GetIntValue(woman,"FW.NumChilds",0) > 0
+		return false
+	endif
+	if StorageUtil.GetIntValue(woman,"FW.Abortus",0) > 1            ; mid-miscarriage
+		return false
+	endif
+	if StorageUtil.FormListCount(woman,"FW.SpermName") > 0          ; could still conceive
+		return false
+	endif
+	if StorageUtil.GetIntValue(woman,"FW.Contraception",0) > 0      ; live contraception countdown
+		return false
+	endif
+	; Foreign pregnancies park CurrentState at 2/8, so the >=4 check above misses them.
+	if IsActorPregnantByChaurus(woman) || IsActorPregnantByEstrusSpider(woman) || IsActorPregnantByEstrusDwemer(woman)
+		return false
+	endif
+
+	float now      = Utility.GetCurrentGameTime()
+	float lastSeen = StorageUtil.GetFloatValue(woman,"FW.LastLoaded", 0.0)
+	if lastSeen <= 0.0
+		StorageUtil.SetFloatValue(woman,"FW.LastLoaded", now)       ; legacy save: start the timer, don't drop yet
+		return false
+	endif
+	if (now - lastSeen) < IdleUntrackDays
+		return false
+	endif
+
+	; --- commit: stop the cycle tick and let the cloak re-discover her later ---
+	woman.RemoveSpell(BeeingFemaleSpell)
+	; Clear the cloak dedup marker (keyed on the female spell in FWCloaking) so she
+	; is re-added next time she enters the cloak radius.
+	StorageUtil.FormListRemove(BeeingFemaleSpell, "BF_CloakEffectList", woman, true)
+	StorageUtil.FormListRemove(none, "FW.SavedNPCs", woman, true)
+	; Clear only the transient cycle bookkeeping - CreateFemaleActor rebuilds these
+	; on rediscovery. Deliberately NOT cleared: FW.NumBirth/FW.NumBabys (lifetime
+	; history) and FW.SpermRace/FW.ChildFatherRace (preserved donor/lineage mirrors).
+	StorageUtil.UnsetIntValue(woman,   "FW.CurrentState")
+	StorageUtil.UnsetFloatValue(woman, "FW.StateEnterTime")
+	StorageUtil.UnsetFloatValue(woman, "FW.LastUpdate")
+	StorageUtil.UnsetIntValue(woman,   "FW.Flags")
+	StorageUtil.UnsetFloatValue(woman, "FW.LastLoaded")
+	FW_log.WriteLog("FWSystem: untracked idle woman " + woman)
+	return true
+endFunction
 
 function Upgrade(int oldVersion, int newVersion)
 	UpdateState=0x01
