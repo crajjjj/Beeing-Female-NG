@@ -2,6 +2,9 @@
 
 A Skyrim SE/AE/VR mod that simulates a female reproductive cycle: menstruation, fertility, conception, pregnancy, birth, and interactive children — for the player and for NPCs. It is a hybrid SKSE C++ plugin plus Papyrus script system built on CommonLibSSE-NG.
 
+!!! warning "Adult mod — reference documentation"
+    Beeing Female NG is a mature (18+) Skyrim mod that simulates a female reproductive cycle. **These pages are reference documentation:** they describe the mod's gameplay systems, MCM options, and mod compatibility so players can configure it and authors can integrate with it. They contain no pornographic media and exist to document software behaviour. Install and use the mod only where appropriate for your age and local laws.
+
 These docs are split into two tracks. Pick the one that fits you:
 
 ## For Players

@@ -17,7 +17,7 @@ When baby spawn mode is "Item/Actor" and **you are the father**, an NPC mother w
 
 ## NPC Auto-Insemination (Couples System)
 
-When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This simulates NPCs having an ongoing intimate life with their partners.
+When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This models background conception between paired NPCs so their cycles progress without the player present.
 
 **How it works:** Once per in-game day (at a configurable time), the system queues several random tracked females (the **Count** setting) and works through them a few per game-hour rather than all in one frame. This is best-effort -- any not reached before the next day's check are simply skipped.
 
