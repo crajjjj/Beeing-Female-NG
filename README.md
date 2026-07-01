@@ -10,11 +10,8 @@
   <a href="https://github.com/crajjjj/Beeing-Female-NG/releases/latest"><img src="https://img.shields.io/github/v/release/crajjjj/Beeing-Female-NG?label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Skyrim-SE%2FAE%2FVR-orange" alt="Skyrim SE/AE/VR">
   <img src="https://img.shields.io/badge/plugin-SKSE%20(CommonLibSSE--NG)-8A2BE2" alt="SKSE plugin">
-  <img src="https://img.shields.io/badge/content-18%2B-black" alt="18+ content"><br>
-  <a href="https://github.com/crajjjj/Beeing-Female-NG/releases"><img src="https://img.shields.io/github/downloads/crajjjj/Beeing-Female-NG/total" alt="Total downloads"></a>
-  <img src="https://img.shields.io/github/last-commit/crajjjj/Beeing-Female-NG" alt="Last commit">
+  <img src="https://img.shields.io/badge/content-18%2B-black" alt="18+ content">
   <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0">
-  <img src="https://img.shields.io/github/repo-size/crajjjj/Beeing-Female-NG" alt="Repo size">
 </p>
 
 A Skyrim SE/AE/VR mod that simulates a female reproductive cycle — menstruation, fertility, conception, pregnancy, birth, and interactive children — for the player and for NPCs. Hybrid SKSE C++ plugin (CommonLibSSE-NG) plus a Papyrus script system.
