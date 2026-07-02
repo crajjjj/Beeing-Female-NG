@@ -10,7 +10,6 @@ string property CFG_VAnchor auto hidden
 
 string _swfName = ""
 string _scriptName = ""
-int _widgetAlpha = 0;100
 FWSystem property System auto
 ;AssociationType spouse
 bool bIsInUpdate=false
@@ -31,9 +30,7 @@ bool property enabled
 			; old FadeTo(0, 0) never hid the frame. Alpha=0.0 calls setAlpha(0)
 			; directly and hides it instantly, selection or not.
 			Alpha = 0.0
-			_widgetAlpha=0
 		else
-			_widgetAlpha=100
 			; Bring the editor panel back up when enabled from the MCM.
 			; OnWidgetReset/disable leave it at Alpha 0, so without this the panel
 			; stays invisible and there is nothing to select an NPC into.
@@ -166,10 +163,10 @@ endFunction
 function hideWidget()
 	if(Ready)
 		;Debug.Notification("Hide Widget")
-		FadeTo(0, 3.0)
-		; showWidget() invokes setVisible(true); mirror it here. Without this the
-		; SWF container stays _visible=true forever and a fade of alpha alone can
-		; leave the frame on screen, so the debug widget never truly goes away.
+		; Hide instantly: Alpha=0 keeps the base class's stored alpha in sync
+		; (parent.OnWidgetReset would otherwise restore a stale value), and
+		; setVisible(false) mirrors showWidget's setVisible(true).
+		Alpha = 0.0
 		UI.InvokeBool(HUD_MENU, WidgetRoot + ".setVisible", false)
 	endIf
 endFunction
@@ -413,14 +410,16 @@ event OnKeyUp(int keyCode, float holdTime)
 	
 	if keyCode == 0x12
 		;Debug.Notification("KeyPressEvent raised: E")
-		if holdTime > 1.5 && targetNpc!=none && System.IsValidateFemaleActor(targetNpc)
+		; The validators return negative codes on failure, never 0 - compare >0,
+		; a bare int test is truthy for every rejection code.
+		if holdTime > 1.5 && targetNpc!=none && System.IsValidateFemaleActor(targetNpc)>0
 			female = targetNpc
 		elseif holdTime > 1.0
 			female = none
 		endif
 	elseif keyCode== 0x23 && holdTime>1.5 && _name!="" && targetNpc!=none
 		;Debug.Notification("KeyPressEvent raised: H")
-		if System.IsValidateMaleActor(targetNpc) && _female.GetRelationshipRank(targetNpc)>=0
+		if System.IsValidateMaleActor(targetNpc)>0 && _female.GetRelationshipRank(targetNpc)>=0
 			if JsonUtil.GetFormValue(JsonFile, "Husband") == targetNpc
 				if bIsInUpdate==false
 					bIsInUpdate=true
@@ -437,12 +436,12 @@ event OnKeyUp(int keyCode, float holdTime)
 					UI.InvokeString(HUD_MENU, WidgetRoot + ".setHusband", targetNpc.GetLeveledActorBase().GetName())
 				endif
 			endif
-		elseif !System.IsValidateMaleActor(targetNpc) && _female.GetRelationshipRank(targetNpc)>=0
+		elseif System.IsValidateMaleActor(targetNpc)<=0 && _female.GetRelationshipRank(targetNpc)>=0
 			JsonUtil.UnsetFormValue(JsonFile, "Husband")
 		endif
 	elseif keyCode== 0x22 && holdTime>1.5 && _name!="" && targetNpc!=none
 		;Debug.Notification("KeyPressEvent raised: A")
-		if System.IsValidateActor(targetNpc) && _female.GetRelationshipRank(targetNpc)>=0
+		if System.IsValidateActor(targetNpc)>0 && _female.GetRelationshipRank(targetNpc)>=0
 			if JsonUtil.FormListHas(JsonFile, "Affairs", targetNpc)
 				JsonUtil.FormListRemove(JsonFile, "Affairs", targetNpc)
 				RefreshAffair()
@@ -455,7 +454,7 @@ event OnKeyUp(int keyCode, float holdTime)
 		endif
 	elseif keyCode== 0x19 && holdTime>1.5 && _name!="" && targetNpc!=none
 		;Debug.Notification("KeyPressEvent raised: P")
-		if System.IsValidateActor(targetNpc) && _female.GetRelationshipRank(targetNpc)>=0
+		if System.IsValidateActor(targetNpc)>0 && _female.GetRelationshipRank(targetNpc)>=0
 			if JsonUtil.FormListHas(JsonFile, "Partners", targetNpc)
 				JsonUtil.FormListRemove(JsonFile, "Partners", targetNpc)
 				RefreshPartner()

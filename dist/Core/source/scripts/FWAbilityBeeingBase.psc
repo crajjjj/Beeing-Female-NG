@@ -270,17 +270,26 @@ endEvent
 
 ; Finds a sleep sex partner near the player within radius. Prefers the closest
 ; actor (cheap, and thematically the partner beside you); if that isn't a valid
-; partner, scans every living actor in the cell. The result is recorded through
-; CheckSexPartnerOnSleep's bSexPartnerOnSleep/aSexPartnerOnSleep side effects -
-; callers must ensure those flags are clear before calling.
+; partner, tries a few more cell actors. The scan is capped because every
+; rejected candidate pays a full validation chain on the script VM - this is a
+; best-effort feature, not an exhaustive search. On success the partner is
+; recorded in bSexPartnerOnSleep/aSexPartnerOnSleep by CheckSexPartnerOnSleep.
+; No keyword filter on the scan: creatures are valid partners when CreatureSperm
+; is enabled, so they must stay in the candidate pool.
 function findSleepPartner(int radius)
-	if CheckSexPartnerOnSleep(Game.FindClosestActorFromRef(PlayerRef, radius), PlayerRef)
+	actor closest = Game.FindClosestActorFromRef(PlayerRef, radius)
+	if CheckSexPartnerOnSleep(closest, PlayerRef)
 		return
 	endif
 	Actor[] sleepActors = MiscUtil.ScanCellNPCs(PlayerRef, radius)
 	int si = 0
-	while si < sleepActors.length && !bSexPartnerOnSleep
-		CheckSexPartnerOnSleep(sleepActors[si], PlayerRef)
+	int checked = 0
+	bool found = false
+	while si < sleepActors.length && checked < 5 && !found
+		if sleepActors[si] != closest ; already validated above
+			found = CheckSexPartnerOnSleep(sleepActors[si], PlayerRef)
+			checked += 1
+		endif
 		si += 1
 	endWhile
 endFunction

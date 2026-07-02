@@ -3853,6 +3853,8 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 							endIf
 						elseif validateMale == -9
 							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason9,targetName), System.MSG_High, System.MSG_Box)
+						elseif validateMale == -12
+							System.Message(FWUtility.MultiStringReplace(Content.ForbiddenReason12,targetName), System.MSG_Low, System.MSG_Box)
 						endif
 					endIf
 				endIf
@@ -4001,6 +4003,8 @@ function __deprecated__showRankedInfoBox(actor target, int Rank)
 							endIf
 						elseif Validate == -9
 							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason9,targetName) , System.MSG_High, System.MSG_Box)
+						elseif Validate == -12
+							System.Message( FWUtility.MultiStringReplace(Content.ForbiddenReason12,targetName) , System.MSG_Low, System.MSG_Box)
 						endif
 					endIf
 				endIf

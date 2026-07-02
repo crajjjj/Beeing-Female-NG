@@ -816,6 +816,23 @@ endEvent
 ; and foreign-pregnancy (Chaurus/Estrus) women so no offscreen progression or
 ; conception window is lost. BF NG's per-actor analogue of FMR's 48h cleanup.
 bool function TryUntrackIdleFemale(actor woman)
+	; Mannequins tracked before the ManakinRace spelling fix: purge immediately,
+	; even while loaded - the -12 validation gate stops the cloak re-adding them.
+	; Checked before the Is3DLoaded bail because home mannequins are loaded on
+	; every visit, so the idle timer below would never expire for them.
+	Race wr = woman.GetRace()
+	if wr && IsMannequinRaceName(wr.GetName() + MiscUtil.GetRaceEditorID(wr))
+		woman.RemoveSpell(BeeingFemaleSpell)
+		StorageUtil.FormListRemove(BeeingFemaleSpell, "BF_CloakEffectList", woman, true)
+		StorageUtil.FormListRemove(none, "FW.SavedNPCs", woman, true)
+		StorageUtil.UnsetIntValue(woman,   "FW.CurrentState")
+		StorageUtil.UnsetFloatValue(woman, "FW.StateEnterTime")
+		StorageUtil.UnsetFloatValue(woman, "FW.LastUpdate")
+		StorageUtil.UnsetIntValue(woman,   "FW.Flags")
+		StorageUtil.UnsetFloatValue(woman, "FW.LastLoaded")
+		FW_log.WriteLog("FWSystem: untracked mannequin " + woman)
+		return true
+	endif
 	; Only drop someone offscreen now - a stale FW.LastLoaded on a loaded actor
 	; would otherwise churn her spell off and right back on.
 	if woman.Is3DLoaded()
@@ -1159,7 +1176,7 @@ Event onBeeingFemaleCommand(string hookName, string argString, float argNum, for
 						endif
 						amount = Manager.getSpermAmount(a2,a,amount)
 						Controller.AddSperm(a2, a, amount)
-					elseif validateF>0 && validateM2 ; F/M2 Cum
+					elseif validateF>0 && validateM2>0 ; F/M2 Cum
 						float virility = Controller.GetVirility(a2)
 						float amount = Utility.RandomFloat(virility * 0.75, virility*1.1)
 						if amount>1.0
@@ -1190,7 +1207,7 @@ Event onBeeingFemaleCommand(string hookName, string argString, float argNum, for
 						amount = Manager.getSpermAmount(a2,a,amount)
 						Controller.AddSperm(a2, a, amount)
 						targetWoman = a2
-					elseif validateF>0 && validateM2 ; F/M2 Cum
+					elseif validateF>0 && validateM2>0 ; F/M2 Cum
 						float virility = Controller.GetVirility(a2)
 						float amount = Utility.RandomFloat(virility * 0.75, virility*1.1)
 						if amount>1.0
@@ -1519,7 +1536,11 @@ bool function CheckGiveSpermToNPC(actor f, float GameTime)
 					Actor[] nearby = MiscUtil.ScanCellNPCs(f, 3000.0)
 					if nearby.length > 0
 						actor cand = nearby[Utility.RandomInt(0, nearby.length - 1)]
-						if cand && cand!=PlayerRef && cand!=f && cand.IsInLocation(f.GetCurrentLocation())
+						; Wilderness cells have no Location - IsInLocation(None) is always
+						; false, so treat None as "same place" instead of vetoing every
+						; candidate exactly where the pooled lists are emptiest.
+						Location floc = f.GetCurrentLocation()
+						if cand && cand!=PlayerRef && cand!=f && (floc==none || cand.IsInLocation(floc))
 							males = FWUtility.ActorArrayAppend(males, cand, 1)
 						endif
 					endif
@@ -1667,6 +1688,7 @@ endFunction
 ; -9 = actor is elder (women only)
 ; -10 = actor or actorbase doesn't exist
 ; -11 = actor is creature and creatures are disabled in settings
+; -12 = actor is a mannequin
 int function IsValidateActor(actor a, bool bIgnoreRelevance = false)
 	if a ;Tkc (Loverslab): optimization
 	else;if a==none
@@ -1682,6 +1704,14 @@ int function IsValidateActor(actor a, bool bIgnoreRelevance = false)
 	elseif ab.GetSex()==1
 		return IsValidateFemaleActor(a,bIgnoreRelevance)
 	endif
+endFunction
+
+; Vanilla's mannequin race is the famously misspelled EditorID "ManakinRace"
+; (FULL name "Nord"!); USMP renames it to "ManikinRace"/"Manikin"; replacer mods
+; use "Femmequin" or a correctly spelled "Mannequin". Match every known spelling
+; against Name+EditorID - StringUtil.Find is case-insensitive.
+bool function IsMannequinRaceName(string RaceName)
+	return StringUtil.Find(RaceName, "Manakin") != -1 || StringUtil.Find(RaceName, "Manikin") != -1 || StringUtil.Find(RaceName, "Mannequin") != -1 || StringUtil.Find(RaceName, "Femmequin") != -1
 endFunction
 
 int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
@@ -1784,11 +1814,10 @@ int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
 
 	String RaceName = ActorRace.GetName()+MiscUtil.GetRaceEditorID(ActorRace)
 
-	; Exclude mannequins: they are ActorTypeNPC on MannequinRace and otherwise pass
-	; every gate. StringUtil.Find is case-insensitive, matching the -MannequinRace
-	; SPID item filter. Pure-string check - no ESM/FormList edit needed.
-	if StringUtil.Find(RaceName, "Mannequin") != -1
-		return -8
+	; Exclude mannequins: they are ActorTypeNPC on the mannequin race and otherwise
+	; pass every gate. Pure-string check - no ESM/FormList edit needed.
+	if IsMannequinRaceName(RaceName)
+		return -12
 	endif
 	
 ;	if ActorRace.IsRaceFlagSet(0x00000004) || StringUtil.Find(RaceName, "Child") != -1 || StringUtil.Find(RaceName, "Little") != -1 || StringUtil.Find(RaceName, "117") != -1 || (StringUtil.Find(RaceName, "Monli") != -1 && a.GetScale() < 0.93) || StringUtil.Find(RaceName, "Elin") != -1 || StringUtil.Find(RaceName, "Enfant") != -1
@@ -1914,11 +1943,10 @@ int function IsValidateMaleActor(actor a, bool bIgnoreRelevance = false)
 
 	String RaceName = ActorRace.GetName()+MiscUtil.GetRaceEditorID(ActorRace)
 
-	; Exclude mannequins: they are ActorTypeNPC on MannequinRace and otherwise pass
-	; every gate. StringUtil.Find is case-insensitive, matching the -MannequinRace
-	; SPID item filter. Pure-string check - no ESM/FormList edit needed.
-	if StringUtil.Find(RaceName, "Mannequin") != -1
-		return -8
+	; Exclude mannequins: they are ActorTypeNPC on the mannequin race and otherwise
+	; pass every gate. Pure-string check - no ESM/FormList edit needed.
+	if IsMannequinRaceName(RaceName)
+		return -12
 	endif
 
 ;	if ActorRace.IsRaceFlagSet(0x00000004) || StringUtil.Find(RaceName, "Child") != -1 || StringUtil.Find(RaceName, "Little") != -1 || StringUtil.Find(RaceName, "117") != -1 || (StringUtil.Find(RaceName, "Monli") != -1 && a.GetScale() < 0.93) || StringUtil.Find(RaceName, "Elin") != -1 || StringUtil.Find(RaceName, "Enfant") != -1
@@ -4702,6 +4730,8 @@ string function getValidateMessage(int id)
 				endIf
 			elseif id==-11
 				return Content.ForbiddenReason11
+			elseif id==-12
+				return Content.ForbiddenReason12
 			endif
 		endIf
 	endIf

@@ -817,6 +817,8 @@ float function timeRemaining()
 	endIf
 endFunction
 
+Keyword ActorTypeNPCKw ; lazily cached vanilla ActorTypeNPC keyword (Skyrim.esm 0x13794)
+
 function getLastSeenNPCs()
 	; FW.LastSeenNPCs is read only by the auto-insemination "last seen" father
 	; source. When that source is off, skip the scan entirely instead of building
@@ -825,13 +827,17 @@ function getLastSeenNPCs()
 		return
 	endif
 	; PapyrusUtil's ScanCellNPCs (already a hard dependency) returns living actors
-	; in the cell directly - no PO3, no keyword, no ObjectReference->Actor cast.
-	; Creatures are filtered by addLastSeenNPC's male validation below.
-	Actor[] nearby = MiscUtil.ScanCellNPCs(ActorRef, 2500.0)
+	; in the cell directly. Filter to ActorTypeNPC natively: addLastSeenNPC rejects
+	; creatures anyway, so without the keyword they'd only burn slots in the 10-cap
+	; below and starve the list in creature-dense cells (farms, stables, caves).
+	if !ActorTypeNPCKw
+		ActorTypeNPCKw = Game.GetFormFromFile(0x13794, "Skyrim.esm") as Keyword
+	endif
+	Actor[] nearby = MiscUtil.ScanCellNPCs(ActorRef, 2500.0, ActorTypeNPCKw)
 	int n = 0
 	while n < nearby.length && n < 10
 		actor a = nearby[n]
-		if a && a != PlayerRef
+		if a && a != PlayerRef && a != ActorRef ; the scan includes the woman herself
 			addLastSeenNPC(a)
 		endif
 		n += 1
@@ -1495,7 +1501,7 @@ EndFunction
 
 Function ResetBelly()
 	int visualScaling = cfg.VisualScaling
-	bool hasSLIF = Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	bool hasSLIF = cfg.HasSLIF()
 	if visualScaling == 4 && !hasSLIF
 		visualScaling = 5
 	endif
@@ -1525,7 +1531,7 @@ EndFunction
 
 function TestScale(float Scale=1.0)
 	int visualScaling = cfg.VisualScaling
-	bool hasSLIF = Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	bool hasSLIF = cfg.HasSLIF()
 	if visualScaling == 4 && !hasSLIF
 		visualScaling = 5
 	endif
@@ -1582,7 +1588,7 @@ Function SetBelly(bool bForce=false)
 	endif
 
 	int visualScaling = cfg.VisualScaling
-	bool hasSLIF = Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	bool hasSLIF = cfg.HasSLIF()
 	if visualScaling == 4 && !hasSLIF
 		visualScaling = 5
 	endif

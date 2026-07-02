@@ -2242,7 +2242,7 @@ Function SetStatsSpellOptions()
 EndFunction
 
 Function SetVisualScalingOptions()
-	if Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	if HasSLIF()
 		If (VisualScalingOptions.Length != 6)
 			VisualScalingOptions = New String[6]
 		EndIf
@@ -2290,6 +2290,13 @@ Function SetVisualScalingOptions()
 		VisualScalingOptions[4] = "$FW_MENU_OPTIONS_VisualScaleBodyMorph"
 		VisualScalingHighlightTexts[4] = "$FW_MENUTXT_OPTIONS_VisualScalingBodyMorph"
 	endIf
+	; A save or imported profile from a SLIF setup can carry index 5 (BodyMorph in
+	; the 6-entry list) into the 5-entry list - clamp so menu rendering never
+	; indexes out of bounds. Length-1 is BodyMorph in the short list, so the
+	; selected backend stays BodyMorph.
+	if VisualScaling >= VisualScalingOptions.Length
+		VisualScaling = VisualScalingOptions.Length - 1
+	endif
 EndFunction
 
 Function SetVisualScalingKindOptions()
@@ -2408,11 +2415,10 @@ Event OnConfigInit()
 	; option list shows index 4 as SLIF or BodyMorph to match). The belly/breast sliders
 	; ship at the BodyMorph baseline (property default 1.0); when SLIF is present, raise
 	; them to the SLIF magnitudes so the shipped default looks right for that backend.
-	if Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	; (No *Def writes here - OnSliderOpenST/OnDefaultST recompute those every time.)
+	if HasSLIF()
 		BellyMaxScale = 7.5
 		BreastsMaxScale = 10.0
-		BellyMaxScaleDef = 7.5
-		BreastsMaxScaleDef = 10.0
 	endif
 EndEvent
 
@@ -4860,12 +4866,18 @@ EndState
 
 
 
+; Single source for SLIF detection - every SLIF-conditional path (here and in
+; FWAbilityBeeingFemale) must use this so the plugin-name string exists once.
+bool function HasSLIF()
+	return Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+endFunction
+
 ; Effective scaling backend for slider defaults/ranges. VisualScaling 4 means SLIF, but
 ; with no SLIF installed it runs as BodyMorph (5) - mirror TestScale's promotion so the
 ; slider default value and range match the backend that will actually be used.
 int function EffectiveVisualScaling()
 	int vs = VisualScaling
-	if vs == 4 && !Game.IsPluginInstalled("SexLab Inflation Framework.esp")
+	if vs == 4 && !HasSLIF()
 		vs = 5
 	endif
 	return vs

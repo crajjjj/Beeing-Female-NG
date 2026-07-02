@@ -108,6 +108,7 @@ string property ForbiddenReason8 = "{0} is a child" auto hidden
 string property ForbiddenReason9 = "{0} is an elder" auto hidden
 string property ForbiddenReason10 = "{0} is an elder" auto hidden
 string property ForbiddenReason11 = "{0} is an elder" auto hidden
+string property ForbiddenReason12 = "{0} is a mannequin" auto hidden
 
 ; Female info
 string property InfoSpell_GotSpermInside="{0} got some sperm inside" auto hidden
@@ -321,6 +322,12 @@ function LoadContent()
 	ForbiddenReason9 = getLangText("FW_INFOWINDOW_ForbiddenReason9")
 	ForbiddenReason10 = getLangText("FW_INFOWINDOW_ForbiddenReason10")
 	ForbiddenReason11 = getLangText("FW_INFOWINDOW_ForbiddenReason11")
+	; Guarded: getLangText returns "" for keys a translation doesn't have - keeps
+	; the English default when a third-party/outdated translation lacks the key.
+	string sForbidden12 = getLangText("FW_INFOWINDOW_ForbiddenReason12")
+	if sForbidden12 != ""
+		ForbiddenReason12 = sForbidden12
+	endif
 
 ; Female info
 	InfoSpell_GotSpermInside = getLangText("GAME_CONTENT_InfoSpell_GotSpermInside")
