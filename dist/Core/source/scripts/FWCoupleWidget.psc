@@ -26,10 +26,21 @@ bool property enabled
 	function set(bool val)
 		bEnabled = val
 		if val==false
-			FadeTo(0, 0)
+			female = none  ; drop any selection
+			; FadeTo(0, x) with a 0 duration is a no-op in SkyUI, which is why the
+			; old FadeTo(0, 0) never hid the frame. Alpha=0.0 calls setAlpha(0)
+			; directly and hides it instantly, selection or not.
+			Alpha = 0.0
 			_widgetAlpha=0
 		else
 			_widgetAlpha=100
+			; Bring the editor panel back up when enabled from the MCM.
+			; OnWidgetReset/disable leave it at Alpha 0, so without this the panel
+			; stays invisible and there is nothing to select an NPC into.
+			; RefreshAll() clears any stale NPC/husband text from a prior selection
+			; (disable sets female=none but does not wipe the SWF fields).
+			RefreshAll()
+			showWidget()
 		endif
 		updateConfig()
 	endFunction
@@ -78,6 +89,12 @@ actor property Female
 			endif
 		else
 			;Debug.Notification("Char was none")
+			; Clear the selection state, not just the visuals. Callers use
+			; "female = none" to mean "deselect"; without this _name/_file keep
+			; the old woman, so a later RefreshAll re-shows a stale name.
+			_female = none
+			_name = ""
+			_file = ""
 			hideWidget()
 		endif
 	endFunction
@@ -129,6 +146,10 @@ event OnWidgetReset()
 	updateConfig()
 	UpdateContent()
 	UpdateWidgetScale()
+	; Start fully transparent so the debug widget never lingers on screen at
+	; init. hideWidget()'s FadeTo is Ready-guarded and gets skipped on load,
+	; but this direct Alpha assignment is not, so it always takes effect.
+	Alpha = 0.0
 endEvent
 
 event OnWidgetLoad()
@@ -146,6 +167,10 @@ function hideWidget()
 	if(Ready)
 		;Debug.Notification("Hide Widget")
 		FadeTo(0, 3.0)
+		; showWidget() invokes setVisible(true); mirror it here. Without this the
+		; SWF container stays _visible=true forever and a fade of alpha alone can
+		; leave the frame on screen, so the debug widget never truly goes away.
+		UI.InvokeBool(HUD_MENU, WidgetRoot + ".setVisible", false)
 	endIf
 endFunction
 
@@ -441,19 +466,27 @@ event OnKeyUp(int keyCode, float holdTime)
 				endif
 			endif
 		endif
+	elseif (keyCode==0x23 || keyCode==0x22 || keyCode==0x19) && holdTime>1.5 && targetNpc!=none && _name==""
+		; H/G/P need a selected woman -- the branches above are gated on
+		; _name!="", so without this they fail silently and it looks broken.
+		Debug.Notification("CoupleMaker: select a woman first - look at her and hold E")
 	endif
 endEvent
 
 function RefreshAll()
 	if(Ready)
+		; NPC Name -- always push, so an empty _name actively clears the field
+		; instead of leaving a stale name from a previous selection on screen.
+		; With no woman selected, show a prompt so it is obvious E starts the flow.
+		string[] s = new String[3]
 		if _name!=""
-			; NPC Name
-			string[] s = new String[3]
 			s[0] = _name
 			s[1] = _id
 			s[2] = _mod
-			UI.InvokeStringA(HUD_MENU, WidgetRoot + ".setNPC", s)
+		else
+			s[0] = "Look at a woman + hold E"
 		endif
+		UI.InvokeStringA(HUD_MENU, WidgetRoot + ".setNPC", s)
 	endif
 	RefreshHusband()
 	RefreshAffair()
