@@ -816,23 +816,6 @@ endEvent
 ; and foreign-pregnancy (Chaurus/Estrus) women so no offscreen progression or
 ; conception window is lost. BF NG's per-actor analogue of FMR's 48h cleanup.
 bool function TryUntrackIdleFemale(actor woman)
-	; Mannequins tracked before the ManakinRace spelling fix: purge immediately,
-	; even while loaded - the -12 validation gate stops the cloak re-adding them.
-	; Checked before the Is3DLoaded bail because home mannequins are loaded on
-	; every visit, so the idle timer below would never expire for them.
-	Race wr = woman.GetRace()
-	if wr && IsMannequinRaceName(wr.GetName() + MiscUtil.GetRaceEditorID(wr))
-		woman.RemoveSpell(BeeingFemaleSpell)
-		StorageUtil.FormListRemove(BeeingFemaleSpell, "BF_CloakEffectList", woman, true)
-		StorageUtil.FormListRemove(none, "FW.SavedNPCs", woman, true)
-		StorageUtil.UnsetIntValue(woman,   "FW.CurrentState")
-		StorageUtil.UnsetFloatValue(woman, "FW.StateEnterTime")
-		StorageUtil.UnsetFloatValue(woman, "FW.LastUpdate")
-		StorageUtil.UnsetIntValue(woman,   "FW.Flags")
-		StorageUtil.UnsetFloatValue(woman, "FW.LastLoaded")
-		FW_log.WriteLog("FWSystem: untracked mannequin " + woman)
-		return true
-	endif
 	; Only drop someone offscreen now - a stale FW.LastLoaded on a loaded actor
 	; would otherwise churn her spell off and right back on.
 	if woman.Is3DLoaded()
