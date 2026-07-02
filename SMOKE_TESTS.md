@@ -103,7 +103,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 8.3 | P1 | Actor exclusions | Children, ElderRace, ElderRaceVampire excluded by `ValidateActor` | FWPlayerAlias |
 | 8.4 | P2 | Location change triggers rescan | `OnLocationChange` → 0.25s delay → Processing → new scan | FWPlayerAlias |
 | 8.5 | P1 | Male actor spell path correctness | Males get `BeeingMaleSpell` not `BeeingFemaleSpell` (known copy-paste risk in `ProcessActor`) | FWPlayerAlias |
-| 8.6 | P2 | Mannequin exclusion | SPID distribution excludes mannequins (commit fd21817) | SPID config |
+| 8.6 | P1 | Mannequin exclusion | Validators return -12 for race Name+EditorID containing Manakin (vanilla misspelling), Manikin (USMP), Mannequin, or Femmequin — vanilla mannequins were previously NOT matched ("Mannequin" never occurs in the vanilla record). Info spell reports "is a mannequin", not "is a child" | FWSystem `IsMannequinRaceName` |
+| 8.7 | P2 | Last-seen scan ignores creatures | `getLastSeenNPCs` passes the ActorTypeNPC keyword to `ScanCellNPCs` so creatures (and the scanned woman herself) don't consume the 10-slot cap in farms/stables/caves | FWAbilityBeeingFemale |
+| 8.8 | P2 | Sleep partner scan is capped | `findSleepPartner` validates closest + at most 5 more cell actors (skipping the already-tried closest); creatures stay in the pool for CreatureSperm setups | FWAbilityBeeingBase |
 
 ## 9. Save/Load & NPC Persistence
 
@@ -191,7 +193,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 16.1 | P2 | Spouse auto-detection | `GetRelationshipRank >= 4` or `HasAssociation(Spouse)` within 1000 units → husband set | FWCoupleWidget |
 | 16.2 | P2 | Couple JSON persistence | `BeeingFemale/Couples/<ModID>_<FormID>.json` created with Husband, Affairs, Partners | FWCoupleWidget |
 | 16.3 | P2 | Stale husband form (mod removed) | `GetFormValue` returns None while `HasFormValue` true → should not cause infinite 5s polling | FWCoupleWidget |
-| 16.4 | P2 | Widget disabled by default | New install: `CFG_Enabled = false`, hotkeys do nothing | FWCoupleWidget |
+| 16.4 | P2 | CoupleMaker off by default | MCM Cheat toggle starts off (and resets off on every game load via `OnGameLoad`); panel hidden at init (no lingering empty frame), hotkeys do nothing while off | FWCoupleWidget, FWSystem |
+| 16.6 | P2 | MCM toggle shows/hides panel | Enable → empty editor panel appears reading "Look at a woman + hold E"; disable → hides instantly (no stale NPC text on re-enable); H/G/P held before a woman is selected shows a hint notification | FWCoupleWidget |
+| 16.7 | P2 | Invalid targets rejected | Validator gates compare `>0`: mannequins/children/creatures can't be selected or set as Husband/Affair/Partner; H on an invalid target with rank >=0 unsets Husband (previously dead code) | FWCoupleWidget |
 | 16.5 | P1 | Auto-insemination uses partners independently of affairs | Daily couples pass: a woman with assigned Partners but NO Affairs still gets her partners in the weighted donor pool (2× each). Previously the Partners branch was gated on the Affairs count (`ca>0`) so partners-only couples were skipped | FWSystem (daily impregnation) |
 
 ## 17. MCM Configuration
@@ -204,6 +208,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 17.5 | P1 | Cheat page: force impregnation with creature | MCM cheat passes `bShowTravelingSperm=true` to bypass washout delay. Creature father found immediately | FWSystemConfig |
 | 17.6 | P2 | PlayAnimations toggle | FNIS gate removed — Nemesis users can enable (commit 530c34a) | FWSystemConfig |
 | 17.4 | P2 | System page: mod reset | Full reset clears StorageUtil, re-runs init | FWSystem |
+| 17.7 | P2 | VisualScaling index survives SLIF removal | A save/profile carrying VisualScaling=5 (BodyMorph, 6-entry SLIF list) into a non-SLIF setup is clamped to the 5-entry list's BodyMorph index — Pregnancy page menu renders, no array OOB | FWSystemConfig `SetVisualScalingOptions` |
 
 ## 18. Mod Events API
 
@@ -214,6 +219,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 18.3 | P1 | External `BeeingFemale` → `DamageBaby`/`HealBaby` | Unborn health modified within bounds | FWController |
 | 18.4 | P2 | Emitted `BeeingFemaleConception` | Args (Mother, ChildCount, Fathers) correct and parseable by external mods | FWController |
 | 18.5 | P2 | Emitted `BeeingFemaleLabor` | Args correct, fires at start of `GiveBirth` (before child spawning loop) | FWController |
+| 18.8 | P1 | `AddSperm` with invalid male donor | Mod event with a mannequin/dead/forbidden donor is rejected (`validateM2>0`); previously any negative validation code passed as truthy and stored sperm | FWSystem `onBeeingFemaleCommand` |
 | 18.6 | P2 | External `BeeingFemale` → `AddFertility` | Raw Gate 2 boost added via `AddFertility`; does NOT touch the per-cycle fertile flag; capped at 8 | FWController `AddFertility`, FWSystem |
 | 18.7 | P2 | External `BeeingFemale` → `DrinkFertilityTonic` | Routes through `ApplyFertilityTonic`: numArg <3.5 = mild (boost + one Gate 1 nudge), ≥3.5 = potent (boost + forces this cycle fertile) — parity with the in-game potion | FWController `ApplyFertilityTonic`, FWSystem |
 
@@ -223,7 +229,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 |---|---|----------|----------|---------|
 | 19.1 | P1 | Female NPCs receive items | Contraception (10%), tampons (40–50%), panty (20%) distributed per rules | SPID INI |
 | 19.2 | P1 | Bandits/Forsworn excluded | No contraception or tampons on bandit/forsworn NPCs | SPID INI |
-| 19.3 | P1 | Mannequins excluded | No items on mannequin actors (commit fd21817) | SPID INI |
+| 19.3 | P1 | Mannequins excluded | No items on mannequin actors — filters use wildcards `-*Manakin*,-*Manikin*,-*Mannequin*,-*Femmequin*` (the old exact `-MannequinRace` matched nothing: the vanilla EditorID is `ManakinRace`) | SPID INI |
 | 19.4 | P2 | Merchant stock | `JobMerchantFaction` members have all consumable types (2–6 units, 100%) | SPID INI |
 | 19.5 | P2 | `_BF_ContraceptionHighest` requires addon | Only appears when `BeeingFemaleBasicAddOn.esp` loaded; absent without it | SPID INI |
 | 19.6 | P2 | Males receive no items | No male distribution rules — confirm males are clean | SPID INI |
