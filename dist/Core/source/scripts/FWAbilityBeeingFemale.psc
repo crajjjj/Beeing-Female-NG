@@ -172,11 +172,23 @@ Event OnEffectStart(Actor target, Actor caster)
 	getLastSeenNPCs()
 	System.Message("FWAbilityBeeingFemale::OnEffectStart("+ActorRef.GetLeveledActorBase().GetName()+") " + (Utility.GetCurrentRealTime() - startTime) + " sec", System.MSG_All, System.MSG_Trace)
 
-	Utility.Wait(1.0)
+	; Re-apply the belly straight away. The old Utility.Wait(1.0) that preceded
+	; this only manufactured suspended stacks (on NPCs this event re-fires on
+	; every actor load, and effects torn down mid-wait strand the stack in the
+	; save), but the SetBelly itself is load-bearing: OnEffectFinish's
+	; ResetBelly clears the morph at effect teardown and mode-1 node scaling
+	; never survives a 3D reload, so without this a freshly loaded pregnant NPC
+	; stays flat until her next game-hour tick. No-ops for cycle states 0-3.
 	SetBelly()
-	
+
 	if(IsPlayer)
 	else
+		; Inventory ops work without loaded 3D, so run this outside the
+		; Is3DLoaded gate - at effect (re)start the 3D may still be settling.
+		if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_RemoveSPIDitems", 0) == 1)
+			FW_log.WriteLog("FWAbilityBeeingFemale : removing SPID distributed items for actor " + ActorRef + ", whose name is " + ActorRef.GetDisplayName())
+			System.RemoveSPIDitems(ActorRef)
+		endIf
 		if(ActorRef.Is3DLoaded())
 			int myNumChilds = StorageUtil.GetIntValue(ActorRef, "FW.NumChilds", numChilds)
 			if(myNumChilds > 0)
@@ -186,13 +198,8 @@ Event OnEffectStart(Actor target, Actor caster)
 				elseif(currentState > 7)
 					System.InstantBornChilds(ActorRef)
 					numChilds = 0
-				endif				
+				endif
 			endif
-			
-			if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_RemoveSPIDitems", 0) == 1)
-				FW_log.WriteLog("FWAbilityBeeingFemale : removing SPID distributed items for actor " + ActorRef + ", whose name is " + ActorRef.GetDisplayName())
-				System.RemoveSPIDitems(ActorRef)
-			endIf
 		endif
 	endIf
 	
@@ -449,7 +456,10 @@ event OnUpdateGameTime()
 			endif
 		endwhile
 	 endif
-	 if currentState<4
+	 ; >7 (Replenish) included: leftover NumChilds from a birth that completed
+	 ; offscreen must also hatch here - OnEffectStart's Is3DLoaded check can
+	 ; race the actor's 3D load, and no other path covers the >7 case.
+	 if currentState<4 || currentState>7
 	  if ActorRef.Is3DLoaded()
 		if numChilds>0
 			System.InstantBornChilds(ActorRef)
@@ -826,6 +836,18 @@ function getLastSeenNPCs()
 	if !cfg.ImpregnateActive || !cfg.ImpregnateLastNPC
 		return
 	endif
+	; Door-churn guard: effect (re)starts fire on every actor load, so without a
+	; throttle every load screen used to run one cell scan per tracked woman in
+	; the area. One scan per game hour per woman is plenty for a best-effort
+	; "who was nearby" list with 2-day retention.
+	float nowScanTime = GameDaysPassed.GetValue()
+	float lastScanTime = StorageUtil.GetFloatValue(ActorRef, "FW.LastSeenScan", 0.0)
+	; 0.0 means never scanned - don't throttle, or a new game's first hour
+	; (GameDaysPassed near 0) would suppress every woman's first scan.
+	if lastScanTime > 0.0 && nowScanTime - lastScanTime < 0.0417
+		return
+	endif
+	StorageUtil.SetFloatValue(ActorRef, "FW.LastSeenScan", nowScanTime)
 	; PapyrusUtil's ScanCellNPCs (already a hard dependency) returns living actors
 	; in the cell directly. Filter to ActorTypeNPC natively: addLastSeenNPC rejects
 	; creatures anyway, so without the keyword they'd only burn slots in the 10-cap

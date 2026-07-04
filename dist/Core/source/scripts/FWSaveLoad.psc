@@ -454,8 +454,14 @@ function Delete(actor Woman) global
 	StorageUtil.UnsetIntValue(Woman,"FW.NumBirth")
 	StorageUtil.UnsetIntValue(Woman,"FW.NumBabys")
 	StorageUtil.UnsetFloatValue(Woman,"FW.PauseTime")
+	StorageUtil.UnsetFloatValue(Woman,"FW.LastLoaded")
+	StorageUtil.UnsetFloatValue(Woman,"FW.LastSeenScan")
+	StorageUtil.FormListClear(Woman,"FW.LastSeenNPCs")
+	StorageUtil.FloatListClear(Woman,"FW.LastSeenNPCsTime")
 
-	StorageUtil.FormListRemove(none,"FW.SavedNPCs",Woman)
+	; allInstances=true: legacy saves may carry duplicate entries from the old
+	; force_new re-add bug - one purge must clear them all.
+	StorageUtil.FormListRemove(none,"FW.SavedNPCs",Woman,true)
 endFunction
 
 ; This will reset all BeeingFemale related StorageUtil variables

@@ -9,7 +9,7 @@ NPCs can go through the same cycle and pregnancy system as the player. Key setti
 | NPC Born Child | On | NPCs actually spawn child actors |
 | NPC Have Items | Off | NPCs receive hygiene/contraception items via scripts |
 
-NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time.
+NPCs near the player are scanned periodically and given the cycle tracking spell. Their pregnancies progress in the background based on game time. Only NPCs that actually exist in a plugin are picked up this way -- runtime-spawned generics (leveled bandits and similar temporary actors the engine later deletes) are skipped, which keeps long saves free of orphaned script data. Spawned actors serving as your followers are the exception: they stay fully tracked.
 
 To keep the tracked-NPC list from growing without bound over a long playthrough, an NPC the player has not been near for **3 in-game days** is quietly dropped from active tracking, and re-discovered with a fresh cycle the next time you meet her. Cleanup never touches a woman with anything in progress -- she is kept while **pregnant, in labor, recovering, miscarrying, on contraception, or carrying sperm**. The only visible effect is that an idle, non-pregnant NPC's exact cycle position is not remembered across a long absence; pregnancies and conceptions are always preserved.
 

@@ -289,9 +289,13 @@ bool function CreateFemaleActor(actor woman, bool force_new=false)
 	StorageUtil.SetFloatValue(woman,"FW.LastLoaded",currentTime)
 	StorageUtil.SetIntValue(woman,"FW.Flags",flag)
 
-	if hasSaved==false || force_new;/==true/;
-		StorageUtil.FormListAdd(none,"FW.SavedNPCs",woman)
-	endif
+	; (Re)assert membership unconditionally: hasSaved was read many external
+	; calls ago and an interleaved TryUntrackIdleFemale (different script
+	; instance, shared list) may have removed her since - trusting the stale
+	; snapshot would strand fresh cycle keys on an untracked woman.
+	; allowDuplicate=false keeps the add idempotent, so no duplicate entries
+	; (the old unconditional force_new re-add duplicated them).
+	StorageUtil.FormListAdd(none,"FW.SavedNPCs",woman,false)
 	
 	return true
 endFunction

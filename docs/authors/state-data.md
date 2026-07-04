@@ -61,6 +61,8 @@ Tracked females are **not** kept forever. When the player has been away from a n
 
 Deliberately **preserved** across an untrack: lifetime history (`FW.NumBirth`, `FW.NumBabys`) and the donor/lineage mirrors (`FW.SpermRace`, `FW.ChildFatherRace`). A woman is **never** dropped while pregnant, in labor, recovering, mid-miscarriage (`FW.Abortus > 1`), contracepting, carrying sperm (`FW.SpermName`), or pregnant by another mod (Chaurus/Estrus). Dead women are fully purged (`FWSaveLoad.Delete`) and have their spell stripped.
 
+Ambient discovery (both the cloak and the alias scan) also skips **temporary references** (FF-prefixed FormIDs -- runtime leveled spawns): the engine deletes such refs outright on cell reset, so granting them the cycle ability would strand orphaned ActiveMagicEffect instances and tracking entries in the save. Two exceptions: persistent runtime companions (player teammates / follower-faction members) are still tracked, and sex-scene integrations (SexLab/OStim) can still track a temporary actress explicitly.
+
 An untracked woman is re-discovered by the cloak and given a **fresh** cycle (via `CreateFemaleActor`) on her next encounter -- her exact prior cycle position is not restored. If your add-on caches per-actor BF data, treat tracking as transient: re-read on the BF events rather than assuming a woman stays in `FW.SavedNPCs`.
 
 Born children (entries in `FW.Babys`) carry their own per-actor keys:

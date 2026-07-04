@@ -782,28 +782,39 @@ event OnUpdate()
 	if bFirstRun
 		OnGameLoad()
 	else
-		; Update the next woman in list
-		int i=10
-		actor female=none
-		while i>0 && !female
-			i-=1 ; To prevent endless loops
+		; Walk a small batch of tracked women per tick: untrack-eligible idle
+		; women are dropped as they are found, and the first woman that stays
+		; tracked gets this tick's stats refresh. Draining only one candidate
+		; per tick let FW.SavedNPCs grow faster than it shrank whenever busy
+		; areas kept adding new women. `probes` bounds list scanning; `drops`
+		; separately bounds mutation work (each drop is several StorageUtil
+		; ops, and a dead woman's drop runs a full FWSaveLoad.Delete purge).
+		int probes = 10 ; To prevent endless loops
+		int drops = 5
+		actor female = none
+		actor refreshTarget = none
+		bool hitPlayer = false
+		while probes > 0 && drops > 0 && !refreshTarget && !hitPlayer
+			probes -= 1
 			female = StorageUtil.FormListGet(none,"FW.SavedNPCs",curRefreshWoman) as actor
 			curRefreshWoman+=1
 			if curRefreshWoman>=StorageUtil.FormListCount(none,"FW.SavedNPCs")
 				curRefreshWoman=0
 			endif
-		endWhile
-		;if female!=none && female!=PlayerRef
-		if female ;Tkc (Loverslab): optimization
-		 if female==PlayerRef
-		 else;female!=PlayerRef
-			if IdleUntrackEnabled && TryUntrackIdleFemale(female)
-				; female dropped from tracking this tick - skip the refresh
-			else
-				float t = Utility.GetCurrentRealTime()
-				Data.Update(female)
+			if female
+				if female==PlayerRef
+					; Probing the player ends the scan (old-loop semantics) -
+					; otherwise a player-only list burns all 10 probes per tick.
+					hitPlayer = true
+				elseif IdleUntrackEnabled && TryUntrackIdleFemale(female)
+					drops -= 1 ; dropped from tracking - keep scanning this tick
+				else
+					refreshTarget = female
+				endif
 			endif
-		 endif
+		endWhile
+		if refreshTarget
+			Data.Update(refreshTarget)
 		endif
 	endif
 	RegisterForSingleUpdate(cfg.UpdateInterval)
@@ -875,6 +886,11 @@ bool function TryUntrackIdleFemale(actor woman)
 	StorageUtil.UnsetFloatValue(woman, "FW.LastUpdate")
 	StorageUtil.UnsetIntValue(woman,   "FW.Flags")
 	StorageUtil.UnsetFloatValue(woman, "FW.LastLoaded")
+	StorageUtil.UnsetFloatValue(woman, "FW.LastSeenScan")
+	; Last-seen pools are rebuilt on rediscovery; untracked they'd never be
+	; pruned again (getLastSeenNPCs only runs on tracked women).
+	StorageUtil.FormListClear(woman,  "FW.LastSeenNPCs")
+	StorageUtil.FloatListClear(woman, "FW.LastSeenNPCsTime")
 	FW_log.WriteLog("FWSystem: untracked idle woman " + woman)
 	return true
 endFunction

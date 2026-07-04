@@ -148,6 +148,18 @@ EndEvent
 ; Removes opposite spell on add to handle gender-change scenarios.
 Function ProcessActor(Actor akTarget, bool IsFemale = true)
 	if akTarget
+		; Same temp-ref gate as FWCloaking: engine-generated FF refs (leveled
+		; spawns; signed FormID in [-16777216, -1]) are deleted outright on cell
+		; reset, orphaning any ActiveMagicEffect instances in the save - never
+		; grant them the cycle abilities. Persistent runtime companions
+		; (teammates / followers) are exempt so spawned followers stay tracked.
+		int refFormID = akTarget.GetFormID()
+		if refFormID < 0 && refFormID >= -16777216
+			if akTarget.IsPlayerTeammate() || akTarget.IsInFaction(System.FollowerFaction)
+			else
+				Return
+			endif
+		endif
 		if IsFemale
 			if akTarget.HasSpell(BeeingFemaleSpell)
 				akTarget.RemoveSpell(BeeingFemaleSpell) ; effect not running, remove so it re-applies next cycle

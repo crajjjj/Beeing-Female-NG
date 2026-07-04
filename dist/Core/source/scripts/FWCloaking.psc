@@ -57,7 +57,20 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 			EndIf/;
 			;Tkc (Loverslab): optimization \/
 			If akTarget			
-				If System.IsValidateMaleActor(akTarget) > 0;(akTarget.GetLeveledActorBase().GetSex() == 0)
+				int refFormID = akTarget.GetFormID()
+				If refFormID < 0 && refFormID >= -16777216 && !akTarget.IsPlayerTeammate() && !akTarget.IsInFaction(System.FollowerFaction)
+					; Engine-generated temporary reference (FF-prefixed FormID, i.e.
+					; signed int in [-16777216, -1]): leveled spawns and other runtime
+					; actors the engine deletes outright on cell reset / respawn.
+					; Granting these the cycle abilities leaks orphaned
+					; ActiveMagicEffect instances into the save once the ref is
+					; deleted, so never track them (restores the original BF
+					; exclusion). Exceptions: persistent runtime companions (teammates
+					; / followers) stay tracked, and BF's own spawned children are
+					; handled by the custom-child recast below, which stays reachable.
+					; FWPlayerAlias.ProcessActor applies the same gate for the alias
+					; scan - keep the two in sync.
+				ElseIf System.IsValidateMaleActor(akTarget) > 0;(akTarget.GetLeveledActorBase().GetSex() == 0)
 					;if akTarget.HasMagicEffect(BeeingMaleSpell.GetNthEffectMagicEffect(0))==false
 					if akTarget.HasSpell(BeeingMaleSpell) ;Tkc (Loverslab): optimization
 					else;if akTarget.HasSpell(BeeingMaleSpell)==false

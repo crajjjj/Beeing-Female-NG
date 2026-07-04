@@ -106,6 +106,9 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 8.6 | P1 | Mannequin exclusion | Validators return -12 for race Name+EditorID containing Manakin (vanilla misspelling), Manikin (USMP), Mannequin, or Femmequin — vanilla mannequins were previously NOT matched ("Mannequin" never occurs in the vanilla record). Info spell reports "is a mannequin", not "is a child" | FWSystem `IsMannequinRaceName` |
 | 8.7 | P2 | Last-seen scan ignores creatures | `getLastSeenNPCs` passes the ActorTypeNPC keyword to `ScanCellNPCs` so creatures (and the scanned woman herself) don't consume the 10-slot cap in farms/stables/caves | FWAbilityBeeingFemale |
 | 8.8 | P2 | Sleep partner scan is capped | `findSleepPartner` validates closest + at most 5 more cell actors (skipping the already-tried closest); creatures stay in the pool for CreatureSperm setups | FWAbilityBeeingBase |
+| 8.9 | P1 | Temporary refs never ambient-tracked | BOTH ambient discovery paths — the cloak (FWCloaking) and the FindActors alias scan (FWPlayerAlias.ProcessActor) — skip actors with FF-prefixed FormIDs (signed int in [-16777216, -1]), so runtime leveled spawns get no cycle/male spells and their engine-side deletion can't orphan ActiveMagicEffect instances. Exemption: FF refs that are `IsPlayerTeammate()` or in FollowerFaction (spawned companions) ARE tracked. BF's own spawned children still reach the custom-child recast; sex-scene paths (BFA_ssl/BFA_Ostim) are deliberately unaffected. The two gates must stay in sync | FWCloaking, FWPlayerAlias |
+| 8.10 | P2 | Last-seen scan throttled per woman | `getLastSeenNPCs` runs at most once per game hour per actor (`FW.LastSeenScan`) — door-hopping no longer triggers one cell scan per tracked woman per load screen. A stored 0.0 means never-scanned and does NOT throttle (new-game first hour would otherwise suppress every first scan) | FWAbilityBeeingFemale |
+| 8.11 | P1 | Effect (re)start has no fixed wait, belly still re-applies | `OnEffectStart` no longer runs `Utility.Wait(1.0)`, but `SetBelly()` stays (OnEffectFinish's ResetBelly clears the morph at teardown; mode-1 node scaling never survives 3D reload — a loaded pregnant NPC must not stay flat until her next game-hour tick). `RemoveSPIDitems` runs outside the `Is3DLoaded` gate (inventory ops don't need 3D); the tick's `InstantBornChilds` branch covers `currentState>7` as the fallback for a 3D-load race at effect start. Verify no suspended `FWAbilityBeeingFemale` stacks pile up in saves after heavy load-door traffic | FWAbilityBeeingFemale |
 
 ## 9. Save/Load & NPC Persistence
 
@@ -117,6 +120,8 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 9.4 | P1 | Delete actor cleans all keys | `Delete(Woman)` removes all `FW.*` StorageUtil keys, no orphaned data | FWSaveLoad |
 | 9.5 | P1 | Reset NPC data preserves player | `ResetNpcData(false)` clears all NPCs, player re-added to `FW.SavedNPCs` | FWSaveLoad |
 | 9.6 | P1 | `hasWillBecomePregnant()` return path | Function has no explicit `return false` — returns `None` implicitly if actor is not pregnant; verify callers handle this | FWSaveLoad |
+| 9.7 | P1 | Idle-untrack drains in batches | `FWSystem.OnUpdate` walks up to 10 `FW.SavedNPCs` slots per tick, drops up to 5 untrack-eligible idle women, and still runs at most ONE `Data.Update` per tick. Probing the player ends the scan (player-only list costs 1 probe, not 10). Untrack also clears `FW.LastSeenScan`/`FW.LastSeenNPCs`/`FW.LastSeenNPCsTime` | FWSystem |
+| 9.8 | P2 | Tracking add is idempotent and race-proof | `CreateFemaleActor` (re)asserts `FW.SavedNPCs` membership unconditionally with `FormListAdd(..., false)` — no duplicates ever, and a `TryUntrackIdleFemale` interleaving between the `hasSaved` read and the add can no longer strand fresh cycle keys on an untracked woman. `FWSaveLoad.Delete` removes ALL list instances (allInstances=true) so legacy duplicate entries purge in one pass, and also clears `FW.LastLoaded`/`FW.LastSeenScan`/last-seen pools | FWController, FWSaveLoad |
 
 ## 10. Equip/Unequip & Consumables
 
@@ -335,4 +340,4 @@ These are confirmed or high-confidence issues found during code inspection. Each
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-04*
