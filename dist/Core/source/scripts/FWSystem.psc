@@ -1337,16 +1337,16 @@ Event onAddActorSperm(string hookName, Actor Woman, Actor Donor)
 		endif
 	endif
 	bool bCanAdd=true
-	if woman ;Tkc (Loverslab): optimization
-	else;if woman==none
+	if w ;Tkc (Loverslab): optimization ; validated local, not the raw Woman param (an excluded futa validates to none but the param stays set)
+	else;if w==none
 		bCanAdd=false
 	endif
 	if m ;Tkc (Loverslab): optimization
 	else;if m==none
 		bCanAdd=false
 	endif
-	if DeviceActive;/==true/; ;Tkc (Loverslab): optimization
-		if woman.WornHasKeyword(zad_DeviousBelt); woman.IsEquipped(DeviceBelt);/==true/;  Bane --> Fixed to cover all Chastity Belts
+	if DeviceActive && w;/==true/; ;Tkc (Loverslab): optimization
+		if w.WornHasKeyword(zad_DeviousBelt); w.IsEquipped(DeviceBelt);/==true/;  Bane --> Fixed to cover all Chastity Belts
 			bCanAdd=false
 		endif
 	endif
