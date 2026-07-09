@@ -233,6 +233,18 @@ Actor Function GetSpermDonorFromList(Actor[] actorList)
 		endif
 		i += 1
 	EndWhile
+	; No male in the scene: with AllowFFCum a female-gendered actor (futa)
+	; can act as the donor. Best-effort pick — legacy SexLab orgasm events
+	; don't say which position is penetrating.
+	if cfg.AllowFFCum
+		i = 0
+		While i < actorList.Length
+			if SexLab.GetGender(actorList[i]) == 1
+				return actorList[i]
+			endif
+			i += 1
+		EndWhile
+	endif
 	return none
 EndFunction
 
@@ -281,8 +293,10 @@ Function OrgasmSeparate(sslThreadController ssl_controller, sslBaseAnimation ani
 		return
 	endif
 
-	If (!sexlab.config.allowFFCum && sexlab.MaleCount(actors) < 1 && sexlab.CreatureCount(actors) < 1)
-		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: blocked — FF scene and allowFFCum=false")
+	; BF's own MCM toggle is the authoritative FF gate: SexLab P+ has no
+	; user-reachable allowFFCum setting, so sexlab.config can't be relied on.
+	If (!cfg.AllowFFCum && sexlab.MaleCount(actors) < 1 && sexlab.CreatureCount(actors) < 1)
+		FW_log.WriteLog("BFA_ssl.OrgasmSeparate: blocked — FF scene and AllowFFCum=false (BF MCM)")
 		return
 	EndIf
 
@@ -325,10 +339,19 @@ Function processPair(Actor Female, Actor Male, bool bool_cameInsideAnal)
 			;Trace("[/SexLabOrgasmEvent]")
 			return
 		endif
-	elseif System.IsValidateFemaleActor(Male)<0
+	else
+		; Female-sexed donor (futa): allowed only via BF's own AllowFFCum toggle,
+		; same gate the OStim path uses. Covers mixed scenes and the P+ cum FX
+		; path, which have no SexLab-side FF check.
+		if !cfg.AllowFFCum
+			FW_log.WriteLog("BFA_ssl.processPair: blocked — female donor and AllowFFCum=false")
+			return
+		endif
+		if System.IsValidateFemaleActor(Male)<0
 			;Trace("   Male is not a validate Female Actor: "+System.IsValidateFemaleActor(Male))
 			;Trace("[/SexLabOrgasmEvent]")
 			return
+		endif
 	endif
 
 	int femaleSex = Female.getLeveledActorBase().GetSex()

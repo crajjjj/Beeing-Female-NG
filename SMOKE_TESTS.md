@@ -45,6 +45,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 3.13 | P2 | Fertility stacking & decay | `AddFertilityTimed` caps at `MaxFertility=8.0`; re-dosing soon adds a prorated slice (floor +1) and refreshes `FW.FertilityTime`; decays over `GetPillDuration` like contraception; `AddFertility` alone never forces fertile (Gate 1 untouched) | FWController `AddFertilityTimed`/`getFertilityTimed` |
 | 3.14 | P2 | Tonic reflected in chance preview/widgets | `getRelativePregnancyChance(includeFertility=true)` adds the boost; Baby-Health widget cache key includes quantized fertility; MCM Info page shows `~<ovulation chance>%` only while a tonic is active | FWController, FWBabyHealthWidget, FWSystemConfig |
 | 3.15 | P2 | Tonic does not cancel contraception | Active contraception still runs `ContraceptionSpermKillTimed` first; a dosed actor must let contraception lapse before the tonic can help | FWController |
+| 3.16 | P1 | Futa donor gated by BF's Allow FF Cum (all paths) | With toggle OFF: female-sexed donor blocked in `processPair` (SexLab separate-orgasm, P+ cum FX, mixed scenes included) and in OStim/mod-event paths. With toggle ON: futa inseminates on every path, including legacy aggregate orgasm (`GetSpermDonorFromList` falls back to a gender-1 donor when no male present). SexLab's own `allowFFCum` config is no longer consulted — P+ has no MCM for it | BFA_ssl, BFA_Ostim |
 
 ## 4. Pregnancy & Birth (States 4–8)
 

@@ -37,6 +37,13 @@ Sperm is deposited during sex events (SexLab or OStim) or manually via mod event
 | Creature Sperm | Off | Whether creatures can deposit viable sperm |
 | Lore Friendly | On | Only allow same-species conception |
 | Wash-Out Delay | 6 hours | How long before sperm "arrives" and can be affected |
+| Allow FF Cum | Off | Whether female actors (futa setups) can inseminate |
+
+### Futa Characters
+
+A futanari setup (a female-bodied actor with an SOS add-on) is treated as female by the game, so she gets the full cycle and **can become pregnant** like any other female. To let her also **father children**, enable **Allow FF Cum** on the Settings page — it is the single switch for every insemination path (SexLab, OStim, and mod events). Virility, sperm amounts, and child race inheritance work exactly as they do for males.
+
+To make a futa sire-only (can impregnate but never gets pregnant herself), give her a [per-actor addon](../authors/add-on-framework.md) with `DisablePregnancy=true`.
 
 Playing a **male** character? Virility and fathering children work a little differently — see [Playing as a Male Character](male-player.md).
 
