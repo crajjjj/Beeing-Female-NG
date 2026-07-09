@@ -125,6 +125,8 @@ MagicEffect[] property BabyHealingMagicEffects auto
 spell property ChaurusBreeder = none Auto hidden
 bool property EstrusActive = false Auto hidden
 Faction property zzEstrusChaurusBreederFaction = none auto hidden
+Faction property SOSFutaFaction = none auto hidden ; SOS schlongified faction, for futa detection
+FormList property TNGGentifiedList = none auto hidden ; TNG_Gentified list of schlonged females, for futa detection
 armor property DeviceBelt = none auto hidden
 bool property DeviceActive = false auto hidden
 bool property HearthFiresActive = true auto hidden ; Skyrim SE has HearthFires
@@ -442,6 +444,18 @@ function CheckOtherMods()
 		else
 			Message(Content.EstrusDwemerFound,MSG_Debug)
 		endif
+	endif
+
+	; Futa detection handles: SOS's schlongified faction, and TNG's
+	; TNG_Gentified FormList (TNG setups run without Schlongs of Skyrim.esp -
+	; TNG's own FAQ says to remove it from the load order)
+	SOSFutaFaction = none
+	if FWUtility.ModFile("Schlongs of Skyrim.esp")
+		SOSFutaFaction = Game.GetFormFromFile(0x000AFF8, "Schlongs of Skyrim.esp") as Faction
+	endif
+	TNGGentifiedList = none
+	if FWUtility.ModFile("TheNewGentleman.esp")
+		TNGGentifiedList = Game.GetFormFromFile(0x000E00, "TheNewGentleman.esp") as FormList
 	endif
 
 
@@ -1255,7 +1269,8 @@ Event onAddSperm(string hookName, string argString, float argNum, form sender)
 		if (Sender as Actor).GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(Sender as Actor)>0
 			man = sender as Actor
 		elseif (Sender as Actor).GetLeveledActorBase().GetSex()==1
-			if Manager.OnAllowFFCum(woman, (Sender as Actor));/==true/; && IsValidateFemaleActor(Sender as Actor)>0 ;Tkc (Loverslab): optimization
+			; bIgnoreFuta: futa donors stay valid in sire-only mode
+			if Manager.OnAllowFFCum(woman, (Sender as Actor));/==true/; && IsValidateFemaleActor(Sender as Actor, false, true)>0 ;Tkc (Loverslab): optimization
 				man = sender as Actor
 			endif
 		endif
@@ -1267,7 +1282,8 @@ Event onAddSperm(string hookName, string argString, float argNum, form sender)
 				if aStr.GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(aStr)>0
 					man = aStr
 				elseif aStr.GetLeveledActorBase().GetSex()==1
-					if Manager.OnAllowFFCum(woman, aStr);/==true/; && IsValidateFemaleActor(aStr)>0 ;Tkc (Loverslab): optimization
+					; bIgnoreFuta: futa donors stay valid in sire-only mode
+					if Manager.OnAllowFFCum(woman, aStr);/==true/; && IsValidateFemaleActor(aStr, false, true)>0 ;Tkc (Loverslab): optimization
 						man = aStr
 					endif
 				endif
@@ -1308,7 +1324,8 @@ Event onAddActorSperm(string hookName, Actor Woman, Actor Donor)
 		if Donor.GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(Donor)>0
 			m = Donor
 		elseif Donor.GetLeveledActorBase().GetSex()==1
-			if Manager.OnAllowFFCum(w,m);/==true/; && IsValidateFemaleActor(Donor)>0 ;Tkc (Loverslab): optimization
+			; bIgnoreFuta: futa donors stay valid in sire-only mode
+			if Manager.OnAllowFFCum(w,m);/==true/; && IsValidateFemaleActor(Donor, false, true)>0 ;Tkc (Loverslab): optimization
 				m = Donor
 			endif
 		endif
@@ -1713,7 +1730,33 @@ bool function IsMannequinRaceName(string RaceName)
 	return StringUtil.Find(RaceName, "Manakin") != -1 || StringUtil.Find(RaceName, "Manikin") != -1 || StringUtil.Find(RaceName, "Mannequin") != -1 || StringUtil.Find(RaceName, "Femmequin") != -1
 endFunction
 
-int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
+; True if the actor is a futa: female base sex wearing a schlong. Detected
+; via SOS's schlongified faction or TNG's TNG_Gentified FormList, both
+; resolved in CheckOtherMods; with neither mod installed every actor
+; reports false. Both are cheap native lookups - no caching needed.
+bool function IsFutaActor(actor a)
+	if a
+	else
+		return false
+	endif
+	Actorbase ab = a.GetLeveledActorBase()
+	if ab && ab.GetSex() == 1
+	else
+		return false
+	endif
+	if SOSFutaFaction && a.IsInFaction(SOSFutaFaction)
+		return true
+	endif
+	; TNG's Core::UpdateFormLists adds the actor *reference* to TNG_Gentified
+	; (master branch); check the base too in case other TNG builds store the
+	; NPC record instead
+	if TNGGentifiedList && (TNGGentifiedList.HasForm(a) || TNGGentifiedList.HasForm(ab))
+		return true
+	endif
+	return false
+endFunction
+
+int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false, bool bIgnoreFuta = false)
 	if a ;Tkc (Loverslab): optimization
 	else;if a==none
 		return -10
@@ -1745,6 +1788,16 @@ int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
 			return -2
 		endif
 	endIf
+	; Futa exclusion: with "Futas can get pregnant" off, schlonged females
+	; can only sire (when Allow FF cum is on) or are ignored entirely.
+	; Donor-side validation passes bIgnoreFuta=true so a futa can still
+	; sire while excluded from pregnancy/tracking herself.
+	if bIgnoreFuta || cfg.FutaPregnancy
+	else
+		if IsFutaActor(a)
+			return -13
+		endif
+	endif
 	if(ForbiddenFactions.GetAt(0))
 		int ForbiddenFactionsLength = ForbiddenFactions.GetSize()
 		int i = 0

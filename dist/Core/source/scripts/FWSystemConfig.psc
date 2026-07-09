@@ -66,6 +66,7 @@ int   Property KeyStateWidget = 9 auto Hidden
 bool  Property WidgetAlwaysActive = false auto hidden
 bool  Property PlayAnimations = true auto hidden
 bool  Property AllowFFCum = false auto hidden
+bool  Property FutaPregnancy = true auto hidden
 ; Menstual Cycle & Conception Element values
 int   Property FollicularDuration = 5 Auto Hidden
 int   Property OvulationDuration = 2 Auto Hidden
@@ -164,6 +165,7 @@ int KeyStateWidgetDef = 9
 bool WidgetAlwaysActiveDef = false
 bool PlayAnimationsDef = false
 bool AllowFFCumDef = false
+bool FutaPregnancyDef = true
 ; Menstual Cycle & Conception Element Default values
 int FollicularDurationDef = 5;11
 int OvulationDurationDef = 2;4
@@ -2574,6 +2576,7 @@ Event OnPageReset(string page)
 			AddHeaderOption("$FW_MENU_SETTINGS_Creature")
 			AddToggleOptionST("ToggleCreatureSperm", "$FW_MENU_SETTINGS_CreatureSperm", CreatureSperm, OPTION_FLAG_NONE)
 			AddToggleOptionST("ToggleAllowFFCum", "$FW_MENU_SETTINGS_AllowFFCum", AllowFFCum, OPTION_FLAG_NONE)
+			AddToggleOptionST("ToggleFutaPregnancy", "$FW_MENU_SETTINGS_FutaPregnancy", FutaPregnancy, OPTION_FLAG_NONE)
 		endif
 		
 		AddHeaderOption("$FW_MENU_SETTINGS_Key")
@@ -6595,14 +6598,30 @@ State ToggleAllowFFCum
 		AllowFFCum = (! AllowFFCum)
 		SetToggleOptionValueST(AllowFFCum)
 	EndEvent
-	
+
 	Event OnDefaultST()
 		AllowFFCum = AllowFFCumDef
 		SetToggleOptionValueST(AllowFFCum)
 	EndEvent
-	
+
 	Event OnHighlightST()
 		SetInfoText("$FW_MENUTXT_SETTINGS_AllowFFCum")
+	EndEvent
+EndState
+
+State ToggleFutaPregnancy
+	Event OnSelectST()
+		FutaPregnancy = (! FutaPregnancy)
+		SetToggleOptionValueST(FutaPregnancy)
+	EndEvent
+
+	Event OnDefaultST()
+		FutaPregnancy = FutaPregnancyDef
+		SetToggleOptionValueST(FutaPregnancy)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_SETTINGS_FutaPregnancy")
 	EndEvent
 EndState
 

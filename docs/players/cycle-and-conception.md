@@ -38,12 +38,25 @@ Sperm is deposited during sex events (SexLab or OStim) or manually via mod event
 | Lore Friendly | On | Only allow same-species conception |
 | Wash-Out Delay | 6 hours | How long before sperm "arrives" and can be affected |
 | Allow FF Cum | Off | Whether female actors (futa setups) can inseminate |
+| Futas Can Get Pregnant | On | Whether schlonged females run a cycle and can conceive |
 
 ### Futa Characters
 
-A futanari setup (a female-bodied actor with an SOS add-on) is treated as female by the game, so she gets the full cycle and **can become pregnant** like any other female. To let her also **father children**, enable **Allow FF Cum** on the Settings page — it is the single switch for every insemination path (SexLab, OStim, and mod events). Virility, sperm amounts, and child race inheritance work exactly as they do for males.
+A futanari setup (a female-bodied actor with an SOS schlong) is treated as female by the game, so by default she gets the full cycle and can become pregnant like any other female. Two Settings-page toggles control both sides of her fertility:
 
-To make a futa sire-only (can impregnate but never gets pregnant herself), give her a [per-actor addon](../authors/add-on-framework.md) with `DisablePregnancy=true`.
+- **Allow FF Cum** — whether she can **father children**. This is the single switch for every insemination path (SexLab, OStim, and mod events). Virility, sperm amounts, and child race inheritance work exactly as they do for males.
+- **Futas Can Get Pregnant** — whether she runs a cycle and can **become pregnant** herself. BF detects futas via the Schlongs of Skyrim faction or The New Gentleman's gentified list, so this toggle needs SOS or TNG installed; without either, all females are treated alike.
+
+The four combinations:
+
+| Allow FF Cum | Futas Can Get Pregnant | Result |
+|---|---|---|
+| Off | On | Futas are ordinary females (default) |
+| On | On | Futas can mother *and* sire children |
+| On | Off | Futas sire only — never pregnant themselves |
+| Off | Off | Futas are ignored entirely |
+
+Turning "Futas Can Get Pregnant" off affects newly scanned NPCs immediately; already-tracked futas drop out on the next NPC re-scan or system reset. For per-actor control instead of a global rule, a [per-actor addon](../authors/add-on-framework.md) with `DisablePregnancy=true` still works.
 
 Playing a **male** character? Virility and fathering children work a little differently — see [Playing as a Male Character](male-player.md).
 
