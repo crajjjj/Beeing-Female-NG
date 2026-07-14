@@ -1418,6 +1418,14 @@ function Upgrade(int oldVersion, int newVersion)
 			Difficulty = 0
 		endif
 	endif
+	if oldVersion<37
+		; A property added to a script that is already baked into a save comes back
+		; zeroed - its declared initializer only runs for a fresh instance. Seed the
+		; 3.5.9 futa toggle so an upgraded save keeps the pre-3.5.9 behaviour (on)
+		; instead of silently excluding every futa from her cycle. The boundary is 37,
+		; not 36: a save made on 3.5.9 already recorded 36 with the property zeroed.
+		FutaPregnancy = FutaPregnancyDef
+	endif
 endFunction
 
 

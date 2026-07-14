@@ -113,9 +113,9 @@ Function processPair(Actor female, Actor Male)
 		if !cfg.AllowFFCum
 			return
 		endif
-		; bIgnoreFuta: a futa donor must stay valid even when "Futas can
+		; Donor validation: a futa donor must stay valid even when "Futas can
 		; get pregnant" is off (sire-only mode)
-		if System.IsValidateFemaleActor(Male, false, true)<0
+		if System.IsValidateFemaleDonor(Male)<0
 			;Trace("   Male is not a validate Female Actor: "+System.IsValidateFemaleActor(Male))
 			;Trace("[/SexLabOrgasmEvent]")
 			return

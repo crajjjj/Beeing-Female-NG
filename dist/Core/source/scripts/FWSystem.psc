@@ -1269,8 +1269,8 @@ Event onAddSperm(string hookName, string argString, float argNum, form sender)
 		if (Sender as Actor).GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(Sender as Actor)>0
 			man = sender as Actor
 		elseif (Sender as Actor).GetLeveledActorBase().GetSex()==1
-			; bIgnoreFuta: futa donors stay valid in sire-only mode
-			if Manager.OnAllowFFCum(woman, (Sender as Actor));/==true/; && IsValidateFemaleActor(Sender as Actor, false, true)>0 ;Tkc (Loverslab): optimization
+			; Donor validation: futa donors stay valid in sire-only mode
+			if Manager.OnAllowFFCum(woman, (Sender as Actor));/==true/; && IsValidateFemaleDonor(Sender as Actor)>0 ;Tkc (Loverslab): optimization
 				man = sender as Actor
 			endif
 		endif
@@ -1282,8 +1282,8 @@ Event onAddSperm(string hookName, string argString, float argNum, form sender)
 				if aStr.GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(aStr)>0
 					man = aStr
 				elseif aStr.GetLeveledActorBase().GetSex()==1
-					; bIgnoreFuta: futa donors stay valid in sire-only mode
-					if Manager.OnAllowFFCum(woman, aStr);/==true/; && IsValidateFemaleActor(aStr, false, true)>0 ;Tkc (Loverslab): optimization
+					; Donor validation: futa donors stay valid in sire-only mode
+					if Manager.OnAllowFFCum(woman, aStr);/==true/; && IsValidateFemaleDonor(aStr)>0 ;Tkc (Loverslab): optimization
 						man = aStr
 					endif
 				endif
@@ -1324,8 +1324,8 @@ Event onAddActorSperm(string hookName, Actor Woman, Actor Donor)
 		if Donor.GetLeveledActorBase().GetSex()==0 && IsValidateMaleActor(Donor)>0
 			m = Donor
 		elseif Donor.GetLeveledActorBase().GetSex()==1
-			; bIgnoreFuta: futa donors stay valid in sire-only mode
-			if Manager.OnAllowFFCum(w,m);/==true/; && IsValidateFemaleActor(Donor, false, true)>0 ;Tkc (Loverslab): optimization
+			; Donor validation: futa donors stay valid in sire-only mode
+			if Manager.OnAllowFFCum(Woman, Donor);/==true/; && IsValidateFemaleDonor(Donor)>0 ;Tkc (Loverslab): optimization
 				m = Donor
 			endif
 		endif
@@ -1744,7 +1744,10 @@ bool function IsFutaActor(actor a)
 	else
 		return false
 	endif
-	if SOSFutaFaction && a.IsInFaction(SOSFutaFaction)
+	; SOS stores the schlong size in the faction RANK and keeps actors it reverted
+	; or never schlongified in the faction at rank -1, so membership alone is not
+	; a schlong - rank >= 0 is.
+	if SOSFutaFaction && a.GetFactionRank(SOSFutaFaction) >= 0
 		return true
 	endif
 	; TNG's Core::UpdateFormLists adds the actor *reference* to TNG_Gentified
@@ -1756,7 +1759,22 @@ bool function IsFutaActor(actor a)
 	return false
 endFunction
 
-int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false, bool bIgnoreFuta = false)
+; Public validators. Their parameter counts are frozen API: Papyrus bakes default
+; arguments into the CALLER's bytecode, so adding a parameter to one of these breaks
+; every already-compiled caller - ours and every add-on's - with an "Incorrect number
+; of arguments" error at runtime (3.5.9 shipped exactly that). Add a new function
+; instead of a parameter.
+int function IsValidateFemaleActor(actor a, bool bIgnoreRelevance = false)
+	return ValidateFemale(a, bIgnoreRelevance, false)
+endFunction
+
+; Donor-side validation: a futa stays a valid sperm donor even when "Futas can get
+; pregnant" is off, which excludes her from cycling/conceiving herself.
+int function IsValidateFemaleDonor(actor a)
+	return ValidateFemale(a, false, true)
+endFunction
+
+int function ValidateFemale(actor a, bool bIgnoreRelevance, bool bIgnoreFuta)
 	if a ;Tkc (Loverslab): optimization
 	else;if a==none
 		return -10
