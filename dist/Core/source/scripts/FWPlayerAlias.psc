@@ -160,6 +160,13 @@ Function ProcessActor(Actor akTarget, bool IsFemale = true)
 				Return
 			endif
 		endif
+		if akTarget.IsDead()
+			; The FindActors alias filter has no GetDead condition, and ability
+			; effects never run on corpses - without this gate every loaded dead
+			; male matches the scan each cycle and the spell toggle below churns
+			; add/remove on the corpse forever.
+			Return
+		endif
 		if IsFemale
 			if akTarget.HasSpell(BeeingFemaleSpell)
 				akTarget.RemoveSpell(BeeingFemaleSpell) ; effect not running, remove so it re-applies next cycle

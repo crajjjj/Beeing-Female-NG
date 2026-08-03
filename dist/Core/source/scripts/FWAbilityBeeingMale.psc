@@ -29,7 +29,12 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 		If IsPlayer || IsFollower || IsSpouse ;Bane 04/07/19: Stack Dump Prevention - For NPC's effect is reapplied on every location change, a 5 hourly update check on non-followers/spouses is unecessary
 			RegisterForSingleUpdateGameTime(5)
 		EndIf
-		RegisterForSleep()
+		If IsPlayer
+			; The OnSleepStart/OnSleepStop logic in FWAbilityBeeingBase is all
+			; IsPlayer-gated, so a sleep registration on an NPC instance only
+			; spawns one no-op stack per male per player sleep.
+			RegisterForSleep()
+		EndIf
 		;If IsPlayer
 		;	RegisterForSingleUpdate(5) ;Tkc (Loverslab): optimization, commented because there is no male actions in parent OnUpdate function of FWAbilityBeeingBase script
 		;EndIf
@@ -42,9 +47,30 @@ EndEvent
 
 function OnPlayerLoadGame()
 	if bInit;/==true/; && bInitSpell;/==true/; ;&& Self as String != "[FWAbilityBeeingMale <None>]"
-		Utility.WaitMenuMode(1)
-		;IsFollower = ActorRef.IsInFaction(System.FollowerFaction) && IsPlayer == false - Never true as only received by the player
-		Controller.UpdateParentFaction(ActorRef)
+		if IsPlayer
+			Utility.WaitMenuMode(1)
+			;IsFollower = ActorRef.IsInFaction(System.FollowerFaction) && IsPlayer == false - Never true as only received by the player
+			Controller.UpdateParentFaction(ActorRef)
+			equipChild()
+			return
+		endif
+		; NPC path: called from OnEffectStart, which re-fires on every actor
+		; load. It must not park the stack (the old WaitMenuMode(1)): an effect
+		; torn down mid-wait strands the stack in the save forever - the same
+		; mechanism FWAbilityBeeingFemale::OnEffectStart removed its Wait for.
+		; The refresh work below is idempotent, so throttle it instead.
+		float now = Utility.GetCurrentGameTime()
+		float last = StorageUtil.GetFloatValue(ActorRef, "FW.MaleInitTime", -100.0)
+		if now >= last && now - last < 0.04 ; ~1 game hour
+			return
+		endif
+		StorageUtil.SetFloatValue(ActorRef, "FW.MaleInitTime", now)
+		if StorageUtil.FormListFind(none, "FW.SavedNPCs", ActorRef) >= 0
+			; UpdateParentFaction early-outs for actors not in FW.SavedNPCs -
+			; apply that gate locally so the untracked majority never queues on
+			; the shared Controller instance at all
+			Controller.UpdateParentFaction(ActorRef)
+		endif
 		equipChild()
 	endif
 endfunction
@@ -100,7 +126,15 @@ Event OnUpdateGameTime()
 	If ActorRef.HasMagicEffect(_BFAbilityEffectBeeingMale)
 		if Self as String == "[FWAbilityBeeingMale <None>]"
 		else;if Self as String != "[FWAbilityBeeingMale <None>]"
-			RegisterForSingleUpdateGameTime(5)
+			; Re-registration must keep the same stack-dump-prevention gate as
+			; OnEffectStart, or one tick is enough to keep an NPC ticking for
+			; life. Recomputed (not the cached flags) so dismissed followers /
+			; divorced spouses drop out of the update loop too.
+			IsFollower = ActorRef.IsInFaction(System.FollowerFaction)
+			IsSpouse = ActorRef.IsInFaction(PlayerMarriedFaction)
+			If IsPlayer || IsFollower || IsSpouse
+				RegisterForSingleUpdateGameTime(5)
+			EndIf
 		EndIf
 	EndIf
 endEvent

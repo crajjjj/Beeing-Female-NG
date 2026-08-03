@@ -596,12 +596,17 @@ Event OnObjectUnequipped(Form akBaseObject, ObjectReference akReference)
 	if OnObjUnEqIsBusy ; Tkc (Loverslab); spamguard
 	else
 		OnObjUnEqIsBusy = true
-		
-		string fName=FWUtility.GetIniFile(akBaseObject)
-		if FWUtility.FileExists("BabySounds/"+fName)
-			bIsWearingBaby=false
+
+		if IsPlayer
+			; bIsWearingBaby is only ever set for the player (OnObjectEquipped),
+			; so without this gate the ini/file probe is native file I/O paid by
+			; every NPC on every redress for a flag that is already false.
+			string fName=FWUtility.GetIniFile(akBaseObject)
+			if FWUtility.FileExists("BabySounds/"+fName)
+				bIsWearingBaby=false
+			endif
 		endif
-		
+
 		OnObjUnEqIsBusy = false
 	endif
 endEvent
