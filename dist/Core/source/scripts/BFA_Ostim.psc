@@ -26,8 +26,9 @@ endFunction
 
 event OnUpdate()
 	; OStim Standalone 7.5+ ships OStim.esp ESL-flagged; GetModByName returns 255
-	; for light plugins, so the light index must be checked too.
-	If Game.GetModByName("Ostim.esp") != 255 || Game.GetLightModByName("Ostim.esp") != 255
+	; for light plugins, so the light index must be checked too. GetLightModByName's
+	; not-found sentinel is 0xFFFF (255 is a valid light index).
+	If Game.GetModByName("Ostim.esp") != 255 || Game.GetLightModByName("Ostim.esp") != 65535
 		if registerOstimEventHandlers() > 0
 			bOstim = true
 		endif

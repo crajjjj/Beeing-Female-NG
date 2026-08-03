@@ -1960,8 +1960,9 @@ bool function ShouldAutoEquipHygiene()
 			return false
 		endif
 	endif
-	; ESL-flagged OStim.esp (Standalone 7.5+) needs the light index check
-	if Game.GetModByName("OStim.esp") != 255 || Game.GetLightModByName("OStim.esp") != 255
+	; ESL-flagged OStim.esp (Standalone 7.5+) needs the light index check.
+	; GetLightModByName's not-found sentinel is 0xFFFF (255 is a valid light index).
+	if Game.GetModByName("OStim.esp") != 255 || Game.GetLightModByName("OStim.esp") != 65535
 		Faction ostimExcitement = Game.GetFormFromFile(0x000D93, "OStim.esp") as Faction
 		if ostimExcitement && ActorRef.IsInFaction(ostimExcitement)
 			return false
