@@ -8,7 +8,7 @@ Hooks orgasm events to add sperm. Supports both legacy SexLab and SexLab P+ (2.1
 
 ### OStim
 
-Uses OStim's Fertility Mode compatibility event to add sperm on orgasm. Requires OStim API 23+. Condom detection is supported.
+Adds sperm on orgasm from OStim scenes. Requires OStim API 23+. Condom detection is supported. Both **player scenes** (via OStim's Fertility Mode compatibility event) and **NPC&harr;NPC scenes** are covered -- the latter includes OStim's own aggressive/NPC scenes and scenes started by [OStim NPCs - NPC Sex Lives Improved](https://www.nexusmods.com/skyrimspecialedition/mods/98163). NPC&harr;NPC conception obeys the same NPC-pregnancy settings as everything else (see [NPC Pregnancy](npc-pregnancy.md)); no extra toggle is required. As with the player, sperm is added when the **penetrating** actor climaxes in a vaginal action.
 
 ### Bathing in Skyrim
 

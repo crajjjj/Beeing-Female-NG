@@ -15,6 +15,10 @@ To keep the tracked-NPC list from growing without bound over a long playthrough,
 
 When baby spawn mode is "Item/Actor" and **you are the father**, an NPC mother will hatch the baby item she carries into her own child (a normal NPC near her, not your follower) once it matures while she is loaded -- see [Baby Items Growing to Children](children.md#baby-items-growing-to-children).
 
+## Conception from NPC&harr;NPC Sex Scenes
+
+Besides the background auto-insemination below, a tracked NPC can conceive from an **on-screen sex scene with another NPC**. Both SexLab and OStim NPC&harr;NPC scenes are hooked: when the penetrating actor climaxes in a vaginal action, the receiving female is inseminated exactly as if the player were involved. For OStim this covers its own aggressive/NPC scenes and scenes driven by [OStim NPCs - NPC Sex Lives Improved](https://www.nexusmods.com/skyrimspecialedition/mods/98163), so an OStim-populated world produces pregnancies on its own. This uses the same validity rules as everything else (NPC must be relevant per your MCM settings, not on contraception, no chastity belt, and so on), so no separate toggle is needed.
+
 ## NPC Auto-Insemination (Couples System)
 
 When enabled in MCM (Impregnate page), the mod can automatically inseminate tracked NPCs in the background -- even when the player is not around. This models background conception between paired NPCs so their cycles progress without the player present.

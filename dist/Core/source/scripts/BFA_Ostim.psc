@@ -46,7 +46,13 @@ int function registerOstimEventHandlers()
     endif
 	RegisterForModEvent("ostim_start", "OStimStart")
 	RegisterForModEvent("FertilityModeAddSperm", "OnFertilityModeAddSperm")
-    return 2
+	; FertilityModeAddSperm is fired by OStim only for the player's main thread,
+	; so NPC<->NPC scenes (OStim aggressive scenes, OStim NPCs, etc.) never
+	; produced sperm. ostim_actor_orgasm fires for every thread with the thread
+	; ID, letting us drive conception for NPC subthreads too. The player thread
+	; stays on FertilityModeAddSperm to avoid double-inseminating it.
+	RegisterForModEvent("ostim_actor_orgasm", "OnActorOrgasm")
+    return 3
 endFunction
 
 Event OStimStart(String EventName, String sceneId, Float index, Form Sender)
@@ -78,6 +84,44 @@ Event OnFertilityModeAddSperm(Form impregnatedForm, string fatherName, Form fath
 	if impregnated && father
 		processPair(impregnated, father)
 	endIf
+EndEvent
+
+; Per-thread orgasm, fired for every OStim thread (player and NPC). This is the
+; NPC<->NPC conception path: an NPC subthread's penetrating actor climaxing here
+; mirrors what FertilityModeAddSperm does for the player's main thread.
+Event OnActorOrgasm(String EventName, String sceneId, Float threadIdArg, Form orgasmedForm)
+	int threadID = threadIdArg as int
+	; The player's main thread is -1 and is already covered by
+	; FertilityModeAddSperm; only handle NPC subthreads (>= 0) here so the
+	; player is never inseminated twice for one orgasm.
+	if threadID < 0
+		return
+	endif
+	Actor performer = orgasmedForm as Actor
+	if !performer
+		return
+	endif
+	; Fall back to the thread's current scene if the event omitted the id.
+	if sceneId == ""
+		sceneId = OThread.GetScene(threadID)
+	endif
+	if sceneId == ""
+		return
+	endif
+	; Resolve the climaxing actor's position, then the vaginalsex action it
+	; performs and who receives it - the receiver is the one who gets sperm.
+	int performerIdx = OThread.GetActorPosition(threadID, performer)
+	if performerIdx < 0
+		return
+	endif
+	int actionIndex = OMetadata.FindActionForActor(sceneId, performerIdx, "vaginalsex")
+	if actionIndex == -1
+		return
+	endif
+	Actor impregnated = OThread.GetActor(threadID, OMetadata.GetActionTarget(sceneId, actionIndex))
+	if impregnated && performer
+		processPair(impregnated, performer)
+	endif
 EndEvent
 
 function Refresh(string strArg, FWAddOnManager sender)
