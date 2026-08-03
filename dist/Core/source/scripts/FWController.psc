@@ -1498,10 +1498,28 @@ function RemoveWombTattoo(actor Woman)
 	if Game.GetModByName("SlaveTats.esp") == 255
 		return
 	endif
-	string current = StorageUtil.GetStringValue(Woman, "FW.WombTattooState", "")
-	if current != ""
-		SlaveTats.simple_remove_tattoo(Woman, "BF PW", current, true, true)
-	endif
+	; Remove every name in the pack, not just the tracked FW.WombTattooState one:
+	; if the tracker ever desyncs from what SlaveTats actually has applied (an
+	; interrupted swap, racing update paths), a targeted remove misses the
+	; orphaned overlay and SlaveTats re-applies it on every game load. A remove
+	; of a name that is not applied is query-only; only real removals synchronize.
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW normal", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW normal semen(3)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW normal semen(9)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW normal semen(full)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Ovulation", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Ovulation semen(3)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Ovulation semen(11)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Ovulation semen(full)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Ovulation semen(full2)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW fertilization", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Baby(phase1)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Baby(phase2)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Baby(phase3)", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW 2Babies", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW 3Babies", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW 4Babies", true, true)
+	SlaveTats.simple_remove_tattoo(Woman, "BF PW", "PW Birth", true, true)
 	StorageUtil.UnsetStringValue(Woman, "FW.WombTattooState")
 endFunction
 

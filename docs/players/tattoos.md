@@ -47,3 +47,10 @@ A single womb-diagram tattoo that mirrors the full reproductive state and update
 | ![Quadruplets](../assets/tattoos/womb-quads.png){ width="150" } | ![Birth](../assets/tattoos/womb-birth.png){ width="150" } | |
 
 Exactly one tattoo from the set is shown at a time, and it updates on every cycle tick. **Player only by default.** Because it re-applies on every cycle/semen change, broadcasting it to tracked NPCs is expensive (and the belly overlay is rarely visible on clothed actors), so it is gated behind an INI opt-in: set `Global_WombTattooNPCs=true` in `Default Global Settings.ini` (and enable that add-on) to extend it to tracked female NPCs. If you later turn the option off, press **Refresh Tattoos** (MCM → Children) once to strip the womb overlay back off any NPCs that still have it.
+
+## Removing the Tattoos
+
+Turn the corresponding toggle(s) off in **MCM → Children** -- the overlay is stripped from the player immediately. If one lingers anyway, or **keeps coming back after loading a save**, press **Refresh Tattoos** once with the toggles off: the button re-syncs everything in both directions, re-applying enabled families and force-removing every tattoo Beeing Female has ever applied for disabled ones (including stale leftovers the normal toggle-off can miss).
+
+!!! warning "Don't remove SlaveTats overlays with RaceMenu"
+    RaceMenu only clears the visible body overlay -- SlaveTats still has the tattoo in its own registry and will faithfully paint it back on the next game load. That is not Beeing Female re-applying it. Always remove tattoos via the Beeing Female MCM toggles (plus **Refresh Tattoos**) or the SlaveTats MCM, so the registry entry itself is removed.

@@ -7414,14 +7414,24 @@ endstate
 
 state RefreshTattoos
 	Event OnSelectST()
+		; Refresh makes reality match the toggles in both directions: re-apply
+		; enabled families, and strip disabled ones - the recovery path for
+		; overlays that survived a toggle-off (e.g. a desynced womb tattoo that
+		; SlaveTats keeps re-applying on game load).
 		if BabyTrackerTattoos
 			Controller.ApplyBabyTrackerTattoos(PlayerRef)
+		else
+			Controller.RemoveBabyTrackerTattoos(PlayerRef)
 		endif
 		if SemenCircleTattoos
 			Controller.ApplySemenCircleTattoo(PlayerRef, true)
+		else
+			Controller.RemoveSemenCircleTattoo(PlayerRef)
 		endif
 		if WombTattoos
 			Controller.ApplyWombTattoo(PlayerRef, true)
+		else
+			Controller.RemoveWombTattoo(PlayerRef)
 		endif
 		; The womb tattoo can also extend to tracked NPCs (Global_WombTattooNPCs):
 		; re-apply it to them when enabled, or strip it when the option was turned
