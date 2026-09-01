@@ -1992,7 +1992,11 @@ endFunction
 function setIrregulation(actor female,int state_number)
 	;System.Trace("FWController.setIrregulation", female)
 	float newIrregulation=1.0
-	if System.IrregulationChance(female, state_number) > Utility.RandomFloat(0,1.01)
+	; IrregulationChance is a PERCENT (MCM slider 0-100, default 4.0) scaled by the
+	; race add-on. Rolling it against 0-1.01 made irregulation fire on essentially
+	; every state change, so every woman's every phase got the race's full
+	; Irregulation_Value_Scale warp (Nord 1.3, Khajiit 1.4) instead of 4-9% of them.
+	if System.IrregulationChance(female, state_number) > Utility.RandomFloat(0,101.0)
 		newIrregulation*=System.IrregulationValue(female, state_number)
 	endif
 	StorageUtil.SetFloatValue(female,"FW.Irregulation",newIrregulation)

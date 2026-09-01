@@ -107,7 +107,7 @@ Event OnEffectStart(Actor target, Actor caster)
 		Self.Dispel()
 		Return
 	endif	
-	float startTime = GameDaysPassed.GetValue()
+	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
 	ActorRef = target
 	ActorRefBase = target.GetLeveledActorBase()
 	IsPlayer = (target==PlayerRef) ;Tkc (Loverslab): optimization. PlayerRef added in FWAbilityBeeingBase
@@ -209,7 +209,7 @@ Event OnEffectStart(Actor target, Actor caster)
 endEvent
 
 Event OnPlayerLoadGame()
-	float startTime = GameDaysPassed.GetValue()
+	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
 	;if bInit;/==true/; && bInitSpell;/==true/;; && ActorRef.HasMagicEffect(System.BeeingFemaleSpell.GetNthEffectMagicEffect(0))
 	if bInit ;Tkc (Loverslab): optimization
 	 if bInitSpell
@@ -305,7 +305,7 @@ event BeeingFemale(string eventName, string strArg, float numArg, Form sender)
 endEvent
 
 event OnUpdateGameTime()
-	float startTime = GameDaysPassed.GetValue()
+	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
 	float currentTime = GameDaysPassed.GetValue()
 	if ActorRef.Is3DLoaded()
 		; Idle-untrack timer: mark when she was last loaded (see FWSystem.TryUntrackIdleFemale).
@@ -1603,7 +1603,7 @@ function TestScale(float Scale=1.0)
 endFunction
 
 Function SetBelly(bool bForce=false)
-	float startTime = GameDaysPassed.GetValue()
+	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
 	;if (currentState<4 || currentState>=20 || System.IsActorPregnantByChaurus(ActorRef)) && bForce==false  ;-->Bane SetBellyTest
 	if bForce ;Tkc (Loverslab): optimization
 	else;if bForce==false
