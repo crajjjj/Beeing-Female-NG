@@ -5,7 +5,7 @@ Skyrim SE mod: female reproductive cycle simulation with pregnancy, birth, and c
 ## Build
 
 ```sh
-# C++ plugin (xmake 2.9.5+, MSVC v143)
+# C++ plugin (xmake 3.0+, MSVC v143, CommonLibSSE-NG v7 alandtse fork)
 xmake f -m release && xmake        # -> dist/Core/skse/plugins/BeeingFemale.dll
 
 # Papyrus scripts (Skyrim SE compiler)

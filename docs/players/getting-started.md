@@ -2,7 +2,7 @@
 
 ## Requirements and Installation
 
-Beeing Female NG runs on Skyrim Special Edition / Anniversary Edition / VR. These mods are hard requirements -- each one must match your exact game version:
+Beeing Female NG runs on Skyrim Special Edition / Anniversary Edition / VR, including the AE 1.7.99 update (SKSE64 2.3.0+). These mods are hard requirements -- each one must match your exact game version:
 
 - **SKSE64** -- and the game must be started through the SKSE loader (or the SKSE entry in your mod manager), not the vanilla launcher.
 - **SkyUI** -- the full mod; it provides the MCM where all settings live.

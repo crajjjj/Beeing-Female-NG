@@ -5,15 +5,14 @@ Beeing Female NG is a hybrid project: a C++ SKSE plugin (built with CommonLibSSE
 ## Requirements
 
 - Visual Studio 2022 (MSVC v143)
-- xmake 2.9.5+
-- CommonLibSSE-NG checked out at `lib/commonlibsse-ng`
+- xmake 3.0+
+- CommonLibSSE-NG v7+ ([alandtse fork](https://github.com/alandtse/CommonLibSSE-NG)) checked out at `lib/commonlibsse-ng` — v7.0.0 adds Skyrim AE 1.7.99 runtime support
 
 ## Setup
 
-To add the submodule in a fresh clone:
+To fetch the submodule in a fresh clone:
 
 ```sh
-git submodule add https://github.com/CharmedBaryon/CommonLibSSE-NG.git lib/commonlibsse-ng
 git submodule update --init --recursive
 ```
 

@@ -1,4 +1,4 @@
-set_xmakever("2.9.5")
+set_xmakever("3.0.0") -- CommonLibSSE-NG v7 (alandtse) requires xmake 3.x
 
 -- Globals
 PROJECT_NAME = "BeeingFemale"
@@ -54,6 +54,16 @@ target(PROJECT_NAME)
         author = "crajjjj",
         description = "Beeing Female NG SKSE plugin."
     })
+
+    -- The v7 commonlib.plugin rule auto-runs `install` after every build and,
+    -- with XSE_TES5_MODS_PATH set, drops a stray "<target>" mod folder into the
+    -- live MO2 instance (the rule's on_config overrides a plain set_installdir).
+    -- This project stages into dist/ (see after_build) and deploys via the
+    -- opt-in copy_to_mod option instead, so sink the rule's install inside the
+    -- build directory from our own on_config.
+    on_config(function (target)
+        target:set("installdir", path.join(target:autogendir(), "install"))
+    end)
 
     -- Source files
     add_files("src/**.cpp")
