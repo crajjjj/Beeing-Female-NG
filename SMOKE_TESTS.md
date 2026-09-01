@@ -95,6 +95,8 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 7.11 | P1 | Twin baby items (shared armor base) | Two `FW.Babys` entries + two identity entries; each hatch consumes one identity FIFO (birth order); both children get distinct recorded names/sexes; per-baby DOB (no shared `FW.ChildArmor.dob` last-writer-wins) | FWAbilityBeeingFemale, FWUtility |
 | 7.12 | P1 | Legacy baby item (born pre-3.5.1) | No `FW.BabyItemArmor` entry → hatch falls back to shared `FW.ChildArmor.*` keys (old behavior: re-rolled name/sex); no errors, item still hatches | FWAbilityBeeingFemale |
 | 7.13 | P2 | MCM baby item rows | Children tab shows the recorded baby name + per-baby countdown from birth-time DOB; legacy items show armor name + shared dob ("Paused" until first equip) | FWSystemConfig |
+| 7.14 | P1 | Child name never re-rolled | Blank `_Name` at OnLoad/OnInit restores `FW.Child.Name` before falling back to a random roll, and the fallback re-checks `_Name` after its external calls — a named child (orphaned parents, birth-time race with `SpawnChildActor`) must never come back with a different name | FWChildActor `OnPlayerLoadGame` |
+| 7.15 | P2 | `bf:childname` console rename | Renames the selected FWChildActor (auto-appends family last name), custom child, or grown adult (updates `FW.Child.Name` + display name); non-child target rejected with a message; multi-word names joined | FWSystem console commands |
 
 ## 8. NPC Scanning & Spell Application
 

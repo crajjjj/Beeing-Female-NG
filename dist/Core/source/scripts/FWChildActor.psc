@@ -685,7 +685,21 @@ Event OnPlayerLoadGame()
 	if _Name=="" || _Name==Contents.BabyBlankName
 		;FWSystemConfig cfg = Game.GetFormFromFile(0x1828, "BeeingFemale.esm") as FWSystemConfig
 		;SetName(cfg.System.getRandomChildName(GetSex()))
-		SetName(FWSystem.getRandomChildName(GetSex()))
+		; Restore the stored name before ever rolling a fresh one - InitChild is
+		; skipped when both parent refs are gone, so _Name can be blank while
+		; FW.Child.Name still holds the child's real name, and the old
+		; unconditional roll permanently renamed the child.
+		string restoredName = StorageUtil.GetStringValue(self, "FW.Child.Name", "")
+		if restoredName=="" || restoredName==Contents.BabyBlankName
+			restoredName = FWSystem.getRandomChildName(GetSex())
+		endif
+		; Both reads above unlock the thread. At birth this event races
+		; SpawnChildActor, which assigns the real name (fwchild.Name = ...) only
+		; after dozens of external calls - never overwrite a name that arrived
+		; while we were fetching the fallback.
+		if _Name=="" || _Name==Contents.BabyBlankName
+			SetName(restoredName)
+		endif
 	endif
 EndEvent
 

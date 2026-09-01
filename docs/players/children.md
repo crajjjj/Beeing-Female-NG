@@ -116,6 +116,18 @@ Talk to a child to give orders:
 
 > Child won't follow you out of a modded cell (camp, player home, dungeon)? See [A child is stuck in a modded cell](troubleshooting.md#a-child-is-stuck-in-a-modded-cell-wont-follow-or-teleport).
 
+## Renaming a Child
+
+Since 3.5.13 you can rename any BF child (or a grown adult) from the console: open the console (`~`), **left-click the child** so their RefID shows at the top, then type:
+
+```
+bf:childname <new first name>
+```
+
+Multi-word names work (`bf:childname Anna Lee`). The family last name (or " Dovahkiir" for the player's children) is appended automatically.
+
+This is also the repair if a child's name ever *changed on its own* — a bug fixed in 3.5.13 where a child could be re-rolled a random name (typically right after being born, or when both parents were no longer around). Updating prevents it from happening again; `bf:childname` fixes any child already affected.
+
 ## MCM Settings (Children Page)
 
 | Setting | Default | What It Does |

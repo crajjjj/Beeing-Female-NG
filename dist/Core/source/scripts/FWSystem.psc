@@ -4480,6 +4480,34 @@ Event OnKeyDown(int keyCode)
 							msg=getValidateMessage(validate)
 						endif
 						bSuccess=true
+					elseif cmd[0]=="bf:childname" || cmd[0]=="childname"
+						if cmd.length>1
+							string newChildName = cmd[1]
+							int ci = 2
+							while ci < cmd.length
+								newChildName = newChildName + " " + cmd[ci]
+								ci += 1
+							endwhile
+							FWChildActor fwc = a as FWChildActor
+							if fwc
+								fwc.SetName(newChildName)
+								msg="Renamed child to "+a.GetDisplayName()
+							elseif StorageUtil.GetStringValue(a, "FW.Child.Name", "")!="" || StorageUtil.GetIntValue(a, "FW.Child.IsCustomChildActor", 0)==1
+								; Custom child actors and grown adults carry no FWChildActor
+								; script - mirror the grow-up naming (display = name + last name)
+								actor cMother = StorageUtil.GetFormValue(a, "FW.Child.Mother", none) as Actor
+								actor cFather = StorageUtil.GetFormValue(a, "FW.Child.Father", none) as Actor
+								int cflag = StorageUtil.GetIntValue(a, "FW.Child.Flag", 0)
+								StorageUtil.SetStringValue(a, "FW.Child.Name", newChildName)
+								a.SetDisplayName(newChildName + myGetLastName(cMother, cFather, Math.LogicalAnd(cflag,32)==32), true)
+								msg="Renamed child to "+a.GetDisplayName()
+							else
+								msg=a.GetDisplayName()+" is not a Beeing Female child"
+							endif
+						else
+							msg="Usage: select the child in the console, then bf:childname <new name>"
+						endif
+						bSuccess=true
 					elseif cmd[0]=="bf:code"
 						;msg = FWUtility.Hex(LoadState,2) + " " + FWUtility.Hex(UpdateState,2) + " " + FWUtility.Hex(ChildSettings.LoadingState,2) + " " + FWUtility.Hex(Manager.LoadingState,2) + " " + FWUtility.Hex(cfg.GetPageResetJobID(),2) + " " + FWUtility.Hex(manager.LoadingStateRace,1) + FWUtility.Hex(manager.iRaces%16,1) + " " + FWUtility.Hex(manager.LoadingStateCME,1) + FWUtility.Hex(manager.iCME%16,1) + " " + FWUtility.Hex(manager.LoadingStateMisc,1) + FWUtility.Hex(manager.iMisc%16,1)
 						msg = FWUtility.Hex(LoadState,2) + " " + FWUtility.Hex(UpdateState,2) + " " + FWUtility.Hex(ChildSettings.LoadingState,2) + " " + FWUtility.Hex(Manager.LoadingState,2) + " " + FWUtility.Hex(cfg.GetPageResetJobID(),2)

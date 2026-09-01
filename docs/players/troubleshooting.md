@@ -7,6 +7,7 @@ When something misbehaves, the logs almost always say why. This page lists where
     - A hygiene item keeps getting knocked off? See [Item Slots & Conflicts](../authors/item-slots.md) (quick fix: switch to tampons).
     - NPCs carry tampons/potions although you disabled NPC items? See [NPCs keep getting tampons and potions with item distribution turned off](#npcs-keep-getting-tampons-and-potions-with-item-distribution-turned-off).
     - Birth happens but no animation plays? See [Birth animations not playing](#birth-animations-not-playing) (usually: run FNIS/Nemesis, then enable **Play Animations**).
+    - A child's name changed on its own? Fixed in 3.5.13 — rename them back with [`bf:childname`](children.md#renaming-a-child).
 
 ## Where the logs are
 
