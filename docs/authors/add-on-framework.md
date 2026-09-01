@@ -124,7 +124,7 @@ Everything else -- spawning, follower factions, relationships, persistence acros
 
 | Patch | What it does |
 |-------|--------------|
-| `SPID` | Spell Perk Item Distributor INI seeding BF's hygiene / contraception / fertility-tonic / pregnancy-test items into vendor and container loot. |
+| `SPID` | Spell Perk Item Distributor INI stocking `JobMerchantFaction` vendors with BF's hygiene / contraception / fertility-tonic items. Vendor stock only since 3.5.13: NPC-carried items are handed out by the mod itself under the `NPCHaveItems` MCM toggle (a global add-on INI can set `Global_RemoveSPIDitems=true` to strip previously seeded items from tracked, non-merchant females). |
 | `Fertility Adventures Redux` | Wires FAR's pregnancy quests, child-support storylines, and announcement dialogue to BF NG cycle events (Conception / Labor / state ticks) instead of Fertility Mode. |
 | `PAIA` | Adds the Beeing Female OAR submod the base P.A.I.A is missing (the author reserved priority 91044062 for it but only shipped a legacy DAR condition). Pregnant idle plays at `ParentFaction` rank >= 5 (2nd trimester onward). Mesh-only. |
 | `PAIAExpansion` | Repoints P.A.I.A Expansion's OAR conditions onto BF's `ParentFaction` so trimester idles, sit/sleep adjustments, and inflation poses follow BF pregnancies. Mesh-only. |

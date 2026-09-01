@@ -52,7 +52,7 @@
 							</typeDescriptor>  
                         </plugin>
                         <plugin name="SPID item distribution">
-                            <description>Uses Spell Perk Item Distributor to seed BF's hygiene / contraception / pregnancy-test items into vendor and container loot tables. Requires powerofthree's Spell Perk Item Distributor. Recommended - without it, BF's items are quest-only and you have to console them in.</description>
+                            <description>Uses Spell Perk Item Distributor to stock vendors with BF's hygiene / contraception / fertility-tonic items so they can be bought in-game. Requires powerofthree's Spell Perk Item Distributor. Recommended - without it, BF's items are quest-only and you have to console them in. Whether NPCs personally carry such items is controlled by the MCM option "NPCs are having relevant items", not by this patch.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="Patches\SPID" destination="" priority="0" /> 

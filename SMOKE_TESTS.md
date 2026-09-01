@@ -234,13 +234,13 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 
 | # | P | Scenario | Expected | Scripts |
 |---|---|----------|----------|---------|
-| 19.1 | P1 | Female NPCs receive items | Contraception (10%), tampons (40–50%), panty (20%) distributed per rules | SPID INI |
-| 19.2 | P1 | Bandits/Forsworn excluded | No contraception or tampons on bandit/forsworn NPCs | SPID INI |
-| 19.3 | P1 | Mannequins excluded | No items on mannequin actors — filters use wildcards `-*Manakin*,-*Manikin*,-*Mannequin*,-*Femmequin*` (the old exact `-MannequinRace` matched nothing: the vanilla EditorID is `ManakinRace`) | SPID INI |
-| 19.4 | P2 | Merchant stock | `JobMerchantFaction` members have all consumable types (2–6 units, 100%) | SPID INI |
-| 19.5 | P2 | `_BF_ContraceptionHighest` requires addon | Only appears when `BeeingFemaleBasicAddOn.esp` loaded; absent without it | SPID INI |
-| 19.6 | P2 | Males receive no items | No male distribution rules — confirm males are clean | SPID INI |
-| 19.7 | P2 | Fertility Tonics distributed | `_BF_FertilityTonicMild`/`_BF_FertilityTonicPotent` seeded to female NPCs (loot, same odds as ContraceptionLow/Medium) and `JobMerchantFaction` vendors (6/4 units, 100%), referenced by EditorID (FormIDs assigned by `BF_GenerateFertilityPotion.pas`) | SPID INI |
+| 19.1 | P1 | Vendor-only distribution | Female NPCs receive NO personal items from SPID (the per-NPC seeding block was removed in 3.5.13 — it bypassed the `NPCHaveItems` MCM toggle and re-seeded on every respawn/cell reset) | SPID INI |
+| 19.2 | P2 | Merchant stock | `JobMerchantFaction` members have all consumable types (1–20 units, 100%) | SPID INI |
+| 19.3 | P2 | `_BF_ContraceptionHighest` requires addon | Only appears when `BeeingFemaleBasicAddOn.esp` loaded; absent without it | SPID INI |
+| 19.4 | P2 | Fertility Tonics stocked | `_BF_FertilityTonicMild`/`_BF_FertilityTonicPotent` at `JobMerchantFaction` vendors (6/4 units, 100%), referenced by EditorID (FormIDs assigned by `BF_GenerateFertilityPotion.pas`) | SPID INI |
+| 19.5 | P1 | `Global_RemoveSPIDitems` cleanup | With the flag true, BF items (pills incl. registered third-party fluids, wash-out fluids, tampons, pads, child scrolls) are stripped from each tracked female at female-effect start; runs before the `NpcMentruation` dispel so it works even with the NPC cycle disabled; `JobMerchantFaction` members are NEVER stripped | FWAbilityBeeingFemale `OnEffectStart`, FWSystem `RemoveSPIDitems` |
+| 19.6 | P1 | Replenish restock gated | Post-birth Replenish state adds ContraceptionLow ×10 to an NPC mother only when `NPCHaveItems` is on (was the one ungated NPC item handout) | FWAbilityBeeingFemale `Replanish_State` |
+| 19.7 | P2 | Hand-given items still usable | With `NPCHaveItems` off (and cleanup flag off), items given to NPCs by hand persist: followers drink contraception on schedule, menstruating NPCs equip owned tampons/pads | FWSaveLoad, FWAbilityBeeingFemale |
 
 ## 20. C++ Native Plugin
 

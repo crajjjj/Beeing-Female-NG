@@ -5,6 +5,7 @@ When something misbehaves, the logs almost always say why. This page lists where
 !!! tip "Quick links"
     - Mod missing from the MCM? Work through the checklist in [Getting Started](getting-started.md#the-mod-does-not-show-up-in-the-mcm).
     - A hygiene item keeps getting knocked off? See [Item Slots & Conflicts](../authors/item-slots.md) (quick fix: switch to tampons).
+    - NPCs carry tampons/potions although you disabled NPC items? See [NPCs keep getting tampons and potions with item distribution turned off](#npcs-keep-getting-tampons-and-potions-with-item-distribution-turned-off).
     - Birth happens but no animation plays? See [Birth animations not playing](#birth-animations-not-playing) (usually: run FNIS/Nemesis, then enable **Play Animations**).
 
 ## Where the logs are
@@ -81,6 +82,20 @@ If you give birth in (or leave a child in) a cell added by another mod — a pla
 > Note: simply re-picking **"Follow me"** while standing next to the child usually won't get it out of such a cell — the order is set, but the AI still has no path to the exit. The teleport scroll (#2) or `moveto player` (#1) are what actually relocate it.
 
 **Avoid:** importing a *still-a-child* actor into a follower framework (NFF/EFF/AFT) to force it out. While a child, BF manages its AI directly and the two systems conflict; and at the grow-up transition the child actor is replaced by a new adult actor, leaving the framework with a stale reference. Wait until the child becomes an adult, then import freely — that is fully supported.
+
+## NPCs keep getting tampons and potions with item distribution turned off
+
+**Symptoms.** The MCM toggle **"NPCs are having relevant items"** (Settings page) is off, yet female NPCs still spawn with contraception potions, tampons, and pads; menstruating NPCs wear pads; and even after you empty their inventory with a follower-management or similar mod, the items come back later.
+
+**Why it happens.** Before 3.5.13, the optional **SPID item distribution** patch seeded these items into every female NPC's personal inventory, not just vendor stock. SPID works at the engine level — it cannot see MCM settings, and it re-seeds items whenever an NPC respawns or her cell resets, which is why removing them never stuck. (Separately, the post-birth recovery state restocked contraception on mothers without checking the toggle — also fixed in 3.5.13.)
+
+**Fix.**
+
+1. **Update to 3.5.13 or newer.** The SPID patch now only stocks vendors; NPC-carried items are handed out exclusively by the mod itself, honoring the MCM toggle. Reinstall the mod so the updated `BeeingFemaleSE-Opt-SPID_DISTR.ini` replaces the old one.
+2. **Clean an existing save (optional).** Items seeded before the update stay in NPC inventories. To purge them, open `Data\BeeingFemale\AddOn\Default Global Settings.ini`, set `Global_RemoveSPIDitems=true`, and play a session — BF strips its own items (tampons, pads, contraception, wash-out fluids, tonics, child-call scrolls) from each tracked female as you encounter her. Vendors are never stripped, so shops stay stocked. Set the flag back to `false` afterwards: while it is on, it also removes BF items you hand to NPCs yourself.
+
+!!! note
+    Giving items to NPCs by hand still works with the toggle off — a follower carrying contraception drinks it on schedule, and a menstruating NPC with tampons or pads in her inventory equips them. The toggle only controls whether BF *gives* NPCs items on its own.
 
 ## Birth animations not playing
 

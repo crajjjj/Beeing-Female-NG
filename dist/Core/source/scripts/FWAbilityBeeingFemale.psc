@@ -138,12 +138,21 @@ Event OnEffectStart(Actor target, Actor caster)
 		IsFollower = false;added to set IsFollower to false if it is player
 		Self.RegisterForSingleUpdate(5);was added here from code below. suppose 5 sec. will be still enough to execute other code to the end of the event before OnUpdate will be executed
 	else
+		; Inventory ops work without loaded 3D, so no Is3DLoaded gate - at
+		; effect (re)start the 3D may still be settling. Must also run BEFORE
+		; the NpcMentruation dispel below: with the NPC cycle disabled this is
+		; the only BF code that still touches the actor, and SPID re-seeds
+		; items on every respawn / cell reset.
+		if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_RemoveSPIDitems", 0) == 1)
+			FW_log.WriteLog("FWAbilityBeeingFemale : removing SPID distributed items for actor " + ActorRef + ", whose name is " + ActorRef.GetDisplayName())
+			System.RemoveSPIDitems(ActorRef)
+		endIf
 		if System.NpcMentruation() ;Tkc (Loverslab): optimization
 		else ;like in the condition in original code above: if (! System.NpcMentruation()) && (! isPlayer)
 			System.Message( FWUtility.StringReplace( Contents.BeeingFemaleMissedOn2,"{0}",ActorRefBase.GetName()), System.MSG_Debug)
 			Self.Dispel()
 			return
-		endIf	
+		endIf
 		IsFollower = target.IsInFaction(System.FollowerFaction) ; in original code it is set two times ; like in original above here:IsFollower = target.IsInFaction(System.FollowerFaction) && IsPlayer == false
 	endIf
 	;;;;;;;
@@ -183,12 +192,6 @@ Event OnEffectStart(Actor target, Actor caster)
 
 	if(IsPlayer)
 	else
-		; Inventory ops work without loaded 3D, so run this outside the
-		; Is3DLoaded gate - at effect (re)start the 3D may still be settling.
-		if(StorageUtil.GetIntValue(none, "FW.AddOn.Global_RemoveSPIDitems", 0) == 1)
-			FW_log.WriteLog("FWAbilityBeeingFemale : removing SPID distributed items for actor " + ActorRef + ", whose name is " + ActorRef.GetDisplayName())
-			System.RemoveSPIDitems(ActorRef)
-		endIf
 		if(ActorRef.Is3DLoaded())
 			int myNumChilds = StorageUtil.GetIntValue(ActorRef, "FW.NumChilds", numChilds)
 			if(myNumChilds > 0)
@@ -2983,7 +2986,7 @@ state Replanish_State
 		;if ActorRef.GetItemCount(System.ContraceptionLow)<=1 && IsPlayer==false
 		if IsPlayer ;Tkc (Loverslab): optimization
 		else;if IsPlayer==false
-			if ActorRef.GetItemCount(ContraceptionLow)<=1
+			if cfg.NPCHaveItems && ActorRef.GetItemCount(ContraceptionLow)<=1
 				ActorRef.AddItem(ContraceptionLow, 10, false)
 			endif
 		endif

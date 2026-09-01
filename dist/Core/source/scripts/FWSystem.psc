@@ -272,6 +272,12 @@ endfunction
 
 ; Remove SPID-Added items
 function RemoveSPIDitems(actor woman)
+	; Never strip vendors - the SPID patch stocks JobMerchantFaction members so
+	; BF items stay purchasable even when NPCs are not supposed to carry them.
+	Faction merchantFaction = Game.GetFormFromFile(0x051596, "Skyrim.esm") as Faction
+	if merchantFaction && woman.IsInFaction(merchantFaction)
+		return
+	endIf
 	int NumTypesPill = Pill_Items.GetSize()
 	int NumTypesWashOut = WashOut_List.GetSize()
 	
