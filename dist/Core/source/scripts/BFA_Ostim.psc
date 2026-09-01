@@ -92,10 +92,13 @@ EndEvent
 ; mirrors what FertilityModeAddSperm does for the player's main thread.
 Event OnActorOrgasm(String EventName, String sceneId, Float threadIdArg, Form orgasmedForm)
 	int threadID = threadIdArg as int
-	; The player's main thread is -1 and is already covered by
-	; FertilityModeAddSperm; only handle NPC subthreads (>= 0) here so the
-	; player is never inseminated twice for one orgasm.
-	if threadID < 0
+	; OThread.psc: "the thread containing the player will always have the
+	; ThreadID 0" and "NPC on NPC threads will always have positive ThreadIDs".
+	; The player's thread is already covered by FertilityModeAddSperm, so only
+	; positive NPC subthreads belong here - gating on < 0 let thread 0 through
+	; and inseminated the player twice for one orgasm (processPair is not
+	; idempotent: each call lands its own AddSperm).
+	if threadID <= 0
 		return
 	endif
 	Actor performer = orgasmedForm as Actor
