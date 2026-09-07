@@ -169,11 +169,16 @@ Event OnEffectStart(Actor target, Actor caster)
 		Self.RegisterForSleep()
 		if oldUpdateDelay>0
 			Self.RegisterForSingleUpdateGameTime(oldUpdateDelay)
+			; This event re-fires on every 3D load for NPCs, so use it to heal a
+			; state machine that saved desynced from FW.CurrentState (lost
+			; post-birth Update event); InitValues() above already refreshed
+			; currentState from StorageUtil.
+			ResyncStateMachine()
 		else
 			InitState()
 		endif
 	endif
-	
+
 	equipChild()
 	
 	CheckRandomSexPartner()
@@ -758,6 +763,58 @@ function RefreshNextState()
 				nextState = 0
 			endIf
 		endIf
+	endIf
+endFunction
+
+; The Papyrus state name InitState() would pick for a given FW.CurrentState,
+; or "" for values with no mapped state (>=9). Used to detect a state machine
+; that saved desynced from the recorded state.
+string function ExpectedStateName(int stateID)
+	if stateID == 0
+		return "Follicular_State"
+	elseif stateID == 1
+		return "Ovulation_State"
+	elseif stateID == 2
+		return "Luteal_State"
+	elseif stateID == 3
+		return "Menstruation_State"
+	elseif stateID == 4
+		return "PregnancyFirst_State"
+	elseif stateID == 5
+		return "PregnancySecond_State"
+	elseif stateID == 6
+		return "PregnancyThird_State"
+	elseif stateID == 7
+		return "LaborPains_State"
+	elseif stateID == 8
+		return "Replanish_State"
+	endIf
+	return ""
+endFunction
+
+; Rebuild the state machine when the persisted Papyrus state disagrees with
+; FW.CurrentState. GiveBirth (and other Controller paths) commit the new state
+; to StorageUtil and hand the actual transition to a "BeeingFemale" ModEvent;
+; if that event is lost (e.g. a stack dump during the birth scene), the actor
+; keeps the old phase's spells, sounds and belly forever while BF Info already
+; shows the new state. The external-pregnancy states diverge on purpose and
+; are left alone.
+function ResyncStateMachine()
+	string psState = Self.GetState()
+	if psState == "PregnantChaurus_State" || psState == "PregnantEstrusSpider_State" || psState == "PregnantEstrusDwemer_State" || psState == "PregnantUnknown_State"
+		return
+	endIf
+	string expState = ExpectedStateName(currentState)
+	if expState != "" && psState != expState
+		FW_log.WriteLog("FWAbilityBeeingFemale::ResyncStateMachine - " + ActorRef + " papyrus state '" + psState + "' but FW.CurrentState=" + currentState + " expects '" + expState + "', rebuilding")
+		if psState == "LaborPains_State"
+			; The recorded state already moved past labor, so the birth itself
+			; completed (GiveBirth commits FW.CurrentState=8). Keep the stale
+			; labor state's onExitState from firing its missed-birth fallback
+			; and delivering the same children twice.
+			bAlreadyGaveBirth = true
+		endIf
+		InitState()
 	endIf
 endFunction
 
