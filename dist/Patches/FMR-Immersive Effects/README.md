@@ -45,23 +45,68 @@ drop `Fertility Mode.esm`. The scripts never read it.
 Trimester rank mapping (computed by the bridge):
 `1..33 = T1, 34..66 = T2, 67..100 = T3, 100 = labor, 101..115 = recovery, 0 = not pregnant`.
 
+## Upstream 1.0.0-b.2 sync (2026-09)
+
+Upstream b.2 restructured the overlay cleanup/recovery logic (absorbing
+fixes this patch previously carried: reachable rank-0/recovery branches,
+slot-key-based removal, overlay preflight) and added:
+
+- an MCM "Reset Player Effects" button calling
+  `_FME_FMRBridge.ResetPlayerEffects()` — implemented by the replacement
+  bridge (CleanupEffects + `FME.NextEffectTime` unset);
+- instant MCM dialogue-slider sync into the `_FME_G_COMM*` GlobalVariables,
+  plus an "Automatically Eat/Drink" cravings toggle (`autoconsumecravings`);
+- NiOverride overlay stripping inside the bridge's CleanupEffects — overlays
+  outlive DispelSpell, and this path also covers unloaded actors (the bug
+  that left stretchmarks on actors after birth);
+- a `pconlyoverlay` Config.json gate (paint the player even without loaded
+  3D when 1), and the random-effect `ticker` is now read from Config.json,
+  so the MCM slider affects the bridge too;
+- a 4-arg `FMR_ActorStatus` signature `(Form mother, int rank,
+  string lastFather, int fatherRaceId)`. The bridge emits all four (father
+  name/race sourced from BF state, `""`/`0` when unknown) because Papyrus
+  silently drops a mod event whose arg count mismatches the receiver's
+  handler;
+- an ESP fix: upstream through b.1 filled the bridge quest's Spell property
+  `_FME_S_2T_Fetal` with MGEF `_FME_ME_2T_Fetal` (0x814) instead of SPEL
+  `_FME_S_2T_Fetal` (0x802). The type mismatch made the VM drop the fill
+  (property = None), so second-trimester fetal effects never fired.
+
+The patch ESP here is still the one built from the b.1 ESP. **No xEdit
+rebuild was needed:** every new or fixed CK fill is self-healed at runtime
+via `Game.GetFormFromFile` (Auto properties are runtime-assignable and
+persist in the save):
+
+- bridge `EnsureProperties()`: `_FME_S_2T_Fetal` (0x802), `_FMELastRank`
+  (0x877);
+- MCM `ResolveRefs()`: `_FME_G_COMMH_SFW` (0x811), `_FME_G_COMMH_NSFW`
+  (0x81D), `_FME_G_COMMI_SFW` (0x81E), `_FME_G_COMMI_NSFW` (0x800),
+  `_FME_FMRBridgeQuest` (0xA24).
+
+If the patch ESP is ever rebuilt from the b.2 upstream (per the steps
+below), these fallbacks become harmless no-ops.
+
 ## Files in this patch folder
 
+Synced to upstream FMR-IE **1.0.0-b.2**; the un-patched originals live in
+`../dependencies/FMR-Immersive Effects/Data`.
+
+Patched sources (differ from upstream b.2):
+
 ```
-Patches/FMR-Immersive Effects/
-  source/scripts/_FME_FMRBridge.psc          replacement bridge (BF NG-driven)
-  source/scripts/_FME_SC_Overlays.psc        patched: reads FME.Rank from StorageUtil
-  source/scripts/_FME_SC_RandEffChooser.psc  patched: reads FME.Rank from StorageUtil
-  source/scripts/_FME_SC_3TBH.psc            unchanged (kept for build convenience)
-  source/scripts/_FME_SC_MSSpells.psc        unchanged
-  source/scripts/_FME_SC_2TFetal.psc         unchanged
-  source/scripts/_FME_SC_3TFetal.psc         unchanged
-  skyrimse.ppj                               Papyrus build project
-  README.md                                  this file
+source/scripts/_FME_FMRBridge.psc          replacement bridge (BF NG-driven)
+source/scripts/_FME_SC_Overlays.psc        reads FME.Rank from StorageUtil
+source/scripts/_FME_SC_RandEffChooser.psc  reads FME.Rank from StorageUtil
+source/scripts/_FME_SC_MSSpells.psc        None-safe FMVerbose guards
+source/scripts/_FME_SC_MCM.psc             ResolveRefs() property fallback
 ```
 
-After building, drop the produced `FMR- Immersive Effects.esp` and
-`scripts\*.pex` into this folder so the FOMOD picks them up.
+Everything else (sources and `.pex`) ships verbatim from upstream b.2 so the
+FOMOD can overwrite an older FMR-IE install wholesale. `skyrimse.ppj` is the
+Papyrus build project; compiling regenerates `Build/FMRImmersiveEffectsBF.zip`.
+
+After building, the produced `scripts\*.pex` land in this folder so the
+FOMOD picks them up alongside the patched `FMR- Immersive Effects.esp`.
 
 ## What needs to be edited in the ESP
 
@@ -165,18 +210,17 @@ tooling. The `Imports` section already points at
 original FMR-IE sources, and at the project's `dist\Core\source\scripts`
 for BF NG types (`FWSystem`).
 
-Compile these four scripts and drop the resulting `.pex` files into
-`scripts/`:
+Compile the five patched scripts and drop the resulting `.pex` files into
+`scripts/` (running pyro on `skyrimse.ppj` does all of this):
 
-- `_FME_FMRBridge.psc` — new bridge
+- `_FME_FMRBridge.psc` — replacement bridge
 - `_FME_SC_Overlays.psc` — patched (reads `FME.Rank`)
 - `_FME_SC_RandEffChooser.psc` — patched (reads `FME.Rank`)
-- `_FME_SC_3TBH.psc` — unchanged, but recompile so its bytecode stays
-  in sync with the rest of the patch's source baseline
+- `_FME_SC_MSSpells.psc` — patched (None-safe `FMVerbose`)
+- `_FME_SC_MCM.psc` — patched (`ResolveRefs()` fallback)
 
-(The other three patched-source files — `_FME_SC_MSSpells`,
-`_FME_SC_2TFetal`, `_FME_SC_3TFetal` — are unchanged from upstream;
-you can leave their original `.pex` in place.)
+(Every other script is unchanged from upstream; its original `.pex`
+ships as-is.)
 
 ### 4. Smoke-test
 

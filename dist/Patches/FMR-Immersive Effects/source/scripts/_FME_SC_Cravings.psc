@@ -64,7 +64,9 @@ endEvent
 Event OnEffectFinish(Actor Target, Actor Caster)
 
 	Sound.StopInstance(instanceID)
-	SexLab.ClearMFG(Target)
+	if SexLab
+		SexLab.ClearMFG(Target)
+	endIf
 
 EndEvent
 
@@ -81,7 +83,11 @@ EndEvent
 function CravingDecider(int tick, int RandM, int RandN)
     if FMETarget == Game.GetPlayer()
         if tick >= RandN
-            CravingGrumbleEat(RandM)
+			if JsonUtil.GetIntValue("/FMEffects/Config.json", "autoconsumecravings", 1) == 1
+				CravingGrumbleEat(RandM)
+			else
+				CravingGrumble(RandM)
+			endIf
             ticker = 0
         else
             CravingGrumble(RandM)
@@ -174,11 +180,11 @@ function CravingGrumbleEat(int RandM)
 		FoodName = Food_Sweet.GetAt(n)
         FMETarget.AddItem(FoodName)
 		string Zname = FoodName.GetName()
-        Debug.Notification("You quickly pull a "+Zname+"out of your bag and eat it.")
+		Debug.Notification("You quickly pull a "+Zname+" out of your bag and eat it.")
         wait(0.04)
         FMETarget.EquipItem(FoodName)
     elseif RandM == 2
-        s = Food_Salty.GetSize() - 1
+		s = Food_Carb.GetSize() - 1
         n = RandomInt(0,s)
 		wait(0.01)
 		FoodName = Food_Carb.GetAt(n)

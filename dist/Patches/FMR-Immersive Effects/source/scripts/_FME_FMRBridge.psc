@@ -26,6 +26,8 @@ a backstop, not the primary trigger.}
 FWSystem _bfSystem
 Bool     _hasSexLab = false
 Bool     _hasOStim  = false
+String   _espName = "FMR- Immersive Effects.esp"
+Faction  _fmeLastRank
 
 ; Note: this script intentionally does NOT carry a Faction property.
 ; The contract between the bridge and the patched FMR-IE scripts is the
@@ -35,15 +37,52 @@ Bool     _hasOStim  = false
 ; read it back via StorageUtil.GetIntValue, replacing the upstream
 ; GetFactionRank(GenericFaction) reads. GenericFaction is therefore
 ; redundant in the patched ESP — the property fills can be cleared.
+; (_fmeLastRank above is not a CK property either: it is FMR-IE's own
+; _FMELastRank delta-tracking faction, resolved lazily via GetFormFromFile
+; so the patch ESP needs no new VMAD fills. See EnsureProperties.)
 
 ;================================================================================
 ; Init
 ;================================================================================
 Event OnInit()
+    EnsureProperties()
     DetectFrameworks()
     RegisterEvents()
     RegisterForSingleUpdateGameTime(TrackedUpdateIntervalHours)
 EndEvent
+
+; Self-heal for CK/ESP fills the patch ESP is missing or carries wrong:
+; - The upstream ESP (through 1.0.0-b.1, which our patch ESP was built from)
+;   filled the Spell property _FME_S_2T_Fetal with MGEF _FME_ME_2T_Fetal
+;   (0x814) instead of SPEL _FME_S_2T_Fetal (0x802). The type mismatch makes
+;   the VM drop the fill, so the property loads as None and second-trimester
+;   fetal-movement effects silently never fire. Upstream fixed the fill in the
+;   b.2 ESP; we fix it here at runtime so the patch ESP needs no xEdit rebuild.
+; - _FMELastRank (0x877) is FMR-IE's own overlay delta-tracking faction; the
+;   upstream b.2 bridge gained it as a CK property for cleanup. We resolve it
+;   lazily instead of adding a VMAD fill.
+; Auto property assignments persist in the save, and every call after the
+; first is just cheap None-checks.
+Function EnsureProperties()
+    if _FME_S_2T_Fetal == none
+        _FME_S_2T_Fetal = Game.GetFormFromFile(0x802, _espName) as Spell
+    endIf
+    if _fmeLastRank == none
+        _fmeLastRank = Game.GetFormFromFile(0x877, _espName) as Faction
+    endIf
+EndFunction
+
+; Public entry point — called by the MCM "Reset Player Effects" button
+; (upstream 1.0.0-b.2). Opt-in only: the "stuck" signal is ambiguous
+; (mid-recovery, between polls), so this never runs automatically.
+Function ResetPlayerEffects()
+    if PlayerRef == none
+        return
+    endIf
+    CleanupEffects(PlayerRef)
+    StorageUtil.UnsetFloatValue(PlayerRef, "FME.NextEffectTime")
+    Debug.Notification("FME: Player effects reset")
+EndFunction
 
 ; NOTE: no OnPlayerLoadGame here - Quest scripts never receive that event
 ; (it only reaches the player actor's aliases/effects). Mod-event
@@ -147,6 +186,7 @@ Function RefreshActor(Actor mother)
     if mother == none
         return
     endIf
+    EnsureProperties()
     Int prevRank = StorageUtil.GetIntValue(mother, "FME.Rank", 0)
     Int rank = ComputeRank(mother)
 
@@ -165,7 +205,13 @@ Function RefreshActor(Actor mother)
     ; (elseif RCT <= 0) remove the stretchmark / areola textures. Gating the
     ; rank==0 case on prevRank avoids re-running NiOverride removals on every
     ; never-pregnant tracked NPC each poll.
-    if (rank > 0 || prevRank != 0) && (mother.Is3DLoaded() || mother == PlayerRef) && OverlayUpdater
+    ; pconlyoverlay JSON flag (upstream b.2): 1 -> the player may be painted
+    ; even without loaded 3D; anything else -> only 3D-loaded actors.
+    Bool canOverlay = mother.Is3DLoaded()
+    if !canOverlay && mother == PlayerRef
+        canOverlay = (JsonUtil.GetIntValue("/FMEffects/Config.json", "pconlyoverlay", 10) == 1)
+    endIf
+    if (rank > 0 || prevRank != 0) && canOverlay && OverlayUpdater
         mother.AddSpell(OverlayUpdater, false)
     endIf
 
@@ -196,12 +242,10 @@ Function RefreshActor(Actor mother)
         return
     endIf
 
-    ; The upstream bridge read this from /FMEffects/Config.json via JsonUtil.
-    ; We hardcode the same default (10) to keep this script free of JContainers
-    ; / PapyrusUtil typed dependencies in its compiler import path. If a user
-    ; cares about retuning this rate, they can edit the constant or move it
-    ; into a CK-filled GlobalVariable property.
-    Int ticker = 10
+    ; Same key RandEffChooser and the MCM slider use, so retuning the rate in
+    ; the MCM now affects the bridge too. (JsonUtil comes from PapyrusUtil,
+    ; which the compile already imports for StorageUtil — no new dependency.)
+    Int ticker = JsonUtil.GetIntValue("/FMEffects/Config.json", "ticker", 10)
     if Utility.RandomInt(1, ticker) < 3
         RollRandomEffect(mother, rank)
     endIf
@@ -209,10 +253,29 @@ Function RefreshActor(Actor mother)
 EndFunction
 
 Function SendStatusEvent(Actor mother, Int rank)
+    ; Recent FMR sends FMR_ActorStatus with FOUR args: (Form mother, int rank,
+    ; string lastFather, int fatherRaceId). Papyrus silently drops a mod event
+    ; whose arg list doesn't match the receiver's handler signature, so a
+    ; third-party listener written against current FMR would never hear a
+    ; 2-arg send. Mirror the shape, sourcing father data from BF NG state
+    ; ("" / 0 when unknown; the race id is the Race form's FormID).
+    String fatherName = ""
+    Int fatherRaceId = 0
+    Actor father = StorageUtil.FormListGet(mother, "FW.ChildFather", 0) as Actor
+    if father
+        fatherName = father.GetDisplayName()
+    endIf
+    Race fatherRace = StorageUtil.FormListGet(mother, "FW.ChildFatherRace", 0) as Race
+    if fatherRace
+        fatherRaceId = fatherRace.GetFormID()
+    endIf
+
     Int h = ModEvent.Create("FMR_ActorStatus")
     if h
         ModEvent.PushForm(h, mother)
         ModEvent.PushInt(h, rank)
+        ModEvent.PushString(h, fatherName)
+        ModEvent.PushInt(h, fatherRaceId)
         ModEvent.Send(h)
     endIf
 EndFunction
@@ -291,6 +354,10 @@ Function RollRandomEffect(Actor a, Int rank)
 EndFunction
 
 Function CleanupEffects(Actor a)
+    if a == none
+        return
+    endIf
+    EnsureProperties()
     if _FME_S_1T_MornSick
         a.DispelSpell(_FME_S_1T_MornSick)
     endIf
@@ -318,6 +385,41 @@ Function CleanupEffects(Actor a)
     if OverlayUpdater
         a.DispelSpell(OverlayUpdater)
     endIf
+
+    ; Strip the NiOverride node overrides for every overlay slot the patched
+    ; _FME_SC_Overlays may have painted (upstream b.2 fix). DispelSpell never
+    ; touches these — they persist on the body node until something explicitly
+    ; removes them, and the overlay script's own cleanup branch can't run for
+    ; an unloaded actor. This was the bug that left stretchmarks on actors
+    ; after birth.
+    RemoveOverlay(a, "body", "bellystretch")
+    RemoveOverlay(a, "body", "breaststretch")
+    RemoveOverlay(a, "body", "darkernip")
+    if a.Is3DLoaded()
+        NiOverride.ApplyNodeOverrides(a)
+    endIf
+
+    ; Drop FMR-IE's own delta-tracking faction so a later pregnancy starts
+    ; overlay tracking fresh.
+    if _fmeLastRank && a.IsInFaction(_fmeLastRank)
+        a.SetFactionRank(_fmeLastRank, 0)
+        a.RemoveFromFaction(_fmeLastRank)
+    endIf
+EndFunction
+
+; Same shape as the patched overlay script's remove path: only ever release a
+; slot we previously claimed (tracked in StorageUtil), reset its texture to
+; the neutral default, then forget the claim.
+Function RemoveOverlay(Actor akActor, String bodyPart, String kind)
+    String slotKey = "FME.Overlay." + kind + "." + bodyPart
+    String nodeName = StorageUtil.GetStringValue(akActor, slotKey, "")
+    if nodeName == ""
+        return
+    endIf
+    Bool nodeSex = (akActor.GetLeveledActorBase().GetSex() == 1)
+    NiOverride.RemoveAllNodeNameOverrides(akActor, nodeSex, nodeName)
+    NiOverride.AddNodeOverrideString(akActor, nodeSex, nodeName, 9, 0, "textures\\Actors\\character\\Overlays\\default.dds", true)
+    StorageUtil.UnsetStringValue(akActor, slotKey)
 EndFunction
 
 ;================================================================================
