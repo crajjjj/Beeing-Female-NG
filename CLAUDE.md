@@ -26,6 +26,9 @@ Three files must be updated together — always keep them in sync:
 
 2. **`dist/fomod/info.xml`** — FOMOD installer version displayed in mod managers. Update `<Version>` to match `BF_Version`.
 
+3. **`dist/fomod/ModuleConfig.xml`** — `<moduleName>Beeing Female NG X.Y.Z</moduleName>`, the title shown at the top of the installer. Update to match `BF_Version`.
+   The `<plugin name="...">` entries for the Fertility Adventures Redux and FMR-Immersive Effects patches also carry the **upstream** mod version each patch is built against (`(for FAR 1.0.2)`, `(for FMR-IE 1.0.0-b.2)`), repeated at the start of their `<description>`. Those track the upstream mods, not `BF_Version` — update them only when a patch is rebased onto a new upstream release.
+
 For a normal bugfix release, only `BF_Version` and `BF_VersionInt` change. The other fields change only when their respective subsystems have breaking changes.
 
 ## Documentation Site (MkDocs / GitHub Pages)
@@ -64,7 +67,7 @@ Script properties filled via the Creation Kit (CK) in the ESP/ESM must NOT be re
 - Max 128 elements. Size must be an integer literal (`new int[128]`), not a variable.
 - `array[i] += 5` does NOT compile -- use `array[i] = array[i] + 5`.
 - No arrays of arrays. Arrays are passed/assigned by reference.
-- `Find()`/`RFind()` and SKSE string functions are case-insensitive. `==` string comparison is case-sensitive.
+- String comparison is **case-insensitive** everywhere: `==`/`!=` (the engine interns strings in a case-insensitive pool, so `"MyString" == "mYsTrInG"` is true), as well as `Find()`/`RFind()` and the SKSE string functions. Don't write case-normalizing wrappers for `==`.
 
 ### Properties & optional mod dependencies
 - Global/static function calls (e.g. `SlaveTats.simple_add_tattoo(...)`) resolve lazily at call time, not script load. Safe to reference optional mods if guarded by `Game.GetModByName()`.

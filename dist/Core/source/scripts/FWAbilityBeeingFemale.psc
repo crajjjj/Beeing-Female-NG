@@ -805,6 +805,17 @@ function ResyncStateMachine()
 		return
 	endIf
 	string expState = ExpectedStateName(currentState)
+	if expState == "LaborPains_State"
+		; Never heal *forward* into labor from here: LaborPains_State.onEnterState
+		; breaks the waters with LockPlayer + EquipItem + Utility.Wait(8), which
+		; would suspend this 3D-load stack for 8s and, on the player, leave the
+		; controls locked if that stack is ever dumped. The pregnancy state's own
+		; OnUpdateGameTime tick still walks into labor on its own stack. The case
+		; this function exists for is the reverse one - a stale LaborPains_State
+		; left behind after the birth already committed - and that is unaffected.
+		return
+	endIf
+
 	if expState != "" && psState != expState
 		FW_log.WriteLog("FWAbilityBeeingFemale::ResyncStateMachine - " + ActorRef + " papyrus state '" + psState + "' but FW.CurrentState=" + currentState + " expects '" + expState + "', rebuilding")
 		if psState == "LaborPains_State"

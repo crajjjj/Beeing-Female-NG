@@ -1,6 +1,6 @@
 <!-- Created with FOMOD Creation Tool 1.7.0.37 [http://www.nexusmods.com/fallout4/mods/6821] --> 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd"> 
-    <moduleName>Beeing Female NG</moduleName>
+    <moduleName>Beeing Female NG 3.5.14</moduleName>
     <moduleImage path="Fomod_resources\fw.jpg" /> 
     <requiredInstallFiles> 
         <folder source="Core" destination="" /> 
@@ -31,8 +31,8 @@
                 </group>
                 <group name="Patches" type="SelectAny"> 
                     <plugins order="Explicit"> 
-                        <plugin name="Fertility Adventures Redux">
-                            <description>Wires Fertility Adventures Redux's pregnancy quests, child-support storylines, and announcement dialogue to BF NG's cycle events. FAR's tracked-pregnancy faction is driven by BF state changes (Conception / Labor / cycle ticks). Auto-detected when Fertility Adventures.esp is active.</description>
+                        <plugin name="Fertility Adventures Redux (for FAR 1.0.2)">
+                            <description>Built against Fertility Adventures Redux 1.0.2. Wires Fertility Adventures Redux's pregnancy quests, child-support storylines, and announcement dialogue to BF NG's cycle events. FAR's tracked-pregnancy faction is driven by BF state changes (Conception / Labor / cycle ticks). Auto-detected when Fertility Adventures.esp is active.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files> 
                                 <folder source="Patches\Fertility Adventures Redux" destination="" priority="0" /> 
@@ -81,8 +81,8 @@
                                 <type name="Optional"/>
                             </typeDescriptor>
                         </plugin>
-                        <plugin name="FMR-Immersive Effects">
-                            <description>Drops FMR-IE's hard dependency on Fertility Mode and reroutes its stretchmark / areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks and lactation spells onto BF NG's pregnancy progress. Overlays band smoothly across all three trimesters and fade out during recovery. Auto-detected when FMR- Immersive Effects.esp is active.</description>
+                        <plugin name="FMR-Immersive Effects (for FMR-IE 1.0.0-b.2)">
+                            <description>Built against FMR-Immersive Effects 1.0.0-b.2. Drops FMR-IE's hard dependency on Fertility Mode and reroutes its stretchmark / areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks and lactation spells onto BF NG's pregnancy progress. Overlays band smoothly across all three trimesters and fade out during recovery. Auto-detected when FMR- Immersive Effects.esp is active.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files>
                                 <folder source="Patches\FMR-Immersive Effects" destination="" priority="0" />
