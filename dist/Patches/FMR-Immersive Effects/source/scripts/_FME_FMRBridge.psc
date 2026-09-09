@@ -200,6 +200,21 @@ Function RefreshActor(Actor mother)
 
     SendStatusEvent(mother, rank)
 
+    ; Rank fell to 0 outside the "Update" mod-event path (a BF "Reset NPC",
+    ; or a state change whose Update event was lost): the event handler's
+    ; teardown is gated on FME.Rank != 0, and this poll has just zeroed that
+    ; key - so without dispelling here, a stuck effect spell (fetal movement
+    ; and friends are self-renewing) would keep moaning forever. The
+    ; _fmeLastRank membership check additionally catches saves where the rank
+    ; was already zeroed before this fix shipped (the faction is FMR-IE's
+    ; delta tracker, joined while effects/overlays run and left only by
+    ; CleanupEffects) - one IsInFaction per non-pregnant woman per poll, vs
+    ; nine unconditional DispelSpells. Runs before the OverlayUpdater kick
+    ; below, mirroring the event handler's order.
+    if rank <= 0 && (prevRank != 0 || (_fmeLastRank && mother.IsInFaction(_fmeLastRank)))
+        CleanupEffects(mother)
+    endIf
+
     ; Kick the overlay refresh while pregnant/recovering, and exactly ONCE
     ; when the rank drops to 0, so the overlay script's cleanup branches
     ; (elseif RCT <= 0) remove the stretchmark / areola textures. Gating the

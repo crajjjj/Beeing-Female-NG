@@ -177,6 +177,17 @@ Event OnEffectStart(Actor target, Actor caster)
 		else
 			InitState()
 		endif
+		; Reconcile the BF tracking faction (ParentFaction 0x8448, whose rank
+		; mirrors FW.CurrentState and is what PAIA-style OAR configs and the
+		; patches condition on). A "Reset NPC" or a lost Update event leaves
+		; the rank stuck at a pregnancy value (>=5) with nothing rewriting it
+		; until the next changeState - days of pregnant idles on a woman BF
+		; already shows as cycling. Cheap: UpdateParentFaction skips the
+		; SetFactionRank when the rank already matches. Guarded like
+		; changeState does - Controller is a CK-filled auto property.
+		if System && System.Controller
+			System.Controller.UpdateParentFaction(ActorRef)
+		endif
 	endif
 
 	equipChild()

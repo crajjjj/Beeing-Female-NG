@@ -462,6 +462,16 @@ function Delete(actor Woman) global
 	; allInstances=true: legacy saves may carry duplicate entries from the old
 	; force_new re-add bug - one purge must clear them all.
 	StorageUtil.FormListRemove(none,"FW.SavedNPCs",Woman,true)
+
+	; Drop the BF tracking faction too. Its rank mirrors FW.CurrentState
+	; (PAIA-style OAR configs and the patches condition on it), and once the
+	; actor is out of FW.SavedNPCs UpdateParentFaction refuses to touch her -
+	; without this a reset mid-pregnancy leaves the "pregnant" rank stuck.
+	; (Global function, so resolve the CK-filled System.ParentFaction by form.)
+	Faction parentFaction = Game.GetFormFromFile(0x008448, "BeeingFemale.esm") as Faction
+	if parentFaction
+		Woman.RemoveFromFaction(parentFaction)
+	endif
 endFunction
 
 ; This will reset all BeeingFemale related StorageUtil variables
@@ -469,6 +479,10 @@ endFunction
 function ResetNpcData(bool bPlayer=false) global
 	int i=StorageUtil.FormListCount(none,"FW.SavedNPCs")
 	actor p = Game.GetPlayer()
+	; This path clears the same data as Delete() but never calls it, so it
+	; needs its own tracking-faction cleanup - see the note in Delete().
+	; Resolved once here rather than per woman.
+	Faction parentFaction = Game.GetFormFromFile(0x008448, "BeeingFemale.esm") as Faction
 	while i>0
 		i-=1
 		actor woman=StorageUtil.FormListGet(none,"FW.SavedNPCs",i) as Actor
@@ -489,6 +503,9 @@ function ResetNpcData(bool bPlayer=false) global
 			StorageUtil.UnsetIntValue(Woman,"FW.NumBirth")
 			StorageUtil.UnsetIntValue(Woman,"FW.NumBabys")
 			StorageUtil.UnsetFloatValue(Woman,"FW.PauseTime")
+			if parentFaction && Woman
+				Woman.RemoveFromFaction(parentFaction)
+			endif
 		endif
 	endWhile
 	StorageUtil.FormListClear(none,"FW.SavedNPCs")

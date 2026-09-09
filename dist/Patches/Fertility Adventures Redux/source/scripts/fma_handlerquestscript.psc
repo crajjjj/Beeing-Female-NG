@@ -81,6 +81,25 @@ function UpdateTrackedFemaleRank(Actor mother)
 	endif
 
 	int stateId = StorageUtil.GetIntValue(mother, "FW.CurrentState", -1)
+
+	; A lost BeeingFemaleLabor event (heavy script load during the birth
+	; scene) leaves FMA_PlayerPregFaction stuck at 1 - the labor handler is
+	; the only place it was cleared - so the spouse keeps pregnancy dialogue
+	; and kick comments forever. Reconcile on the poll when BF says the
+	; pregnancy is over. Recovery (8) is only ever entered out of a completed
+	; birth, so it is the one case that also confers parent status; a drop
+	; straight to a cycle state (or to untracked, -1) means the pregnancy
+	; ended without a delivery - miscarriage, or the data was reset - which
+	; must clear the dialogue flags without making anyone a parent.
+	if mother.GetFactionRank(FMA_PlayerPregFaction) == 1 && (stateId <= 3 || stateId == 8)
+		if stateId == 8
+			mother.SetFactionRank(FMA_PlayerParentFaction, 1)
+		endif
+		FMA_AnnouncementQueueList.RemoveAddedForm(mother)
+		mother.RemovefromFaction(FMA_PlayerPregFaction)
+		mother.RemovefromFaction(FMA_AnnouncementBlockerFaction)
+	endif
+
 	if stateId == -1
 		mother.RemovefromFaction(TrackedFemFaction)
 		return

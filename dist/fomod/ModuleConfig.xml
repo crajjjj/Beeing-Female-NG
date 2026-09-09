@@ -1,6 +1,6 @@
 <!-- Created with FOMOD Creation Tool 1.7.0.37 [http://www.nexusmods.com/fallout4/mods/6821] --> 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd"> 
-    <moduleName>Beeing Female NG 3.5.14</moduleName>
+    <moduleName>Beeing Female NG 3.5.15</moduleName>
     <moduleImage path="Fomod_resources\fw.jpg" /> 
     <requiredInstallFiles> 
         <folder source="Core" destination="" /> 
