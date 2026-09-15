@@ -147,6 +147,12 @@ float property UpdateInterval = 30.0 auto hidden
 bool property UpdateIntervalEnabled = true auto hidden
 ; System
 string property WidgetProfile = "default.ini" auto hidden
+; BodyMorph slider profile (VisualScaling type 5) - loaded from Data/BeeingFemale/BodyMorph/*.ini
+string property BodyMorphProfile = "default.ini" auto hidden
+string[] property BellyMorphNames auto hidden
+float[] property BellyMorphMaxs auto hidden
+string[] property BreastMorphNames auto hidden
+float[] property BreastMorphMaxs auto hidden
 
 
 ;---------------------------------------------
@@ -250,6 +256,7 @@ int ImpregnatePlayerChanceDef = 30
 float UpdateIntervalDef = 30.0
 bool UpdateIntervalEnabledDef = true
 string WidgetProfileDef = "default.ini"
+string BodyMorphProfileDef = "default.ini"
 
 
 ;---------------------------------------------
@@ -1181,6 +1188,69 @@ function LoadWidgetProfile(string ProfileName="")
 		CoupleWidget.UpdateContent()
 		CoupleWidget.UpdateWidgetScale()
 	endif
+endFunction
+
+function ReloadBodyMorphProfile()
+	LoadBodyMorphProfile(BodyMorphProfile)
+endFunction
+
+function LoadBodyMorphProfile(string ProfileName="")
+	; Reads the BodyMorph slider set from Data/BeeingFemale/BodyMorph/<profile>.
+	; Each section lists Morph1..Morph16 (BodySlide slider name) with Morph1Max..
+	; (value applied at full scale, negatives allowed). Falls back to the classic
+	; hardcoded sliders when the file is missing or a section is empty.
+	if(ProfileName;/!=""/;)
+		BodyMorphProfile=ProfileName
+	endif
+	if BodyMorphProfile==""
+		BodyMorphProfile=BodyMorphProfileDef
+	endif
+
+	int c = 0
+	int i = 0
+	while c < 16 && FWUtility.getIniCString("BodyMorph", BodyMorphProfile, "Belly", "Morph" + (c + 1)) != ""
+		c += 1
+	endWhile
+	if c == 0
+		BellyMorphNames = FWUtility.StringArray(1)
+		BellyMorphMaxs = FWUtility.FloatArray(1)
+		BellyMorphNames[0] = "PregnancyBelly"
+		BellyMorphMaxs[0] = 1.0
+		FW_log.WriteLog("FWSystemConfig::LoadBodyMorphProfile() - No [Belly] sliders in " + BodyMorphProfile + ", using classic sliders")
+	else
+		BellyMorphNames = FWUtility.StringArray(c)
+		BellyMorphMaxs = FWUtility.FloatArray(c)
+		i = 0
+		while i < c
+			BellyMorphNames[i] = FWUtility.getIniCString("BodyMorph", BodyMorphProfile, "Belly", "Morph" + (i + 1))
+			BellyMorphMaxs[i] = FWUtility.getIniCFloat("BodyMorph", BodyMorphProfile, "Belly", "Morph" + (i + 1) + "Max", 1.0)
+			i += 1
+		endWhile
+	endif
+
+	c = 0
+	while c < 16 && FWUtility.getIniCString("BodyMorph", BodyMorphProfile, "Breasts", "Morph" + (c + 1)) != ""
+		c += 1
+	endWhile
+	if c == 0
+		BreastMorphNames = FWUtility.StringArray(2)
+		BreastMorphMaxs = FWUtility.FloatArray(2)
+		BreastMorphNames[0] = "BreastsSH"
+		BreastMorphMaxs[0] = 1.0
+		BreastMorphNames[1] = "BreastsNewSH"
+		BreastMorphMaxs[1] = 1.0
+		FW_log.WriteLog("FWSystemConfig::LoadBodyMorphProfile() - No [Breasts] sliders in " + BodyMorphProfile + ", using classic sliders")
+	else
+		BreastMorphNames = FWUtility.StringArray(c)
+		BreastMorphMaxs = FWUtility.FloatArray(c)
+		i = 0
+		while i < c
+			BreastMorphNames[i] = FWUtility.getIniCString("BodyMorph", BodyMorphProfile, "Breasts", "Morph" + (i + 1))
+			BreastMorphMaxs[i] = FWUtility.getIniCFloat("BodyMorph", BodyMorphProfile, "Breasts", "Morph" + (i + 1) + "Max", 1.0)
+			i += 1
+		endWhile
+	endif
+	FW_log.WriteLog("FWSystemConfig::LoadBodyMorphProfile() - Loaded " + BodyMorphProfile + ": " + BellyMorphNames.Length + " belly / " + BreastMorphNames.Length + " breast sliders")
 endFunction
 
 function UpdateAllWidgetLayout()
@@ -2702,7 +2772,13 @@ Event OnPageReset(string page)
 		AddHeaderOption("$FW_MENU_PREGNANCY_VisualScaling")
 		AddMenuOptionST("MenuVisualScaling", "$FW_MENU_PREGNANCY_VisualScalingType", VisualScalingOptions[VisualScaling])
 		AddMenuOptionST("MenuScalingKind", "$FW_MENU_PREGNANCY_VisualScalingKind", VisualScalingKindOptions[VisualScalingKind])
-		
+
+		optionFlag = OPTION_FLAG_DISABLED
+		If VisualScaling == 5 || (VisualScaling == 4 && !HasSLIF())
+			optionFlag = OPTION_FLAG_NONE
+		EndIf
+		AddMenuOptionST("MenuBodyMorphProfile", "$FW_MENU_PREGNANCY_BodyMorphProfile", BodyMorphProfile, optionFlag)
+
 		optionFlag = OPTION_FLAG_DISABLED
 		If VisualScaling == 1 || VisualScaling == 2 || VisualScaling == 4 || VisualScaling == 5
 			optionFlag = OPTION_FLAG_NONE
@@ -4604,6 +4680,59 @@ State MenuWidgetProfile
 	EndEvent
 EndState
 
+State MenuBodyMorphProfile
+	Event OnMenuOpenST()
+		string[] fileNames = FWUtility.GetFileNames("BodyMorph","ini")
+		int c = fileNames.length
+		if c>128
+			c=128
+		endif
+		if c==0
+			; directory missing - offer only the built-in default
+			fileNames = FWUtility.StringArray(1)
+			fileNames[0] = BodyMorphProfileDef
+			c = 1
+		endif
+		string[] Files = FWUtility.StringArray(c)
+		int si = 0
+		int i = 0
+		while i < c
+			Files[i] = fileNames[i]
+			if Files[i]==BodyMorphProfile
+				si=i
+			endif
+			i += 1
+		endWhile
+		SetMenuDialogOptions(Files)
+		SetMenuDialogStartIndex(si)
+	EndEvent
+
+	Event OnMenuAcceptST(int index)
+		string[] fileNames = FWUtility.GetFileNames("BodyMorph","ini")
+		if index>=0 && index<fileNames.length
+			BodyMorphProfile = fileNames[index]
+			SetMenuOptionValueST(BodyMorphProfile)
+			LoadBodyMorphProfile(BodyMorphProfile)
+			If System.Player
+				System.Player.SetBelly()
+			EndIf
+		endif
+	EndEvent
+
+	Event OnDefaultST()
+		BodyMorphProfile = BodyMorphProfileDef
+		SetMenuOptionValueST(BodyMorphProfile)
+		LoadBodyMorphProfile(BodyMorphProfile)
+		If System.Player
+			System.Player.SetBelly()
+		EndIf
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("$FW_MENUTXT_PREGNANCY_BodyMorphProfile")
+	EndEvent
+EndState
+
 State MenuBabySpawn
 	Event OnMenuOpenST()
 		SetMenuDialogDefaultIndex(BabySpawnDef)
@@ -4813,7 +4942,13 @@ State MenuVisualScaling
 		SetOptionFlagsST(optionFlag, True, "ToggleBreastScale")
 		SetOptionFlagsST(optionFlag, True, "SliderBellyScaleMax")
 		SetOptionFlagsST(optionFlag, True, "SliderBreastScaleMax")
-		
+
+		optionFlag = OPTION_FLAG_DISABLED
+		If VisualScaling == 5 || (VisualScaling == 4 && !HasSLIF())
+			optionFlag = OPTION_FLAG_NONE
+		EndIf
+		SetOptionFlagsST(optionFlag, True, "MenuBodyMorphProfile")
+
 		optionFlag = OPTION_FLAG_DISABLED
 		If VisualScaling == 3
 			optionFlag = OPTION_FLAG_NONE

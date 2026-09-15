@@ -626,6 +626,7 @@ function OnGameLoad(bool bIsModReset = false) ;***Edit by Bane
 	endIf
 	LoadState=19
 	cfg.LoadWidgetProfile()
+	cfg.ReloadBodyMorphProfile()
 	LoadState=20
 	;--------------------------------------------------------------
 	; Check other mods

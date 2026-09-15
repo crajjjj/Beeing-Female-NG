@@ -10,6 +10,27 @@ Pregnancy has three trimesters, each defaulting to 10 in-game days (30 days tota
 | Second (State 5) | 10 days | Noticeable belly and breast growth |
 | Third (State 6) | 10 days | Full belly, maximum scaling |
 
+### Belly & Breast Scaling
+
+How the growth is *displayed* is picked on the **Pregnancy page → Visual scaling type**:
+
+| Type | How it works | Needs |
+|------|--------------|-------|
+| Node scaling (two variants) | Scales the `NPC Belly` / breast skeleton bones | XPMSSE skeleton |
+| Weight gain | Raises the actor's weight slider | -- |
+| SLIF | Hands scaling to SexLab Inflation Framework | SLIF |
+| BodyMorph | Applies BodySlide morphs via RaceMenu/NiOverride | RaceMenu, body meshes built with **Build Morphs** checked |
+
+**BodyMorph profiles.** The BodyMorph type reads its slider set from an INI profile chosen right below the scaling type (**"Body morph profile"**). Profiles live in `Data/BeeingFemale/BodyMorph/`:
+
+- `default.ini` -- the classic Beeing Female sliders (`PregnancyBelly`, `BreastsSH`, `BreastsNewSH`); works everywhere
+- `CBBE 3BA.ini` -- a blend tuned for CBBE / 3BA bodies (fuller, heavier breast shape)
+- `BHUNP.ini` -- for BHUNP, which uses `BreastsSSH` instead of the CBBE breast sliders
+
+Each profile lists up to 16 sliders per section with the value applied at full scale (negative values allowed), so you can edit them -- or copy one to a new `.ini` and build your own; new files appear in the MCM menu automatically. The MCM *Maximum belly/breast size* sliders multiply on top of the profile values.
+
+> If the belly doesn't grow in BodyMorph mode, your body meshes were built without morph data -- rebuild in BodySlide with **Build Morphs** checked.
+
 ### Baby Health
 
 The unborn baby has a health value (0--100, starting at 100). It is reduced by **combat damage** taken by the mother while pregnant. If health drops too low and the miscarriage system is enabled, a miscarriage may occur.

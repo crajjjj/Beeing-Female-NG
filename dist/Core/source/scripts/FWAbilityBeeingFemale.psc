@@ -1462,32 +1462,60 @@ EndFunction
 
 Function UpdateBodyMorphs(Float afBellyScale, Float afBreastScale)
 	If ActorRef;/!=none/;
-		; BodyMorph
+		; BodyMorph - slider set comes from the BodyMorph profile INI (cfg.LoadBodyMorphProfile)
+		String[] names
+		Float[] maxs
+		Int i
+		; Drop everything under our key first, so profile switches or removed
+		; sliders never leave stale morphs behind. Nothing renders until
+		; UpdateModelWeight below, so this causes no visible flicker.
+		NiOverride.ClearBodyMorphKeys(ActorRef, "BeeingFemale")
 		If cfg.BellyScale;/==true/;
-			NiOverride.SetBodyMorph(ActorRef, "PregnancyBelly", "BeeingFemale", afBellyScale)
-		Else
-			NiOverride.ClearBodyMorph(ActorRef, "PregnancyBelly", "BeeingFemale")
+			names = cfg.BellyMorphNames
+			maxs = cfg.BellyMorphMaxs
+			If names.Length == 0
+				; profile not loaded yet (old save before OnGameLoad) - classic slider
+				NiOverride.SetBodyMorph(ActorRef, "PregnancyBelly", "BeeingFemale", afBellyScale)
+			EndIf
+			i = 0
+			While i < names.Length
+				NiOverride.SetBodyMorph(ActorRef, names[i], "BeeingFemale", afBellyScale * maxs[i])
+				i += 1
+			EndWhile
 		EndIf
-		
+
 		If cfg.BreastScale;/==true/;
-			NiOverride.SetBodyMorph(ActorRef, "BreastsSH", "BeeingFemale", afBreastScale)
-			NiOverride.SetBodyMorph(ActorRef, "BreastsNewSH", "BeeingFemale", afBreastScale)
-		Else
-			NiOverride.ClearBodyMorph(ActorRef, "BreastsSH", "BeeingFemale")
-			NiOverride.ClearBodyMorph(ActorRef, "BreastsNewSH", "BeeingFemale")
+			names = cfg.BreastMorphNames
+			maxs = cfg.BreastMorphMaxs
+			If names.Length == 0
+				; profile not loaded yet (old save before OnGameLoad) - classic sliders
+				NiOverride.SetBodyMorph(ActorRef, "BreastsSH", "BeeingFemale", afBreastScale)
+				NiOverride.SetBodyMorph(ActorRef, "BreastsNewSH", "BeeingFemale", afBreastScale)
+			EndIf
+			i = 0
+			While i < names.Length
+				NiOverride.SetBodyMorph(ActorRef, names[i], "BeeingFemale", afBreastScale * maxs[i])
+				i += 1
+			EndWhile
 		EndIf
-		
+
 		NiOverride.UpdateModelWeight(ActorRef)
+		; notify normal-map swappers (Pregnancy Normalmap Swapper etc.)
+		int eid = ModEvent.Create("PNSUpdateRequest")
+		ModEvent.PushForm(eid, ActorRef)
+		ModEvent.Send(eid)
 	EndIf
 EndFunction
 
 Function ClearBodyMorphs()
 	If ActorRef;/!=none/;
-		; BodyMorph
-		NiOverride.ClearBodyMorph(ActorRef, "PregnancyBelly", "BeeingFemale")
-		NiOverride.ClearBodyMorph(ActorRef, "BreastsSH", "BeeingFemale")
-		NiOverride.ClearBodyMorph(ActorRef, "BreastsNewSH", "BeeingFemale")
+		; BodyMorph - wipe every morph applied under our key, whatever profile set it
+		NiOverride.ClearBodyMorphKeys(ActorRef, "BeeingFemale")
 		NiOverride.UpdateModelWeight(ActorRef)
+		; notify normal-map swappers (Pregnancy Normalmap Swapper etc.)
+		int eid = ModEvent.Create("PNSUpdateRequest")
+		ModEvent.PushForm(eid, ActorRef)
+		ModEvent.Send(eid)
 	EndIf
 EndFunction
 
