@@ -118,6 +118,17 @@ BF's spoken parent-child greetings come from the HearthFires adoption dialogue, 
 
 Everything else -- spawning, follower factions, relationships, persistence across saves -- is handled by BF at transition time.
 
+## BodyMorph Slider Profiles
+
+The BodyMorph scaling type (MCM > Pregnancy > Visual Scaling) reads its slider set from an INI profile in `Data/BeeingFemale/BodyMorph/`. A body or compatibility mod can ship its own profile without touching core files: drop a uniquely named `.ini` in that folder and it appears in the MCM picker automatically (the bundled BF UBE Support patch ships `UBE.ini` this way). Use your mod's name in the filename - profile files do not merge, so never overwrite `default.ini` or another mod's profile.
+
+Format (see `default.ini` for the commented reference): up to 16 sliders per section, `MorphN` = BodySlide slider name, `MorphNMax` = value applied at full scale (negatives allowed). The MCM max-size sliders multiply on top.
+
+**Sections are fixed: only `[Belly]` and `[Breasts]` exist.** Each section is a *channel* driven by the pregnancy simulation (belly scale, breast scale) - a made-up section like `[Butt]` is silently ignored because nothing drives it. Do not invent section names in shipped profiles. If your body needs another region, two options:
+
+- Sliders for other body parts can ride an existing channel: listing `HipSize p|n` under `[Belly]` grows hips in step with the belly, which covers most cases.
+- If a region genuinely needs its own channel (its own growth curve or driver), **request it upstream** via a [GitHub issue](https://github.com/crajjjj/Beeing-Female-NG/issues) instead of working around it. Channels are added centrally so every profile stays interchangeable and the per-tick apply/clear logic stays in one place.
+
 ## Bundled Optional Patches
 
 `dist/Patches/` ships compatibility patches exposed as optional FOMOD components (`dist/fomod/ModuleConfig.xml`):

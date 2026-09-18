@@ -27,7 +27,9 @@ How the growth is *displayed* is picked on the **Pregnancy page → Visual scali
 - `CBBE 3BA.ini` -- a blend tuned for CBBE / 3BA bodies (fuller, heavier breast shape)
 - `BHUNP.ini` -- for BHUNP, which uses `BreastsSSH` instead of the CBBE breast sliders
 
-Each profile lists up to 16 sliders per section with the value applied at full scale (negative values allowed), so you can edit them -- or copy one to a new `.ini` and build your own; new files appear in the MCM menu automatically. The MCM *Maximum belly/breast size* sliders multiply on top of the profile values.
+Each profile lists up to 16 sliders per section with the value applied at full scale (negative values allowed), so you can edit them -- or copy one to a new `.ini` and build your own; new files appear in the MCM menu automatically. The MCM *Maximum belly/breast size* sliders multiply on top of the profile values. Other mods can ship their own profiles the same way (BF UBE Support ships `UBE.ini`, for example).
+
+Only the `[Belly]` and `[Breasts]` sections exist -- they are the two channels the pregnancy simulation drives. Sliders for other body parts (hips, butt, ...) can be listed under `[Belly]` to grow with it; if you think a region deserves its own growth channel, [request it on GitHub](https://github.com/crajjjj/Beeing-Female-NG/issues) rather than editing scripts -- channels are added centrally so all profiles keep working (see the [author guide](../authors/add-on-framework.md#bodymorph-slider-profiles)).
 
 > If the belly doesn't grow in BodyMorph mode, your body meshes were built without morph data -- rebuild in BodySlide with **Build Morphs** checked.
 
