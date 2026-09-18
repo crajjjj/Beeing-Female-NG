@@ -2,6 +2,28 @@
 
 A high-level map of the Beeing Female NG plugin set and source tree. It tells you *where* things live and *what* each part is for — to see individual forms, open the plugins in [SSEEdit / xEdit](https://github.com/TES5Edit/TES5Edit). For runtime actor data see [StorageUtil & State Data](state-data.md); for the INI extension system see the [Add-on Framework](add-on-framework.md).
 
+## Integrating from another mod
+
+You do **not** need anything from this repo to integrate with BF NG. The API is
+[mod events](modevents.md) plus [StorageUtil keys](state-data.md), both reachable with vanilla
+Papyrus and PapyrusUtil — so a consumer script compiles with no BF sources in its import path,
+and gains no hard dependency. Detect BF with `Game.GetModByName("BeeingFemale.esm") != 255` and
+skip the integration when it is absent.
+
+For convenience each release attaches an **integration kit**,
+`BeeingFemaleNG-API-<version>+.zip` ([releases](https://github.com/crajjjj/Beeing-Female-NG/releases)):
+a compile-verified example consumer, the add-on INI templates, `VERSIONS.txt`, and — only for
+*script* add-ons that extend `FWAddOn_Misc`/`_Race`/`_CycleMagicEffect` — BF's own Papyrus
+sources. Build it with `python tools/pack-api-kit.py`.
+
+!!! warning "Script add-ons are the expensive option"
+    BF's scripts are mutually referential, so the compile closure of any one add-on base class
+    is the whole ~34-script cluster, and compiling it also needs sources for every mod BF holds
+    a typed property for (SexLab, Devious Devices, OStim, SlaveTats, FNIS, MFG Fix, SkyUI SDK,
+    RaceMenu, JContainers, PO3, ConsoleUtil — see `skyrimse.ppj`). Prefer mod events or an
+    [add-on INI](add-on-framework.md); reach for a script add-on only for the hooks
+    (`OnGiveBirthStart`, `OnLaborPain`, `OnBabySpawn`, …) that nothing else exposes.
+
 ## The plugin set
 
 One master plus three supporting plugins; load order is master first, then the patch chain.

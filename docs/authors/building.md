@@ -58,6 +58,19 @@ tools/xedit/                    xEdit generator scripts (adult pack, fertility p
 lib/commonlibsse-ng/            SKSE framework (submodule)
 ```
 
+## Integration kit
+
+```sh
+python tools/pack-api-kit.py    # -> dist/Release/BeeingFemaleNG-API-<version>+.zip
+```
+
+Packages what another mod needs to integrate (see [Author Overview](overview.md#integrating-from-another-mod)):
+the README and example consumer from `tools/api-kit/`, the shipped add-on INI templates, a
+`VERSIONS.txt` read straight out of `0 Beeing Female version.ini` so it cannot drift, and the
+Papyrus compile closure for script add-ons — computed from the `FWAddOn_*` base classes at pack
+time rather than hand-listed, so it stays correct as scripts are added. Attach the zip to the
+GitHub release.
+
 ## Notes
 
 - `xmake-requires.lock` is tracked to keep dependency versions stable.
