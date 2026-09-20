@@ -572,7 +572,10 @@ Event OnSpellCast(Form akSpell)
 			potion p = akSpell as potion
 			onPotionFunction(p)
 		endif
-		If BadSpellList && BadSpellList.Find(akSpell)>=0 && currentState>=4 && currentState<20
+		; State first: && short-circuits, and this fires on every spell cast and potion
+		; drunk by every tracked female, so the cheap same-script reads keep the FormList
+		; Find (a native linear search) off the path whenever she is not pregnant.
+		If currentState>=4 && currentState<20 && BadSpellList && BadSpellList.Find(akSpell)>=0
 			If IsPlayer
 				System.Message( FWUtility.StringReplace( Contents.AlcoholNotGoodForYourBaby,"{0}",ActorRefBase.GetName()), System.MSG_Low)
 			Else

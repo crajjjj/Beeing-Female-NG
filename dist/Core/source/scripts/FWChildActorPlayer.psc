@@ -73,6 +73,16 @@ float InCombatStartTime = 0.0;
 Event OnCombatStateChanged(Actor akTarget, int aeCombatState)
 	; Add exp
 	float curTime = Utility.GetCurrentRealTime()
+	; GetCurrentRealTime restarts at 0 each game launch, but these stamps are saved with
+	; the child. Saving mid-combat and reloading leaves them in the future, and the
+	; subtraction below would then REMOVE hundreds of experience instead of adding any.
+	; Drop a stale stamp rather than scoring it.
+	if SearchStartTime > curTime
+		SearchStartTime = 0
+	endif
+	if InCombatStartTime > curTime
+		InCombatStartTime = 0
+	endif
 	if SearchStartTime>0
 		AddExp((curTime - SearchStartTime) / 20)
 	endif

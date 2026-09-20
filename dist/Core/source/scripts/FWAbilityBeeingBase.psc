@@ -78,6 +78,15 @@ float lastTimeBabySound=0.0
 Event OnHitEx(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
 	FWChildActor ca = akAggressor as FWChildActor
 	float t = Utility.GetCurrentRealTime()
+	; GetCurrentRealTime restarts at 0 each game launch while these stamps persist with
+	; the effect, so a save made late in a session leaves them in the future and would
+	; mute both 3-second windows for that many real minutes. Treat that as a new session.
+	if lastTimeGaveExp > t
+		lastTimeGaveExp = 0.0
+	endif
+	if lastTimeBabySound > t
+		lastTimeBabySound = 0.0
+	endif
 	if ca
 		if t>lastTimeGaveExp+3
 			if abPowerAttack || abSneakAttack || abBashAttack
@@ -193,7 +202,19 @@ int cBabyHiccup=0
 float nextUpdate
 event OnUpdate()
 	if IsPlayer
-	
+		; GetCurrentRealTime restarts at 0 each game launch while these two stamps persist
+		; with the effect. A save made late in a session leaves them in the future, which
+		; silences the baby and freezes the stood-still timer for that many real minutes.
+		; The longest legitimate lead on nextUpdate is the 120s roll further down, so
+		; anything beyond that is last session's value.
+		float tNow = Utility.GetCurrentRealTime()
+		if nextUpdate > tNow + 120
+			nextUpdate = 0.0
+		endif
+		if lastMoveTime > tNow
+			lastMoveTime = tNow
+		endif
+
 		if ActorRef.X > aPosX+20 || ActorRef.X < aPosX - 20 || ActorRef.Y > aPosY+20 || ActorRef.Y < aPosY - 20 || ActorRef.Z > aPosZ+20 || ActorRef.Z < aPosZ - 20
 			aPosX=ActorRef.X
 			aPosY=ActorRef.Y
@@ -205,7 +226,7 @@ event OnUpdate()
 		if cBabyHiccup>0
 			PlayBabySound_Hiccup()
 			cBabyHiccup-=1
-		elseif nextUpdate < Utility.GetCurrentRealTime()
+		elseif nextUpdate < tNow
 			
 			; Check again if the actor is wearing a baby
 			bool bFound=false
