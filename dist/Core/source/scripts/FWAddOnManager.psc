@@ -5136,6 +5136,25 @@ function OnMagicEffectApply(Actor akWoman, ObjectReference akCaster, MagicEffect
 	endWhile
 endfunction
 
+; The magic effects some Misc add-on wants OnMagicEffectApply raised for.
+; FWAbilityBFOnMagicEffectApply registers exactly these with PO3's filtered
+; magic-effect-apply event, so the VM never wakes Papyrus for an effect nobody asked
+; about - the unfiltered event cost one stack per magic effect per tracked female.
+Form[] function GetMagicEffectFilters()
+	Form[] fAll
+	int i=0
+	while i<iMisc
+		if Misc[i] as FWAddOn_Misc;/!=none/;
+			Form[] f = Misc[i].OnRegisterMagicEffectFilters()
+			if f;/!=none/;
+				fAll = FWUtility.FormArrayConcat(fAll,f)
+			endif
+		endIf
+		i+=1
+	endWhile
+	return fAll
+endfunction
+
 Form[] function OnStripActor(Actor ActorRef)
 	int i=0
 	Form[] fAll

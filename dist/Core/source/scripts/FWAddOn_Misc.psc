@@ -148,6 +148,17 @@ function OnMagicEffectApply(Actor akWoman, ObjectReference akCaster, MagicEffect
 endFunction
 
 
+; Return the magic effects this add-on wants OnMagicEffectApply raised for.
+; Nothing by default: an unfiltered subscription costs one Papyrus stack for every
+; magic effect applied to every tracked female, so BF only listens for the effects
+; an add-on names here. The list is read at each cycle-ability start and whenever
+; SendModEvent("FW_OMEARefresh") is raised, so send that event if it changes.
+Form[] function OnRegisterMagicEffectFilters()
+	Form[] fNone
+	return fNone
+endFunction
+
+
 ; Check for a condome. When this function returns true, there won't be any sperm added
 bool function CheckForCondome(actor Woman, actor Man)
 	return false

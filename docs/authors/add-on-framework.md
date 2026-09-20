@@ -19,7 +19,7 @@ Beeing Female NG ships an INI-driven add-on framework that lets external mods ex
 - Per-race/per-actor child-sex bias via `ProbChildSexDetermMale` (see [Child Sex](#child-sex)).
 - Custom adult actor/voice selection for the grow-up feature (`AdultActor_*` — see [Adult Actor Add-ons](#adult-actor-add-ons-grow-up-feature) below).
 - Integration hooks via misc add-ons (SexLab/OStim/Bathing in Skyrim).
-- Add-on event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffectApply`, camera start/stop.
+- Add-on event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffectApply` (opt-in per effect - see [Magic-effect hooks](#magic-effect-hooks)), camera start/stop.
 
 ## Default Behaviors
 
@@ -128,6 +128,24 @@ Format (see `default.ini` for the commented reference): up to 16 sliders per sec
 
 - Sliders for other body parts can ride an existing channel: listing `HipSize p|n` under `[Belly]` grows hips in step with the belly, which covers most cases.
 - If a region genuinely needs its own channel (its own growth curve or driver), **request it upstream** via a [GitHub issue](https://github.com/crajjjj/Beeing-Female-NG/issues) instead of working around it. Channels are added centrally so every profile stays interchangeable and the per-tick apply/clear logic stays in one place.
+
+## Magic-effect hooks
+
+A misc add-on's `OnMagicEffectApply(Actor akWoman, ObjectReference akCaster, MagicEffect akEffect)` only fires for magic effects the add-on asked for by name. Name them by overriding `OnRegisterMagicEffectFilters()`:
+
+```papyrus
+Form[] function OnRegisterMagicEffectFilters()
+    Form[] f
+    if myEffect
+        f = PapyrusUtil.PushForm(f, myEffect)
+    endif
+    return f
+endFunction
+```
+
+BF collects the filters from every active misc add-on and registers exactly those with PO3 Papyrus Extender's `OnMagicEffectApplyEx`, which filters in C++. Register nothing and your `OnMagicEffectApply` never fires - and BF pays nothing for it.
+
+This is not negotiable, and it is why the hook is opt-in: the plain `ActiveMagicEffect.OnMagicEffectApply` event cannot be filtered, and BF's cycle ability rides on every tracked female, so listening for everything cost one Papyrus stack per magic effect per tracked female - hundreds of thousands per hour in a crowded hold, enough to back the VM queue up until dialogue and doors take seconds to respond. Resolve your effects with `Game.GetFormFromFile` in `OnGameLoad`, and if the set changes afterwards raise `SendModEvent("FW_OMEARefresh")` so the abilities rebuild their filters (`BFA_BathingInSkyrim` does this once its bathing effects resolve, a few seconds after load).
 
 ## Bundled Optional Patches
 

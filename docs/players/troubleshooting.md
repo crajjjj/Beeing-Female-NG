@@ -98,6 +98,14 @@ If you give birth in (or leave a child in) a cell added by another mod — a pla
 !!! note
     Giving items to NPCs by hand still works with the toggle off — a follower carrying contraception drinks it on schedule, and a menstruating NPC with tampons or pads in her inventory equips them. The toggle only controls whether BF *gives* NPCs items on its own.
 
+## Everything takes seconds to respond (dialogue, looting, doors), stack dumps in the log
+
+**Symptoms.** In towns or after a while of play the game stays smooth visually, but anything driven by scripts lags badly — talking to an NPC, looting a body, opening a door all take seconds. A Papyrus profiler or VM monitor shows enormous numbers of `FWAbilityBFOnMagicEffectApply.OnMagicEffectApply` stacks (hundreds of thousands within a few minutes of play).
+
+**Why it happens.** Before 3.5.16, BF listened for the plain `OnMagicEffectApply` event on its cycle ability. That event cannot be filtered: the game raises it for *every* magic effect applied to the actor, and the cycle ability is on every tracked female. In a crowded hold that multiplies every cloak, regeneration, potion and combat effect in your whole load order by the number of tracked females, and each one costs a Papyrus stack even though almost all of them were immediately discarded. The MCM option **"Disable OnMagicEffectApply Events"** did not help, because the script was still woken for every effect — it only skipped the work afterwards.
+
+**Fix.** Update to 3.5.16 or newer. BF now registers only the specific magic effects an add-on actually asked for (the bathing effects, when Bathing in Skyrim is installed) through PO3 Papyrus Extender's filtered event, so the game never wakes Papyrus for anything else. With no such add-on the listener costs nothing at all. No save cleaning is needed, and the MCM option still works if you want the hook off entirely.
+
 ## Birth animations not playing
 
 If the mother gives birth but just stands there — no lying down, no labor animation — work through these in order. The birth itself (baby spawn, recovery, events) still happens regardless; only the *visuals* are affected.

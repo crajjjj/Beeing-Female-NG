@@ -46,6 +46,11 @@ event OnUpdate()
 		bIsInstalled = ((sBathingEffect != none) && (sBathingEffectSoap != none))
 		FW_log.WriteLog("BFA_BathingInSkyrim - BFA_BathingInSkyrim - bIsInstalled is " + bIsInstalled)
 		TryRegisterCount=0
+		if bIsInstalled
+			; The effects are resolved several seconds after game load, so the cycle
+			; abilities have already built their filter list without them.
+			SendModEvent("FW_OMEARefresh")
+		endif
 		return
 	else
 		FW_log.WriteLog("BFA_BathingInSkyrim - BFA_BathingInSkyrim - checking whether Bathing in Skyrim - Renewed is installed...")
@@ -58,6 +63,9 @@ event OnUpdate()
 			bIsInstalled = ((sBathingEffect != none) && (sBathingEffectSoap != none) && (sBathingEffectSoapAnim != none))
 			FW_log.WriteLog("BFA_BathingInSkyrim - BFA_BathingInSkyrim - bIsInstalled is " + bIsInstalled)
 			TryRegisterCount=0
+			if bIsInstalled
+				SendModEvent("FW_OMEARefresh")
+			endif
 			return
 		endif
 	endIf
@@ -68,6 +76,26 @@ event OnUpdate()
 		RegisterForSingleUpdate(5)
 	endif
 endEvent
+
+; Only the bathing effects need to reach OnMagicEffectApply. Naming them keeps the
+; filtering inside PO3's C++ hook instead of waking Papyrus for every magic effect
+; applied to every tracked female. Not gated on bActive - that is checked in
+; OnMagicEffectApply below, and it is only ever set from the MCM AddOn page.
+Form[] function OnRegisterMagicEffectFilters()
+	Form[] f
+	if bIsInstalled
+		if sBathingEffect
+			f = PapyrusUtil.PushForm(f, sBathingEffect)
+		endif
+		if sBathingEffectSoap && sBathingEffectSoap != sBathingEffect
+			f = PapyrusUtil.PushForm(f, sBathingEffectSoap)
+		endif
+		if sBathingEffectSoapAnim && sBathingEffectSoapAnim != sBathingEffectSoap && sBathingEffectSoapAnim != sBathingEffect
+			f = PapyrusUtil.PushForm(f, sBathingEffectSoapAnim)
+		endif
+	endif
+	return f
+endFunction
 
 function OnMagicEffectApply(Actor akWoman, ObjectReference akCaster, MagicEffect akEffect)
 	if bIsInstalled && bActive
