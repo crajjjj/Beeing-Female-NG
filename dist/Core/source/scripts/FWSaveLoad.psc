@@ -472,6 +472,10 @@ function Delete(actor Woman) global
 	if parentFaction
 		Woman.RemoveFromFaction(parentFaction)
 	endif
+
+	; Same story for the labor abilities: they live in her spell list, not in
+	; FW.*, so clearing the data leaves a stuck woman still moaning.
+	FWUtility.ClearLaborAbilities(Woman)
 endFunction
 
 ; This will reset all BeeingFemale related StorageUtil variables
@@ -506,6 +510,7 @@ function ResetNpcData(bool bPlayer=false) global
 			if parentFaction && Woman
 				Woman.RemoveFromFaction(parentFaction)
 			endif
+			FWUtility.ClearLaborAbilities(Woman)
 		endif
 	endWhile
 	StorageUtil.FormListClear(none,"FW.SavedNPCs")

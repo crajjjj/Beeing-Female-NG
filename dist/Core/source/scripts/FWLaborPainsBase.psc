@@ -7,6 +7,9 @@ int property KindOfPains auto
 bool property Silent = false auto
 actor ActorRef
 
+Spell _ownAbility
+bool _ownAbilityResolved = false
+
 
 Event OnEffectStart(Actor akTarget, Actor akCaster)
 	ActorRef=akTarget
@@ -14,7 +17,90 @@ Event OnEffectStart(Actor akTarget, Actor akCaster)
 	OnUpdateGameTime()
 endEvent
 
+; The ability that carries this effect, keyed off KindOfPains (unique per
+; variant) so no CK property filling is needed on the four magic effects.
+; Cached: an orphaned effect resolves this once and then dies.
+Spell function GetOwnAbility()
+	if _ownAbilityResolved
+		return _ownAbility
+	endif
+	_ownAbilityResolved = true
+	int formID = 0
+	if KindOfPains == 7
+		formID = 0x0053C4 ; _BFAbilityLabor_PremonitoryPains
+	elseif KindOfPains == 8
+		formID = 0x0053C2 ; _BFAbilityLabor_FirstStagePains
+	elseif KindOfPains == 10
+		formID = 0x0053BF ; _BFAbilityLabor_BreakingDownPains
+	elseif KindOfPains == 11
+		formID = 0x0053BE ; _BFAbilityLabor_AfterPains
+	endIf
+	if formID
+		_ownAbility = Game.GetFormFromFile(formID, "BeeingFemale.esm") as Spell
+	endIf
+	return _ownAbility
+endFunction
+
+; True when FW.CurrentState has moved past the phase this effect belongs to.
+;
+; The valid sets are deliberately generous by one phase: a state's onExitState
+; runs from InitState(), which changeState() calls AFTER it has already written
+; the new FW.CurrentState, so the normal teardown window legitimately sees the
+; next state. Being loose there keeps this check from ever racing the state
+; machine; the orphan case it exists for is many phases off, not one.
+;
+;   KindOfPains  7  Premonitory pains  added in 3rd trimester >90%  -> 6, 7
+;   KindOfPains  8  First stage pains  added in labor <50%          -> 7, 8
+;   KindOfPains 10  Bearing-down pains added in labor >=50%         -> 7, 8
+;   KindOfPains 11  After pains        added in replenish           -> 8
+;
+; An untracked actor reads 0 (the StorageUtil default the grimace check below
+; also relies on), which counts as orphaned - that is what silences a woman
+; whose FW.* data was wiped by an MCM reset while the ability stayed behind.
+bool function IsOrphaned()
+	int s = StorageUtil.GetIntValue(ActorRef, "FW.CurrentState", 0)
+	if KindOfPains == 7
+		return s != 6 && s != 7
+	elseif KindOfPains == 8 || KindOfPains == 10
+		return s != 7 && s != 8
+	elseif KindOfPains == 11
+		return s != 8
+	endIf
+	return false ; unknown variant - never self-remove
+endFunction
+
 function OnUpdateGameTime()
+	; Orphan self-heal, FIRST thing in the tick.
+	;
+	; This script is a self-rescheduling timer: every tick arms the next one,
+	; and the abilities are torn down exclusively by the owning state's
+	; onExitState. A transition that never fires (the post-birth "Update"
+	; ModEvent lost, a stack dump during the birth scene, an actor unloaded
+	; mid-labor) therefore leaves the ability on her and this loop moaning
+	; forever, while FW.CurrentState already reads as recovered.
+	;
+	; The check has to sit ahead of PlayPainSound rather than just guarding the
+	; reschedule below, because OnEffectStart calls this function DIRECTLY - a
+	; guard on the reschedule alone would still fire one moan on every game
+	; load for as long as the stale ability sits in her spell list.
+	;
+	; Removing the ability matters beyond the sound: LaborPains_State gates the
+	; birth on HasSpell(Effect_Presswehen) == false, so a stale push ability
+	; would suppress the 50% birth trigger on her next pregnancy and push
+	; delivery out to the end of the full labor duration.
+	if ActorRef ;/!=none/;
+	else
+		return ; no target left to hurt - let the loop die rather than re-arm
+	endIf
+	if IsOrphaned()
+		FW_log.WriteLog("FWLaborPainsBase: orphaned labor effect (KindOfPains=" + KindOfPains + ") on " + ActorRef + " at FW.CurrentState=" + StorageUtil.GetIntValue(ActorRef, "FW.CurrentState", 0) + " - removing ability")
+		Spell own = GetOwnAbility()
+		if own && ActorRef.HasSpell(own)
+			ActorRef.RemoveSpell(own) ; ends this effect - nothing below runs
+		endIf
+		return ; no sound, no damage, no reschedule
+	endIf
+
 	float rnd=Utility.RandomFloat(-1.0,1.0)
 	if Silent ;Tkc (Loverslab): optimization
 	else;if Silent==false

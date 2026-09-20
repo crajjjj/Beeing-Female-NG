@@ -2144,6 +2144,17 @@ endFunction
 ;--------------------------------------------------------------------------------
 state Follicular_State
 	function onEnterState()
+		; Defensive sweep, mirroring PregnancyFirst_State.onEnterState: each
+		; state's onExitState only clears its own spells, so anything a missed
+		; transition left behind would otherwise follow her into the new cycle.
+		; Follicular is where she lands after replenish, which makes it the
+		; natural net for leftover labor abilities - and those are not merely
+		; cosmetic, since FWLaborPainsBase keeps moaning for as long as one is
+		; on her and a stale Presswehen suppresses the next birth trigger.
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Vorwehen)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Eroeffnungswehen)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Presswehen)
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Nachwehen)
 		Manager.removeCME(ActorRef) ; Remove All effects
 		;if ActorRef==PlayerRef
 		if IsPlayer ;Tkc (Loverslab): optimization. IsPlayer is true if ActorRef==PlayerRef

@@ -334,6 +334,23 @@ function ClearSpermMirror(actor Woman) global
 	StorageUtil.FloatListClear(Woman, "FW.SpermAmount")
 	StorageUtil.FormListClear(Woman, "FW.SpermRace")
 endFunction
+
+; Remove the four labor abilities (_BFAbilityLabor_*). They are separate spells
+; from the BF tracking spell, driven by FWLaborPainsBase - a self-rescheduling
+; timer that only stops when the ability leaves the actor. Wiping FW.* data
+; alone therefore does NOT silence a woman left moaning by a missed labor
+; transition, so every reset path has to sweep these too.
+; (Global function, so the CK-filled Effect_* properties are resolved by form.)
+function ClearLaborAbilities(actor Woman) global
+	if !Woman
+		return
+	endif
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053C4, "BeeingFemale.esm") as Spell) ; Premonitory pains
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053C2, "BeeingFemale.esm") as Spell) ; First stage pains
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053BF, "BeeingFemale.esm") as Spell) ; Bearing-down pains
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053BE, "BeeingFemale.esm") as Spell) ; After pains
+endFunction
+
 string function GetStringFromRaces(Race[] frms) global
 	int i=0
 	string s=""
