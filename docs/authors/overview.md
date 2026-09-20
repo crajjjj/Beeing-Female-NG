@@ -10,11 +10,8 @@ Papyrus and PapyrusUtil — so a consumer script compiles with no BF sources in 
 and gains no hard dependency. Detect BF with `Game.GetModByName("BeeingFemale.esm") != 255` and
 skip the integration when it is absent.
 
-For convenience each release attaches an **integration kit**,
-`BeeingFemaleNG-API-<version>+.zip` ([releases](https://github.com/crajjjj/Beeing-Female-NG/releases)):
-a compile-verified example consumer, the add-on INI templates, `VERSIONS.txt`, and — only for
-*script* add-ons that extend `FWAddOn_Misc`/`_Race`/`_CycleMagicEffect` — BF's own Papyrus
-sources. Build it with `python tools/pack-api-kit.py`.
+A *script* add-on — one extending `FWAddOn_Misc`/`_Race`/`_CycleMagicEffect` — is the exception:
+it does compile against BF's own sources, from `dist/Core/source/scripts/` in this repo.
 
 !!! warning "Script add-ons are the expensive option"
     BF's scripts are mutually referential, so the compile closure of any one add-on base class
