@@ -474,8 +474,12 @@ function CheckOtherMods()
 	endif
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-	if SSL_installed ;Tkc (Loverslab): optimization
-	else;if !SSL_installed
+	; Creature sperm needs a framework that can actually stage a creature scene.
+	; SexLab and OStim both can, so only wipe the toggle when neither is present -
+	; testing SexLab alone silently reset the MCM option on every game load for
+	; OStim-only setups. Same condition the MCM uses to show the Creature header.
+	bool bOStimInstalled = FWUtility.ModFile("OStim") != ""
+	if !SSL_installed && !bOStimInstalled
 		cfg.CreatureSperm=false
 	endif
 endFunction
