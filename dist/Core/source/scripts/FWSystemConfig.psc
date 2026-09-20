@@ -1190,6 +1190,32 @@ function LoadWidgetProfile(string ProfileName="")
 	endif
 endFunction
 
+; The profile picker's list, built once so OnMenuOpenST and OnMenuAcceptST
+; cannot disagree about it. When Data/BeeingFemale/BodyMorph/ is missing the
+; list is a synthetic single entry, and an Accept handler that re-read the
+; directory instead would bounds-check index 0 against a zero-length array and
+; silently drop the only row it had just displayed.
+string[] function GetBodyMorphProfileNames()
+	string[] fileNames = FWUtility.GetFileNames("BodyMorph","ini")
+	int c = fileNames.length
+	if c==0
+		; directory missing - offer only the built-in default
+		fileNames = FWUtility.StringArray(1)
+		fileNames[0] = BodyMorphProfileDef
+		return fileNames
+	endif
+	if c<=128
+		return fileNames
+	endif
+	string[] capped = FWUtility.StringArray(128)
+	int i = 0
+	while i < 128
+		capped[i] = fileNames[i]
+		i += 1
+	endWhile
+	return capped
+endFunction
+
 function ReloadBodyMorphProfile()
 	LoadBodyMorphProfile(BodyMorphProfile)
 endFunction
@@ -1495,6 +1521,17 @@ function Upgrade(int oldVersion, int newVersion)
 		; instead of silently excluding every futa from her cycle. The boundary is 37,
 		; not 36: a save made on 3.5.9 already recorded 36 with the property zeroed.
 		FutaPregnancy = FutaPregnancyDef
+	endif
+	if oldVersion<38
+		; 3.5.16 added the BodyMorph slider profile. Its five properties come back
+		; None/empty on a save baked before this build, and OnGameLoad only fills
+		; them at LoadState 19 - dozens of Utility.Wait steps in, with the cycle
+		; abilities already ticking. Seed them here so no tracked female spends
+		; that window falling back to the classic sliders.
+		if BodyMorphProfile==""
+			BodyMorphProfile = BodyMorphProfileDef
+		endif
+		LoadBodyMorphProfile(BodyMorphProfile)
 	endif
 endFunction
 
@@ -4682,22 +4719,11 @@ EndState
 
 State MenuBodyMorphProfile
 	Event OnMenuOpenST()
-		string[] fileNames = FWUtility.GetFileNames("BodyMorph","ini")
-		int c = fileNames.length
-		if c>128
-			c=128
-		endif
-		if c==0
-			; directory missing - offer only the built-in default
-			fileNames = FWUtility.StringArray(1)
-			fileNames[0] = BodyMorphProfileDef
-			c = 1
-		endif
-		string[] Files = FWUtility.StringArray(c)
+		string[] Files = GetBodyMorphProfileNames()
+		int c = Files.length
 		int si = 0
 		int i = 0
 		while i < c
-			Files[i] = fileNames[i]
 			if Files[i]==BodyMorphProfile
 				si=i
 			endif
@@ -4708,7 +4734,7 @@ State MenuBodyMorphProfile
 	EndEvent
 
 	Event OnMenuAcceptST(int index)
-		string[] fileNames = FWUtility.GetFileNames("BodyMorph","ini")
+		string[] fileNames = GetBodyMorphProfileNames()
 		if index>=0 && index<fileNames.length
 			BodyMorphProfile = fileNames[index]
 			SetMenuOptionValueST(BodyMorphProfile)

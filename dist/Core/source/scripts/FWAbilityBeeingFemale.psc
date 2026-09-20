@@ -1463,11 +1463,48 @@ Function UpdateNodesSLIF(Float afAddedBellySize, Float afAddedBreastSize)
 	EndIf
 EndFunction
 
+; How far the two halves of a slider profile can safely be walked together.
+;
+; Both halves are `auto hidden` properties with no initializer, so on a save
+; baked before 3.5.16 they read None until LoadBodyMorphProfile has run - and
+; `.Length` on a None array is a VM error, not a clean 0. They are also read
+; through two separate property getters, each an external call that unlocks
+; this script, so a profile switch from the MCM can hand back the new name
+; array against the old max array. Refuse both cases and let the caller fall
+; back to the classic sliders rather than index past the end of either one.
+Int Function MorphPairLength(String[] names, Float[] maxs)
+	If names;/!=none/;
+	Else
+		Return 0
+	EndIf
+	If maxs;/!=none/;
+	Else
+		Return 0
+	EndIf
+	If names.Length != maxs.Length
+		Return 0
+	EndIf
+	Return names.Length
+EndFunction
+
+; Tell normal-map swappers (Pregnancy Normalmap Swapper etc.) to re-evaluate.
+; Create returns 0 when nothing is registered, which is the common case since
+; those mods are optional - skip the push and send rather than paying two more
+; VM calls per belly update per tracked female on a dead handle.
+Function SendNormalMapUpdate()
+	int eid = ModEvent.Create("PNSUpdateRequest")
+	if eid
+		ModEvent.PushForm(eid, ActorRef)
+		ModEvent.Send(eid)
+	endIf
+EndFunction
+
 Function UpdateBodyMorphs(Float afBellyScale, Float afBreastScale)
 	If ActorRef;/!=none/;
 		; BodyMorph - slider set comes from the BodyMorph profile INI (cfg.LoadBodyMorphProfile)
 		String[] names
 		Float[] maxs
+		Int c
 		Int i
 		; Drop everything under our key first, so profile switches or removed
 		; sliders never leave stale morphs behind. Nothing renders until
@@ -1476,12 +1513,14 @@ Function UpdateBodyMorphs(Float afBellyScale, Float afBreastScale)
 		If cfg.BellyScale;/==true/;
 			names = cfg.BellyMorphNames
 			maxs = cfg.BellyMorphMaxs
-			If names.Length == 0
-				; profile not loaded yet (old save before OnGameLoad) - classic slider
+			c = MorphPairLength(names, maxs)
+			If c == 0
+				; profile not loaded yet (old save before OnGameLoad), or caught
+				; mid-switch with mismatched halves - classic slider
 				NiOverride.SetBodyMorph(ActorRef, "PregnancyBelly", "BeeingFemale", afBellyScale)
 			EndIf
 			i = 0
-			While i < names.Length
+			While i < c
 				NiOverride.SetBodyMorph(ActorRef, names[i], "BeeingFemale", afBellyScale * maxs[i])
 				i += 1
 			EndWhile
@@ -1490,23 +1529,22 @@ Function UpdateBodyMorphs(Float afBellyScale, Float afBreastScale)
 		If cfg.BreastScale;/==true/;
 			names = cfg.BreastMorphNames
 			maxs = cfg.BreastMorphMaxs
-			If names.Length == 0
-				; profile not loaded yet (old save before OnGameLoad) - classic sliders
+			c = MorphPairLength(names, maxs)
+			If c == 0
+				; profile not loaded yet (old save before OnGameLoad), or caught
+				; mid-switch with mismatched halves - classic sliders
 				NiOverride.SetBodyMorph(ActorRef, "BreastsSH", "BeeingFemale", afBreastScale)
 				NiOverride.SetBodyMorph(ActorRef, "BreastsNewSH", "BeeingFemale", afBreastScale)
 			EndIf
 			i = 0
-			While i < names.Length
+			While i < c
 				NiOverride.SetBodyMorph(ActorRef, names[i], "BeeingFemale", afBreastScale * maxs[i])
 				i += 1
 			EndWhile
 		EndIf
 
 		NiOverride.UpdateModelWeight(ActorRef)
-		; notify normal-map swappers (Pregnancy Normalmap Swapper etc.)
-		int eid = ModEvent.Create("PNSUpdateRequest")
-		ModEvent.PushForm(eid, ActorRef)
-		ModEvent.Send(eid)
+		SendNormalMapUpdate()
 	EndIf
 EndFunction
 
@@ -1515,10 +1553,7 @@ Function ClearBodyMorphs()
 		; BodyMorph - wipe every morph applied under our key, whatever profile set it
 		NiOverride.ClearBodyMorphKeys(ActorRef, "BeeingFemale")
 		NiOverride.UpdateModelWeight(ActorRef)
-		; notify normal-map swappers (Pregnancy Normalmap Swapper etc.)
-		int eid = ModEvent.Create("PNSUpdateRequest")
-		ModEvent.PushForm(eid, ActorRef)
-		ModEvent.Send(eid)
+		SendNormalMapUpdate()
 	EndIf
 EndFunction
 

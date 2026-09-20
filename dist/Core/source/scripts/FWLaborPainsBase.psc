@@ -52,11 +52,14 @@ endFunction
 ;   KindOfPains  7  Premonitory pains  added in 3rd trimester >90%  -> 6, 7
 ;   KindOfPains  8  First stage pains  added in labor <50%          -> 7, 8
 ;   KindOfPains 10  Bearing-down pains added in labor >=50%         -> 7, 8
-;   KindOfPains 11  After pains        added in replenish           -> 8
+;   KindOfPains 11  After pains        added in replenish           -> 8, 0
 ;
 ; An untracked actor reads 0 (the StorageUtil default the grimace check below
-; also relies on), which counts as orphaned - that is what silences a woman
-; whose FW.* data was wiped by an MCM reset while the ability stayed behind.
+; also relies on), which counts as orphaned for 7, 8 and 10 - that is what
+; silences a woman whose FW.* data was wiped by an MCM reset while the ability
+; stayed behind. 11 cannot lean on it, because 0 is equally its own legitimate
+; teardown state; a wiped actor loses that one to FWUtility.ClearLaborAbilities
+; instead, which is also what strips the two KindOfPains 3 variants below.
 bool function IsOrphaned()
 	int s = StorageUtil.GetIntValue(ActorRef, "FW.CurrentState", 0)
 	if KindOfPains == 7
@@ -64,7 +67,11 @@ bool function IsOrphaned()
 	elseif KindOfPains == 8 || KindOfPains == 10
 		return s != 7 && s != 8
 	elseif KindOfPains == 11
-		return s != 8
+		; 0 is the phase after replenish (follicular), so it is this variant's
+		; share of the one-phase slack above - not an orphan. It is also the
+		; untracked default, but a wiped actor gets her abilities stripped by
+		; FWUtility.ClearLaborAbilities, so nothing is left here to catch.
+		return s != 8 && s != 0
 	endIf
 	return false ; unknown variant - never self-remove
 endFunction

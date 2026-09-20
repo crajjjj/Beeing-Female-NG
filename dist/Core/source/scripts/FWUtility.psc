@@ -349,6 +349,13 @@ function ClearLaborAbilities(actor Woman) global
 	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053C2, "BeeingFemale.esm") as Spell) ; First stage pains
 	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053BF, "BeeingFemale.esm") as Spell) ; Bearing-down pains
 	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053BE, "BeeingFemale.esm") as Spell) ; After pains
+	; Not labor, but the same self-rescheduling FWLaborPainsBase timer: these two
+	; run with KindOfPains 3, which IsOrphaned deliberately never self-removes
+	; because one number covers two different cycle phases. A data wipe therefore
+	; has to take them off explicitly, or the woman keeps cramping forever with no
+	; FW.* data behind it.
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053C8, "BeeingFemale.esm") as Spell) ; Menstruation cramps
+	ActorRemoveSpell(Woman, Game.GetFormFromFile(0x0053CA, "BeeingFemale.esm") as Spell) ; Mittelschmerz
 endFunction
 
 string function GetStringFromRaces(Race[] frms) global

@@ -41,6 +41,14 @@ Event OnUpdate()
 	float t = Utility.GetCurrentRealTime()
 	float g = GameDaysPassed.GetValue()
 	float w = 90
+	; GetCurrentRealTime restarts at 0 each game launch while lastEatenTime
+	; persists with the effect, so a save made late in a session leaves the stamp
+	; in the future and the hungry check below can never fire. Only the game-day
+	; fallback would recover, up to two in-game days later. Treat it as a new
+	; session instead, the same way the cycle abilities do.
+	if lastEatenTime > t
+		lastEatenTime = 0.0
+	endif
 	
 	if t >= lastEatenTime + w || g > lastEatenGTime + 2.0
 		; Actor is hungry
