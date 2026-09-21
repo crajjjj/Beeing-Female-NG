@@ -1,3 +1,13 @@
+// Beeing Female NG - female reproductive cycle simulation for Skyrim SE/AE/VR.
+// Copyright (C) 2025-2026 crajjjj
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version. It is built on CommonLibSSE-NG, which is GPL-3.0, and is
+// distributed WITHOUT ANY WARRANTY. See the LICENSE file in the repository
+// root, or <https://www.gnu.org/licenses/>.
+
 #include "CommonLibCompat.h"
 
 #include <REL/Module.h>

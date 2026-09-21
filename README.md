@@ -44,3 +44,16 @@ See [Building from Source](https://crajjjj.github.io/Beeing-Female-NG/authors/bu
 ## Changelog
 
 Release notes are published on the [GitHub releases page](https://github.com/crajjjj/Beeing-Female-NG/releases).
+
+## License
+
+Copyright (C) 2025-2026 crajjjj. Beeing Female NG is free software under the
+[GNU General Public License v3.0](LICENSE) or (at your option) any later
+version, and comes with **no warranty**.
+
+The SKSE plugin is built on
+[CommonLibSSE-NG](https://github.com/alandtse/CommonLibSSE-NG), which is
+GPL-3.0, so the mod is distributed under the same terms. The complete
+corresponding source is this repository; the Papyrus sources and a copy of the
+license also ship inside the download (`Data\source\scripts` and
+`Data\BeeingFemale\LICENSE.txt`).
