@@ -539,6 +539,8 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 			endif
 			mother.UnequipItem(arm)
 			mother.RemoveItem(arm, 1, true)
+
+			FWUtility.SendChildSpawnedEvent(newChild, mother, father, babyName)
 		else
 			; Spawn can fail (e.g. no child base for the race) - keep the item,
 			; its FW.Babys entry and its identity entry so the next tick can retry
@@ -1320,6 +1322,9 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 
 		Utility.Wait(1)
 	endIf
+
+	FWUtility.SendAbortEvent(ActorRef, none, "miscarriage")
+
 	changeState(8)
 endFunction
 

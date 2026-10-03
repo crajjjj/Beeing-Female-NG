@@ -2979,6 +2979,8 @@ function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
 	Controller.UpdateParentFaction(Mother)
 	Controller.UpdateParentFaction(Father)
 	Manager.OnBabySpawn(Mother, Father)
+
+	FWUtility.SendBirthEvent(Mother, Father, Baby)
 endFunction
 
 Armor function SpawnChildItem(Actor Mother, Actor Father, Race FatherRace = none)
@@ -3250,6 +3252,9 @@ actor function GrowChildToAdult(Actor child)
 		if bIsPlayerChild
 			Debug.Notification(child.GetDisplayName() + " has grown into an adult")
 		endif
+
+		FWUtility.SendAdultSpawnedEvent(child, child, Mother, Father)
+
 		return child
 	endif
 
@@ -3445,6 +3450,9 @@ actor function GrowChildToAdult(Actor child)
 	if bIsPlayerChild
 		Debug.Notification(adult.GetDisplayName() + " has grown into an adult")
 	endif
+
+	FWUtility.SendAdultSpawnedEvent(adult, child, Mother, Father)
+
 	return adult
 endFunction
 

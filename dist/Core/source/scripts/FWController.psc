@@ -1752,6 +1752,7 @@ function AbortusBaby(actor Mother)
 		else
 			SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 		endIf
+		FWUtility.SendAbortEvent(Mother, none, "abortion")
 	endif
 endFunction
 function AbortusBabyTimed(actor Mother,Float Time)
@@ -1775,6 +1776,7 @@ function AbortusBabyTimed(actor Mother,Float Time)
 		else
 			SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 		endIf
+		FWUtility.SendAbortEvent(Mother, none, "abortion")
 	endif
 endFunction
 
@@ -1800,6 +1802,7 @@ function AbortusState(actor Mother, int Abortus_State)
 		else
 			SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 		endIf
+		FWUtility.SendAbortEvent(Mother, none, "abortion")
 	endif
 endFunction
 
@@ -1824,6 +1827,7 @@ function AbortusStateTimed(actor Mother, float Time, int Abortus_State)
 		else
 			SendModEvent("BeeingFemale","CheckAbortus",Mother.GetFormID())
 		endIf
+		FWUtility.SendAbortEvent(Mother, none, "abortion")
 	endif
 endFunction
 

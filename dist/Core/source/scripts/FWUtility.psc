@@ -1,4 +1,4 @@
-﻿Scriptname FWUtility
+Scriptname FWUtility
 
 ; Time functions
 ; Formats a duration into a human-readable string ("" when akTime is 0, akNegativeText when akTime < 0 and provided).
@@ -901,3 +901,101 @@ Form[] Function FormArray(Int size) Global
 endFunction
 
 ; 03.06.2019 Tkc (Loverslab) optimizations: Changes marked with "Tkc (Loverslab)" comment
+
+; ===============================================================================
+; Beeing Female Event Utility Functions
+; ===============================================================================
+
+function SendBirthEvent(Actor akMother, Actor akFather, Form akBaby) global
+	if !akMother
+		return
+	endif
+	string bName = ""
+	int bSex = 0
+	if akBaby as Actor
+		Actor babyActor = akBaby as Actor
+		bName = StorageUtil.GetStringValue(babyActor, "FW.Child.Name", "")
+		if bName == ""
+			bName = babyActor.GetDisplayName()
+		endif
+		bSex = babyActor.GetLeveledActorBase().GetSex()
+	elseif akBaby as Armor
+		int nameCount = StorageUtil.StringListCount(akMother, "FW.BabyItemName")
+		if nameCount > 0
+			bName = StorageUtil.StringListGet(akMother, "FW.BabyItemName", nameCount - 1)
+			bSex = StorageUtil.IntListGet(akMother, "FW.BabyItemSex", nameCount - 1)
+		endif
+	endif
+	if bName == ""
+		bName = "Newborn"
+	endif
+
+	int birthEvent = ModEvent.Create("BeeingFemaleBirth")
+	if birthEvent
+		ModEvent.PushForm(birthEvent, akMother)
+		ModEvent.PushForm(birthEvent, akFather)
+		ModEvent.PushForm(birthEvent, akBaby)
+		ModEvent.PushString(birthEvent, bName)
+		ModEvent.PushInt(birthEvent, bSex)
+		ModEvent.Send(birthEvent)
+	endif
+
+	if akBaby as Actor
+		SendChildSpawnedEvent(akBaby as Actor, akMother, akFather, bName)
+	endif
+endFunction
+
+function SendChildSpawnedEvent(Actor akChild, Actor akMother, Actor akFather, string asChildName = "") global
+	if !akChild
+		return
+	endif
+	if asChildName == ""
+		asChildName = StorageUtil.GetStringValue(akChild, "FW.Child.Name", "")
+		if asChildName == ""
+			asChildName = akChild.GetDisplayName()
+		endif
+	endif
+	int spawnEvent = ModEvent.Create("BeeingFemaleChildSpawned")
+	if spawnEvent
+		ModEvent.PushForm(spawnEvent, akChild)
+		ModEvent.PushForm(spawnEvent, akMother)
+		ModEvent.PushForm(spawnEvent, akFather)
+		ModEvent.PushString(spawnEvent, asChildName)
+		ModEvent.Send(spawnEvent)
+	endif
+endFunction
+
+function SendAdultSpawnedEvent(Actor akAdult, Actor akChild, Actor akMother, Actor akFather, string asChildName = "") global
+	if !akAdult
+		return
+	endif
+	if asChildName == ""
+		asChildName = StorageUtil.GetStringValue(akAdult, "FW.Child.Name", "")
+		if asChildName == ""
+			asChildName = akAdult.GetDisplayName()
+		endif
+	endif
+	int adultEvent = ModEvent.Create("BeeingFemaleAdultChildSpawned")
+	if adultEvent
+		ModEvent.PushForm(adultEvent, akAdult)
+		ModEvent.PushForm(adultEvent, akChild)
+		ModEvent.PushForm(adultEvent, akMother)
+		ModEvent.PushForm(adultEvent, akFather)
+		ModEvent.PushString(adultEvent, asChildName)
+		ModEvent.Send(adultEvent)
+	endif
+endFunction
+
+function SendAbortEvent(Actor akMother, Actor akFather = none, string asReason = "abortion") global
+	if !akMother
+		return
+	endif
+	int abortEvent = ModEvent.Create("BeeingFemaleAbort")
+	if abortEvent
+		ModEvent.PushForm(abortEvent, akMother)
+		ModEvent.PushForm(abortEvent, akFather)
+		ModEvent.PushString(abortEvent, asReason)
+		ModEvent.Send(abortEvent)
+	endif
+endFunction
+
