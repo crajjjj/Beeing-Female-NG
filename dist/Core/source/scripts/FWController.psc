@@ -1212,6 +1212,13 @@ function GiveBirth(actor Mother)
 	StorageUtil.UnsetFloatValue(Mother,"FW.UnbornHealth")
 	FWUtility.ClearChildFathers(Mother)
 	StorageUtil.UnsetFloatValue(Mother,"FW.AbortusTime")
+	; The pregnancy is over, so the abortus state goes with it. Birth used to clear
+	; only AbortusTime, so a woman who reached labor with FW.Abortus still raised
+	; (an abortion draught during labor is the easy way there) kept taking
+	; AbortusPains damage through replenish, and the induced marker leaked into the
+	; next pregnancy and mislabeled its loss as an abortion.
+	StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+	StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 	StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
 	Utility.Wait(2)
 	; Clear expressions

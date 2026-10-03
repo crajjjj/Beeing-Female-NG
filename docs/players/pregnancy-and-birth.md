@@ -50,6 +50,18 @@ When enabled (MCM toggle), low baby health can trigger miscarriage at any point 
 
 These damage the mother *after* the pregnancy has ended -- they are not a cause of unborn baby health loss. Higher difficulty increases the damage; on the *Painless* difficulty there is none.
 
+### Abortion Draught
+
+A craftable potion that deliberately ends an ongoing pregnancy, as opposed to the miscarriage the cycle can roll on its own.
+
+- **Where to get it** -- cook it at any **cooking pot** (not an alchemy lab), the same place the contraception fluids and fertility tonics are made. With the optional **SPID item distribution** component installed, general merchants also stock it, more sparsely than the tonics.
+- **It is not instant.** Drinking it commits the loss immediately and irreversibly, but the pregnancy takes roughly **one in-game day** to actually end, and it ends the same way a miscarriage does -- with the usual pain and bleeding. Do not expect the belly to vanish on the spot.
+- **It needs the Abortus option enabled** (MCM: Pregnancy -> Abortus). With that toggle off nothing would ever resolve the loss, so the draught declines to start one and says so in the corner instead of leaving you pregnant and puzzled.
+- **Drinking a second one changes nothing** while a loss is already under way -- it will not speed the loss up or restart it.
+- **The aftermath rolls apply**, exactly as for a miscarriage -- see the complications above, and note that an incomplete abortion is the most dangerous outcome.
+- It does nothing at all if she is not pregnant.
+- **The bottle is drunk either way.** Skyrim consumes a potion before its effect runs, so in every "nothing happens" case above the draught is still used up -- the mod has no way to put it back.
+
 ### Switching Babies ("NTR")
 
 An optional, **off-by-default** mechanic: while a female is *already* pregnant, sex with another male can reassign an unborn child's father to that new male. The pregnancy does not restart -- only the recorded father changes, which is what determines the child's inherited race and traits at birth. The roll is repeated on each pregnancy tick throughout all three trimesters, but never once labor has begun.

@@ -939,7 +939,12 @@ function SendBirthEvent(Actor akMother, Actor akFather, Form akBaby, int aiIdent
 		babySex = babyActor.GetLeveledActorBase().GetSex()
 	elseif aiIdentityIndex >= 0 && StorageUtil.StringListCount(akMother, "FW.BabyItemName") > aiIdentityIndex
 		babyName = StorageUtil.StringListGet(akMother, "FW.BabyItemName", aiIdentityIndex)
-		babySex = StorageUtil.IntListGet(akMother, "FW.BabyItemSex", aiIdentityIndex)
+		; Guard the sex list on its OWN count. The FW.BabyItem* lists are always
+		; written together, but an out-of-range IntListGet returns 0, and 0 reads as
+		; "male" rather than "unknown" - the exact mislabel this function avoids.
+		if StorageUtil.IntListCount(akMother, "FW.BabyItemSex") > aiIdentityIndex
+			babySex = StorageUtil.IntListGet(akMother, "FW.BabyItemSex", aiIdentityIndex)
+		endif
 	endif
 
 	int eid = ModEvent.Create("BeeingFemaleBirth")
