@@ -352,6 +352,7 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 	EndWhile
 	StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 	StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+	StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 	StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 	Manager.OnImpregnate(Mother, NumChilds,Fathers)
 	SendConceptionEvent(Mother, Fathers)
@@ -453,6 +454,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 				endWhile
 				StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 				StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+				StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 				StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 				actor[] emptyFathers = FWUtility.ActorArray(numChild)
 				Manager.OnImpregnate(Mother, numChild, emptyFathers)
@@ -494,6 +496,7 @@ bool function ActiveSpermImpregnationTimed(actor Mother, float Time, bool bIgnor
 			endWhile
 			StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 			StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+			StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 			StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
 			SendConceptionEvent(Mother, Fathers)
@@ -600,6 +603,10 @@ bool function ActiveSpermImpregnationNoContraceptionTimed(actor Mother, float Ti
 				Fathers[numChild]=a[j]
 			endWhile
 			StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
+			; Reset abortus state for the new pregnancy, as the other conception paths do.
+			; This one never did, so a stale state (and its induced marker) could carry over.
+			StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+			StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 			StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
 			SendConceptionEvent(Mother, Fathers)
@@ -822,6 +829,7 @@ function UnimpregnateState(actor Mother, int Menstrual_Cycle_State)
 	FWUtility.ClearChildFathers(Mother)
 	StorageUtil.SetIntValue(Mother,"FW.NumChilds",0)
 	StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+	StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 	StorageUtil.UnsetFloatValue(Mother,"FW.UnbornHealth")
 	StorageUtil.UnsetFloatValue(Mother,"FW.AbortusTime")
 	StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
@@ -1179,7 +1187,8 @@ function GiveBirth(actor Mother)
 			StorageUtil.SetIntValue(Mother,"FW.NumBabys", StorageUtil.GetIntValue(Mother,"FW.NumBabys",0) + 1)
 		else
 			System.Message("You've born a dead child...", System.MSG_ALWAYS)
-			; Child is death >.<
+			; Child is death >.< - no SpawnChild, so no BeeingFemaleBirth for this one
+			FWUtility.SendStillbirthEvent(Mother, ChildFather[NumChilds])
 		endIf
 		
 		if(playAnim)
@@ -1747,6 +1756,9 @@ function AbortusBaby(actor Mother)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",2)
 		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", GameDaysPassed.GetValue())
 		StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
+		; Mark the loss as induced. BeeingFemaleAbort is NOT raised here: this only
+		; starts the staged loss, which castAbortus resolves days later.
+		StorageUtil.SetIntValue(Mother,"FW.AbortusInduced",1)
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -1770,6 +1782,9 @@ function AbortusBabyTimed(actor Mother,Float Time)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",2)
 		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", Time)
 		StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
+		; Mark the loss as induced. BeeingFemaleAbort is NOT raised here: this only
+		; starts the staged loss, which castAbortus resolves days later.
+		StorageUtil.SetIntValue(Mother,"FW.AbortusInduced",1)
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -1795,6 +1810,9 @@ function AbortusState(actor Mother, int Abortus_State)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",Abortus_State)
 		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", GameDaysPassed.GetValue())
 		StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
+		; Mark the loss as induced. BeeingFemaleAbort is NOT raised here: this only
+		; starts the staged loss, which castAbortus resolves days later.
+		StorageUtil.SetIntValue(Mother,"FW.AbortusInduced",1)
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -1819,6 +1837,9 @@ function AbortusStateTimed(actor Mother, float Time, int Abortus_State)
 		StorageUtil.SetIntValue(Mother, "FW.Abortus",Abortus_State)
 		StorageUtil.SetFloatValue(Mother, "FW.AbortusTime", Time)
 		StorageUtil.SetFloatValue(Mother,"FW.LastConception", 0.0)
+		; Mark the loss as induced. BeeingFemaleAbort is NOT raised here: this only
+		; starts the staged loss, which castAbortus resolves days later.
+		StorageUtil.SetIntValue(Mother,"FW.AbortusInduced",1)
 		if PlayerRef == Mother
 			System.Player.checkAbortus()
 		else
@@ -2546,6 +2567,7 @@ bool function MyActiveSpermImpregnationTimedForAnyPeriod(actor Mother, bool bIgn
 			endWhile
 			StorageUtil.SetFloatValue(Mother,"FW.UnbornHealth",100.0)
 			StorageUtil.UnsetIntValue(Mother,"FW.Abortus")
+			StorageUtil.UnsetIntValue(Mother,"FW.AbortusInduced")
 			StorageUtil.SetFloatValue(Mother,"FW.LastConception", Utility.GetCurrentGameTime())
 			Manager.OnImpregnate(Mother, Fathers.length,Fathers)
 			; This path was the only conception flow not emitting the public event

@@ -2368,7 +2368,8 @@ function InstantBornChilds(actor a)
 			FW_log.WriteLog("FWSystem.InstantBornChilds: spawning child index " + numChilds + ", father = " + (StorageUtil.FormListGet(a,"FW.ChildFather",numChilds) As Actor) + ", tempFatherRace = " + tempFatherRace + ", childFatherRaceCount = " + StorageUtil.FormListCount(a, "FW.ChildFatherRace"))
 			SpawnChild(a, StorageUtil.FormListGet(a,"FW.ChildFather",numChilds) As Actor, tempFatherRace)
 		else
-			; Totgeburt
+			; Totgeburt - no SpawnChild, so no BeeingFemaleBirth for this one
+			FWUtility.SendStillbirthEvent(a, StorageUtil.FormListGet(a,"FW.ChildFather",numChilds) As Actor)
 		endIf
 	endWhile
 	StorageUtil.SetIntValue(a, "FW.NumBirth", StorageUtil.GetIntValue(a,"FW.NumBirth",0) + 1)
@@ -2376,6 +2377,7 @@ function InstantBornChilds(actor a)
 	FWUtility.ClearChildFathers(a)
 	StorageUtil.SetIntValue(a,"FW.NumChilds",0)
 	StorageUtil.UnsetIntValue(a,"FW.Abortus")
+	StorageUtil.UnsetIntValue(a,"FW.AbortusInduced")
 	StorageUtil.UnsetFloatValue(a,"FW.UnbornHealth")
 	StorageUtil.UnsetFloatValue(a,"FW.AbortusTime")
 endFunction
@@ -2928,6 +2930,10 @@ function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
 		return
 	endif
 	form Baby = none
+	; Snapshot the baby-item identity list BEFORE the spawn: the entry ChildItemSetup
+	; appends is this baby's, and reading the tail afterwards would name an unhatched
+	; sibling whenever the item failed to place.
+	int identityIndex = StorageUtil.StringListCount(Mother, "FW.BabyItemName")
 	bool fatherIsCreature = false
 	if Father;/!=none/; ;Tkc (Loverslab): optimization
 		fatherIsCreature = Father.GetRace().HasKeyword(ActorTypeCreature)
@@ -2979,6 +2985,11 @@ function SpawnChild(Actor Mother, Actor Father, race FatherRace = none)
 	Controller.UpdateParentFaction(Mother)
 	Controller.UpdateParentFaction(Father)
 	Manager.OnBabySpawn(Mother, Father)
+	; Guarded: Baby is none for the baby-gem setting and for a failed spawn, and
+	; neither of those is a birth.
+	if Baby
+		FWUtility.SendBirthEvent(Mother, Father, Baby, identityIndex)
+	endif
 endFunction
 
 Armor function SpawnChildItem(Actor Mother, Actor Father, Race FatherRace = none)
@@ -3250,6 +3261,7 @@ actor function GrowChildToAdult(Actor child)
 		if bIsPlayerChild
 			Debug.Notification(child.GetDisplayName() + " has grown into an adult")
 		endif
+		FWUtility.SendAdultSpawnedEvent(Mother, Father, child, child)
 		return child
 	endif
 
@@ -3445,6 +3457,7 @@ actor function GrowChildToAdult(Actor child)
 	if bIsPlayerChild
 		Debug.Notification(adult.GetDisplayName() + " has grown into an adult")
 	endif
+	FWUtility.SendAdultSpawnedEvent(Mother, Father, adult, child, childName)
 	return adult
 endFunction
 

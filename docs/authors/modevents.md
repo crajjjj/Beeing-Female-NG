@@ -35,7 +35,17 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
 
 - `BeeingFemaleConception` (ModEvent): pushed as `Mother` (Form), `ChildCount` (Int), `Father0` (Form), `Father1` (Form), `Father2` (Form). Fathers may be `None` if unknown.
 - `BeeingFemaleLabor` (ModEvent): pushed as `Mother` (Form), `ChildCount` (Int), `Father0` (Form), `Father1` (Form), `Father2` (Form). Fired on labor start and on direct `GiveBirth` calls.
+- `BeeingFemaleBirth` (ModEvent): pushed as `Mother` (Form), `Father` (Form), `Baby` (Form), `BabyName` (String), `BabySex` (Int: 0 male, 1 female, -1 unknown). Fired **once per child that reaches the world**, so twins raise it twice, each with that child's own father. `Baby` is the child Actor when the baby spawns as an actor, or the baby-item armor **base** form while she carries it - twins sharing a base push an identical form, so pair it with `BabyName`. Not fired when nothing spawned (the baby-gem setting, or a spawn that failed because the race has no child base), and not fired for a stillbirth.
+- `BeeingFemaleStillbirth` (ModEvent): pushed as `Mother` (Form), `Father` (Form). Fired once per child lost to the stillbirth roll at birth. Those children never reach the spawn path, so they raise no `BeeingFemaleBirth` - this is what lets you reconcile per-child births against the `ChildCount` from `BeeingFemaleLabor`.
+- `BeeingFemaleChildSpawned` (ModEvent): pushed as `Mother` (Form), `Father` (Form), `Child` (Form), `ChildName` (String). Fired once when a child is physically in the world as an Actor: either a carried baby item that finished its growth timer, or a baby born directly as an actor - in that case it follows `BeeingFemaleBirth` immediately.
+- `BeeingFemaleAdultChildSpawned` (ModEvent): pushed as `Mother` (Form), `Father` (Form), `Adult` (Form), `Child` (Form), `ChildName` (String). Fired once when a child grows up. On the in-place graduation path `Adult` and `Child` are the same actor; on the replacement path `Child` is the child actor that was swapped out - and that actor is already disabled and queued for deletion by the time you see it, so read what you need from it inside the handler and do **not** store the form: holding it blocks the delete and leaves a ghost actor in the save.
+- `BeeingFemaleAbort` (ModEvent): pushed as `Mother` (Form), `Father` (Form), `AbortusState` (Int), `Reason` (String). Fired **once**, at the point the pregnancy actually ends - not when `FW.Abortus` is first raised, because state 1 is "threatened" and can still recover, and the staged loss takes several game days to resolve. `AbortusState` is the `FW.Abortus` value that resolved it (2 incipient, 3 incomplete, 4 complete, 5 missed abortion, 6 stillbirth), so an early loss is distinguishable from a third-trimester one; it is `0` when the loss was forced outside the staged machine, which is what the Chaurus and Estrus states do when they take over an existing pregnancy. `Reason` flattens that to `abortion` when the loss was induced through one of the `Abortus*` entry points, `stillbirth` for state 6, otherwise `miscarriage`. One event per resolved loss, with one caveat: `castAbortus` clears `FW.Abortus` only after the loss sequence has played (~15 s), so a `CheckAbortus` command landing inside that window can drive a second resolution and a second event. Guard against a repeat if your handler is not idempotent.
 - `BeeingFemale` (ModEvent): command-style event; see the ChangeState subscription example below if you want to listen for `ChangeState` commands.
+
+!!! note "One `Father`, or `Father0-2`?"
+    A pregnancy can have up to three fathers, which is why `BeeingFemaleConception` and `BeeingFemaleLabor` push `Father0`, `Father1` and `Father2`. The per-child events push a single `Father` instead: by the time a child is spawned BF has already resolved which father it belongs to (`FW.ChildFather` is indexed per child), so one father per event is the more precise answer, not a lossy one. `BeeingFemaleAbort` pushes `FW.ChildFather[0]`, read before the list is cleared.
+
+    Every emitted event puts the mother first, then the father(s), then the subject of the event, then its details. Handlers are positional, so keep that order.
 - `dhlp-Suspend` / `dhlp-Resume` (SendModEvent): broadcast around the **birth scene** so DHLP-aware mods back off while the mother is stripped / locked / animated. `dhlp-Suspend` fires once when a birth commits; `dhlp-Resume` fires once when the last in-progress birth finishes (the pair is reference-counted, so overlapping NPC births stay balanced and an interrupted birth still resumes). BF sends these from its own quest, so its own listener filters them out by `sender` — your mod sees them like any other suspend/resume. If your mod manages facial expressions, posing, or camera, treat a BF `dhlp-Suspend` as "do not touch this actor until `dhlp-Resume`".
 
 ## Examples
@@ -70,6 +80,11 @@ Subscribing to the emitted events:
 Event OnInit()
 	RegisterForModEvent("BeeingFemaleConception", "OnBeeingFemaleConception")
 	RegisterForModEvent("BeeingFemaleLabor", "OnBeeingFemaleLabor")
+	RegisterForModEvent("BeeingFemaleBirth", "OnBeeingFemaleBirth")
+	RegisterForModEvent("BeeingFemaleStillbirth", "OnBeeingFemaleStillbirth")
+	RegisterForModEvent("BeeingFemaleChildSpawned", "OnBeeingFemaleChildSpawned")
+	RegisterForModEvent("BeeingFemaleAdultChildSpawned", "OnBeeingFemaleAdultChildSpawned")
+	RegisterForModEvent("BeeingFemaleAbort", "OnBeeingFemaleAbort")
 EndEvent
 
 Event OnBeeingFemaleConception(Form akMother, int aiChildCount, Form akFather0, Form akFather1, Form akFather2)
@@ -84,6 +99,26 @@ Event OnBeeingFemaleLabor(Form akMother, int aiChildCount, Form akFather0, Form 
 	Actor Father0 = akFather0 as Actor
 	Actor Father1 = akFather1 as Actor
 	Actor Father2 = akFather2 as Actor
+EndEvent
+
+Event OnBeeingFemaleBirth(Form akMother, Form akFather, Form akBaby, string asBabyName, int aiBabySex)
+	; Once per child. akBaby is an Actor, or the baby-item armor base form.
+EndEvent
+
+Event OnBeeingFemaleStillbirth(Form akMother, Form akFather)
+	; Once per child lost to the stillbirth roll - no BeeingFemaleBirth for these.
+EndEvent
+
+Event OnBeeingFemaleChildSpawned(Form akMother, Form akFather, Form akChild, string asChildName)
+	; The child is now a real actor in the world.
+EndEvent
+
+Event OnBeeingFemaleAdultChildSpawned(Form akMother, Form akFather, Form akAdult, Form akChild, string asChildName)
+	; akAdult == akChild when the child graduated in place.
+EndEvent
+
+Event OnBeeingFemaleAbort(Form akMother, Form akFather, int aiAbortusState, string asReason)
+	; asReason is "abortion", "miscarriage" or "stillbirth".
 EndEvent
 ```
 

@@ -539,6 +539,7 @@ Function ProcessBabyItemTransitionToChild(Actor mother,Actor father, float sizeD
 			endif
 			mother.UnequipItem(arm)
 			mother.RemoveItem(arm, 1, true)
+			FWUtility.SendChildSpawnedEvent(mother, father, newChild, babyName)
 		else
 			; Spawn can fail (e.g. no child base for the race) - keep the item,
 			; its FW.Babys entry and its identity entry so the next tick can retry
@@ -1084,6 +1085,7 @@ bool function checkAbortus() ; SensebilityPercent - 20 = up to 20% Chances to lo
 			; Baby got some life again
 			elseif hp>=10 && abortus<2
 				StorageUtil.UnsetIntValue(ActorRef,"FW.Abortus")
+				StorageUtil.UnsetIntValue(ActorRef,"FW.AbortusInduced")
 				StorageUtil.UnsetFloatValue(ActorRef,"FW.AbortusTime")
 			endIf		
 		; Abortus_incompletus
@@ -1225,6 +1227,16 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 		return
 	endif
 
+	; Snapshot what BeeingFemaleAbort needs before the cleanup below wipes it:
+	; ClearChildFathers empties FW.ChildFather, so a listener could not look the
+	; father up afterwards either.
+	actor abortusFather = none
+	if StorageUtil.FormListCount(ActorRef, "FW.ChildFather") > 0
+		abortusFather = StorageUtil.FormListGet(ActorRef, "FW.ChildFather", 0) as actor
+	endif
+	int abortusState = StorageUtil.GetIntValue(ActorRef, "FW.Abortus", 0)
+	bool abortusInduced = StorageUtil.GetIntValue(ActorRef, "FW.AbortusInduced", 0) == 1
+
 	float Abortus_DamageScale = System.getDamageScale(5, ActorRef)
 
 	; Find the list of fathers
@@ -1306,6 +1318,7 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 		FWUtility.ClearChildFathers(ActorRef)
 		StorageUtil.UnsetFloatValue(ActorRef,"FW.AbortusTime")
 		StorageUtil.UnsetIntValue(ActorRef,"FW.Abortus")
+		StorageUtil.UnsetIntValue(ActorRef,"FW.AbortusInduced")
 		
 		Utility.Wait(1)
 		if IsPlayer
@@ -1317,9 +1330,11 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 		FWUtility.ClearChildFathers(ActorRef)
 		StorageUtil.UnsetFloatValue(ActorRef,"FW.AbortusTime")
 		StorageUtil.UnsetIntValue(ActorRef,"FW.Abortus")
+		StorageUtil.UnsetIntValue(ActorRef,"FW.AbortusInduced")
 
 		Utility.Wait(1)
 	endIf
+	FWUtility.SendAbortEvent(ActorRef, abortusFather, abortusState, abortusInduced)
 	changeState(8)
 endFunction
 

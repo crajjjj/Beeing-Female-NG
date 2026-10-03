@@ -42,6 +42,7 @@ The most important keys (prefix `FW.`) are:
 - `FW.LastConception` (Float, per-actor: mother): game time of last conception.
 - `FW.Abortus` (Int, per-actor: mother): abortus state flag (0 none, 1 imminent, 2 incipient, 3 incomplete, 4 complete, 5 missed abortion, 6 miscarriage/stillbirth).
 - `FW.AbortusTime` (Float, per-actor: mother): game time when abortus started.
+- `FW.AbortusInduced` (Int, per-actor: mother): 1 while the current abortus was started deliberately through one of the `FWController.Abortus*` entry points, rather than by failing unborn health. Read once when the loss resolves, to label `BeeingFemaleAbort` as `abortion` instead of `miscarriage`, and cleared everywhere `FW.Abortus` is cleared.
 - `FW.Contraception` (Float, per-actor: mother): current contraception strength (0-100).
 - `FW.ContraceptionTime` (Float, per-actor: mother): game time when contraception last changed.
 - `FW.SpermName` (FormList, per-actor: mother): list of sperm donors (actors).

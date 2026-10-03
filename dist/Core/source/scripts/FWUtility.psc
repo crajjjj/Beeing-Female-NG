@@ -901,3 +901,166 @@ Form[] Function FormArray(Int size) Global
 endFunction
 
 ; 03.06.2019 Tkc (Loverslab) optimizations: Changes marked with "Tkc (Loverslab)" comment
+
+; ===============================================================================
+; Lifecycle ModEvents
+; ===============================================================================
+; Payload order follows BeeingFemaleConception / BeeingFemaleLabor: the mother
+; first, then the father(s), then the subject of the event, then its details.
+; Every one of these fires exactly once per thing that happened - see the
+; individual notes for which moment that is.
+
+; Fired once per child that actually reaches the world, from FWSystem.SpawnChild.
+; Not fired when nothing spawned (baby-gem setting, or a failed spawn), and not
+; fired for a stillbirth - see SendStillbirthEvent for that.
+; akBaby is the child Actor, or for a carried baby the armor BASE form; twins
+; sharing a base push an identical form, so pair it with asBabyName.
+; babySex is 0 male, 1 female, -1 unknown. Unknown is reachable: the index below
+; can go stale if the mother's identity lists are pruned or an item hatches while
+; SpawnChild is mid-flight, and an actor base can report no sex at all.
+; aiIdentityIndex is the FW.BabyItem* slot recorded for THIS item, snapshotted by
+; the caller before the spawn. Reading the tail of the list instead would pick up
+; an unhatched sibling whenever ChildItemSetup failed to place the object.
+function SendBirthEvent(Actor akMother, Actor akFather, Form akBaby, int aiIdentityIndex = -1) global
+	if !akMother || !akBaby
+		return
+	endif
+	string babyName = ""
+	; -1 is "unknown", which is the honest answer when the identity lookup below
+	; cannot resolve: defaulting to 0 would announce every such baby as a boy.
+	int babySex = -1
+	Actor babyActor = akBaby as Actor
+	if babyActor
+		babyName = StorageUtil.GetStringValue(babyActor, "FW.Child.Name", "")
+		if babyName == ""
+			babyName = babyActor.GetDisplayName()
+		endif
+		; Same authority SpawnChildActor uses - it re-reads sex off the resolved base
+		babySex = babyActor.GetLeveledActorBase().GetSex()
+	elseif aiIdentityIndex >= 0 && StorageUtil.StringListCount(akMother, "FW.BabyItemName") > aiIdentityIndex
+		babyName = StorageUtil.StringListGet(akMother, "FW.BabyItemName", aiIdentityIndex)
+		babySex = StorageUtil.IntListGet(akMother, "FW.BabyItemSex", aiIdentityIndex)
+	endif
+
+	int eid = ModEvent.Create("BeeingFemaleBirth")
+	if eid
+		ModEvent.PushForm(eid, akMother)
+		ModEvent.PushForm(eid, akFather)
+		ModEvent.PushForm(eid, akBaby)
+		ModEvent.PushString(eid, babyName)
+		ModEvent.PushInt(eid, babySex)
+		ModEvent.Send(eid)
+	endif
+
+	; A baby born straight as an actor is already in the world, so the hatch event
+	; that would otherwise follow the carried-item path has nothing left to wait for.
+	if babyActor
+		SendChildSpawnedEvent(akMother, akFather, babyActor, babyName)
+	endif
+endFunction
+
+; Fired once when a child is physically in the world as an Actor: a carried baby
+; that finished its growth timer (FWAbilityBeeingFemale.ProcessBabyItemTransitionToChild),
+; or a baby born directly as an actor (cascaded from SendBirthEvent).
+function SendChildSpawnedEvent(Actor akMother, Actor akFather, Actor akChild, string asChildName = "") global
+	if !akChild
+		return
+	endif
+	if asChildName == ""
+		asChildName = StorageUtil.GetStringValue(akChild, "FW.Child.Name", "")
+		if asChildName == ""
+			asChildName = akChild.GetDisplayName()
+		endif
+	endif
+	int eid = ModEvent.Create("BeeingFemaleChildSpawned")
+	if eid
+		ModEvent.PushForm(eid, akMother)
+		ModEvent.PushForm(eid, akFather)
+		ModEvent.PushForm(eid, akChild)
+		ModEvent.PushString(eid, asChildName)
+		ModEvent.Send(eid)
+	endif
+endFunction
+
+; Fired once when a child reaches adulthood, from FWSystem.GrowChildToAdult - both
+; the in-place graduation path (akAdult == akChild) and the replacement path, where
+; akChild is the child actor that was swapped out.
+; On the replacement path akChild is ALREADY disabled and queued for deletion by the
+; time this goes out. It is passed so a listener can retire its own record of that
+; child, and must not be stored: holding the reference blocks the delete and leaves
+; a ghost actor in the save.
+function SendAdultSpawnedEvent(Actor akMother, Actor akFather, Actor akAdult, Actor akChild, string asChildName = "") global
+	if !akAdult
+		return
+	endif
+	if asChildName == ""
+		asChildName = StorageUtil.GetStringValue(akAdult, "FW.Child.Name", "")
+		if asChildName == ""
+			asChildName = akAdult.GetDisplayName()
+		endif
+	endif
+	int eid = ModEvent.Create("BeeingFemaleAdultChildSpawned")
+	if eid
+		ModEvent.PushForm(eid, akMother)
+		ModEvent.PushForm(eid, akFather)
+		ModEvent.PushForm(eid, akAdult)
+		ModEvent.PushForm(eid, akChild)
+		ModEvent.PushString(eid, asChildName)
+		ModEvent.Send(eid)
+	endif
+endFunction
+
+; Fired once when a pregnancy ends in loss, from FWAbilityBeeingFemale.castAbortus -
+; the point the pregnancy actually ends, NOT where FW.Abortus is first raised:
+; abortus 1 is "threatened" and can still recover, and the staged loss can take
+; several game days to resolve.
+; aiAbortusState is the FW.Abortus value that resolved it (2 incipiens, 3 incompletus,
+; 4 completus, 5 missed abortion, 6 stillbirth), so an early loss is distinguishable
+; from a third-trimester one. It is 0 when the loss was forced outside the staged
+; machine and FW.Abortus was never raised - the Chaurus/Estrus states call castAbortus
+; directly when they take over an existing pregnancy.
+; asReason flattens that to "abortion" (induced through FWController.Abortus*),
+; "stillbirth" (state 6) or "miscarriage".
+; Once per resolved loss. castAbortus has a pre-existing re-entrancy: it clears
+; FW.Abortus only after ~15 s of waits, so an external CheckAbortus command landing
+; inside that window can drive a second resolution, and a second event with it.
+; abInduced comes from FW.AbortusInduced, set by the FWController.Abortus* entry
+; points and cleared alongside FW.Abortus at every site that clears it - the marker
+; must never outlive the abortus state it qualifies, or a later natural loss would
+; read as an abortion.
+; The caller must read the father BEFORE ClearChildFathers wipes the list.
+function SendAbortEvent(Actor akMother, Actor akFather, int aiAbortusState, bool abInduced = false) global
+	if !akMother
+		return
+	endif
+	string reason = "miscarriage"
+	if abInduced
+		reason = "abortion"
+	elseif aiAbortusState == 6
+		reason = "stillbirth"
+	endif
+	int eid = ModEvent.Create("BeeingFemaleAbort")
+	if eid
+		ModEvent.PushForm(eid, akMother)
+		ModEvent.PushForm(eid, akFather)
+		ModEvent.PushInt(eid, aiAbortusState)
+		ModEvent.PushString(eid, reason)
+		ModEvent.Send(eid)
+	endif
+endFunction
+
+; Fired once per child lost to the stillbirth roll at birth. That child never
+; reaches SpawnChild, so it raises no BeeingFemaleBirth; without this a listener
+; could not reconcile per-child births against BeeingFemaleLabor aiChildCount.
+function SendStillbirthEvent(Actor akMother, Actor akFather) global
+	if !akMother
+		return
+	endif
+	int eid = ModEvent.Create("BeeingFemaleStillbirth")
+	if eid
+		ModEvent.PushForm(eid, akMother)
+		ModEvent.PushForm(eid, akFather)
+		ModEvent.Send(eid)
+	endif
+endFunction
+
