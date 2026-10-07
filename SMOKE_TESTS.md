@@ -97,6 +97,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 7.13 | P2 | MCM baby item rows | Children tab shows the recorded baby name + per-baby countdown from birth-time DOB; legacy items show armor name + shared dob ("Paused" until first equip) | FWSystemConfig |
 | 7.14 | P1 | Child name never re-rolled | Blank `_Name` at OnLoad/OnInit restores `FW.Child.Name` before falling back to a random roll, and the fallback re-checks `_Name` after its external calls — a named child (orphaned parents, birth-time race with `SpawnChildActor`) must never come back with a different name | FWChildActor `OnPlayerLoadGame` |
 | 7.15 | P2 | `bf:childname` console rename | Renames the selected FWChildActor (auto-appends family last name), custom child, or grown adult (updates `FW.Child.Name` + display name); non-child target rejected with a message; multi-word names joined | FWSystem console commands |
+| 7.16 | P1 | Simple Children pack (BFASC) | With SimpleChildren.esp + the pack active and the RS patch absent: a child of a Nord/Imperial/Breton/Redguard parent spawns from a `_BFSC_ChildActor*` base with Simple Children hair and eyes, a normal (not dark, not grey) live-computed face, and skin matching the body; `player.placeatme <FE xxx 801>` is the quick spot check. Other races fall back to the stock child. With SimpleChildren.esp missing the INI is skipped (`required`) and nothing errors | FWAddOnManager |
 
 ## 8. NPC Scanning & Spell Application
 

@@ -30,7 +30,7 @@ current_scale = starting_scale + ((final_scale - starting_scale) / growth_durati
 
 Growth in Beeing Female's **core** is **scale-based** -- on its own the mod only changes the child's size over time, not its underlying actor model. Visual changes to the model itself come from the **add-ons and features described below** (staged child model packs, and the grow-into-adults option). What the child looks like as it grows depends on which actor base was used at birth:
 
-- **With a child model pack** (BFACCA_SE_Opt, BFASE_RSChildren_SE_Opt, or similar): the child is spawned using a proper child-race actor base from the pack. These packs are designed so that at full scale the child looks appropriately grown. Some packs provide staged models that swap appearance at growth milestones.
+- **With a child model pack** (BFACCA_SE_Opt, BFASE_RSChildren_SE_Opt, BF Simple Children, or similar): the child is spawned using a proper child-race actor base from the pack. These packs are designed so that at full scale the child looks appropriately grown. Some packs provide staged models that swap appearance at growth milestones.
 
 - **Without a child model pack**: the mod uses the default child actors that ship in BeeingFemale.esm -- Nord child bases wired as the global fallback (`FallBack_*BabyActor` on the `BF_BabyItemList` quest). The newborn looks like a Nord-style child and keeps child proportions as it scales (scale 1.0 is a full-size *child*, not an adult); for non-Nord races the recorded race is still correct, so a later grow-up still produces the right adult. On their own these **never** visually transform into adults -- for that, see "Growing Into Adults" below. (Only if those fallback actors are cleared does the mod instead scale down the parent's own adult base, the old "small adult" look.)
 
@@ -50,7 +50,7 @@ Where the adult's appearance comes from:
 
 ### Grow-up outcomes by stage, race, and sex
 
-An offspring can pass through three stages: **Baby item** (only in the Item/Actor spawn mode, humanoid -- it hatches into the child actor), **Child actor** (the spawned, growing child), and **Adult actor** (only when "Children grow into adults" is enabled). "Without patches" is base Beeing Female only -- the BF Adult Pack and the Nord fallback child are part of the base; no RS Children or BFACCA. "With patches" adds the child-model pack for that race (**RS Children** for humanoids, **BFACCA** for creatures). The listed parent's race is assumed to have won the race roll.
+An offspring can pass through three stages: **Baby item** (only in the Item/Actor spawn mode, humanoid -- it hatches into the child actor), **Child actor** (the spawned, growing child), and **Adult actor** (only when "Children grow into adults" is enabled). "Without patches" is base Beeing Female only -- the BF Adult Pack and the Nord fallback child are part of the base; no RS Children or BFACCA. "With patches" adds the child-model pack for that race (**RS Children** or **Simple Children** for humanoids, **BFACCA** for creatures). The listed parent's race is assumed to have won the race roll.
 
 | Offspring race group | Sex | Patches | Baby item | Child actor | Adult actor |
 |----------------------|-----|---------|-----------|-------------|-------------|
@@ -64,7 +64,8 @@ An offspring can pass through three stages: **Baby item** (only in the Item/Acto
 | Creature | ♀ | With (BFACCA) | — spawns directly as a child actor | Real creature child | Full-size creature; never transitions |
 
 - The **Baby item** column applies only when Baby Spawn is "Item/Actor"; in "Actor" mode the child actor appears directly, and creatures always spawn as actors (never an item).
-- Without RS Children, **non-Nord humanoids borrow the Nord child** as a stand-in model -- the recorded race is still correct, so the grown adult matches.
+- Without a humanoid child pack, **non-Nord humanoids borrow the Nord child** as a stand-in model -- the recorded race is still correct, so the grown adult matches.
+- The **Simple Children** pack covers the four human races only (Nord, Imperial, Breton, Redguard). With it, elves, orcs, and beast races still borrow the Nord stand-in, where RS Children gives each of them a child of its own.
 - With the **`MixWithCopyActorBase`** add-on setting, a configurable share of children instead spawn as a scaled-down copy of the parent's own base (a "small adult", or a small creature) rather than the child model shown above.
 
 > **Where the grown adult comes from:** the BF Adult Pack (or an `AdultActor_*` entry) when the race is covered; otherwise a copy of the **same-sex parent's** base. That copy is never made from the player, a unique NPC (named followers, spouses -- it would break quest aliases and follower frameworks), or a creature. When the only candidate is one of those, the child simply stays a grown child.

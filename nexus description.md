@@ -78,7 +78,7 @@ Beeing Female is built around a [b]🧩 modular add-on framework[/b] and a broad
 [list]
 [*]Extensive 📋 MCM configuration[/*]
 [*]Optional integrations (SexLab, OStim﻿, Bathing in Skyrim)[/*]
-[*]RS Children compatibility via add-on[/*]
+[*]RS Children or Simple Children compatibility via add-on[/*]
 [*]Creature race pregnancy support (via add-on)[/*]
 [*]Add-on INIs, mod events & exposed state data[/*]
 [/list]

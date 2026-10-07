@@ -107,10 +107,10 @@
         </installStep>
         <installStep name="Step 2">
 			<optionalFileGroups order="Explicit">
-				<group name="Addons" type="SelectAny">
+				<group name="Child Actor Pack" type="SelectAtMostOne">
 					<plugins order="Explicit">
 						<plugin name="BeeingFemale_RS_ChildActors">
-							<description>Spawns BF-born children using RS Children Overhaul's actor templates instead of vanilla child meshes / textures, so BF babies match the look of every other child in your game. Requires RSkyrimChildren.esm (auto-detected).</description>
+							<description>Spawns BF-born children using RS Children Overhaul's actor templates instead of vanilla child meshes / textures, so BF babies match the look of every other child in your game. Requires RSkyrimChildren.esm (auto-detected). Use this or the Simple Children pack, not both.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files>
                                 <folder source="Addon\BFARSC" destination="" priority="0" /> 
@@ -122,6 +122,26 @@
 										<pattern>
 											<dependencies operator="And">
 												<fileDependency file="RSkyrimChildren.esm" state="Active"/> 
+											</dependencies>
+											<type name="Optional"/>
+										</pattern>
+									</patterns>
+								</dependencyType>
+							</typeDescriptor>
+						</plugin>
+						<plugin name="BeeingFemale_SimpleChildren_ChildActors">
+							<description>Spawns the BF-born children of Nord, Imperial, Breton and Redguard parents with Simple Children hair, eyes, head textures and skin tones (three looks per sex and race), so BF babies match the other children in a Simple Children game. Other races keep the default child. Faces are computed live by the engine, so no FaceGen files are needed. Requires Simple Children (SimpleChildren.esp, auto-detected). Use this or the RS Children pack, not both.</description>
+							<image path="Fomod_resources\fw.jpg" />
+							<files>
+								<folder source="Addon\BFASC" destination="" priority="0" />
+							</files>
+							<typeDescriptor>
+								<dependencyType>
+									<defaultType name="Optional"/>
+									<patterns>
+										<pattern>
+											<dependencies operator="And">
+												<fileDependency file="SimpleChildren.esp" state="Active"/>
 											</dependencies>
 											<type name="Optional"/>
 										</pattern>

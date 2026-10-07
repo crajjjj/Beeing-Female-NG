@@ -55,6 +55,7 @@ dist/Core/
   skse/plugins/                 Compiled .dll output
 dist/Patches/                   Optional compatibility patches (FOMOD components)
 tools/xedit/                    xEdit generator scripts (adult pack, fertility potion, …)
+tools/mutagen/                  Mutagen (.NET 9) generator projects (Simple Children child actor pack)
 lib/commonlibsse-ng/            SKSE framework (submodule)
 ```
 
