@@ -8,10 +8,20 @@
 // The plugin holds child actor bases for human parents (Nord, Imperial, Breton,
 // Redguard): copies of the stock BF child actors, as BeeingFemaleSE_Opt.esp ships
 // them, dressed in Simple Children hair, eyes, head textures and skin tones.
-// They keep BF's own child race (_FWNordRaceChild), so no race, skin or clothing
-// record is touched. That is also why this pack and the RS Children pack exclude
-// each other: the RS patch restyles that same race. The TK Children pack answers
-// for the same parent races, so it is not run alongside either.
+// They keep BF's own child race (_FWNordRaceChild); no skin or clothing record is
+// touched. That is also why this pack and the RS Children pack exclude each
+// other: the RS patch restyles that same race. The TK Children pack answers for
+// the same parent races, so it is not run alongside either.
+//
+// The one BF record the plugin overrides is that race, to give it a Morph Race.
+// Simple Children requires TK Children's tri files, and those shape the child
+// head, eyes and mouth through race morphs the engine picks by the race's
+// EditorID or Morph Race. BF's child race matches neither, so without the
+// override its children keep the vanilla head shape while every other child has
+// TK's. All four parent races borrow NordRaceChild's morph. The override copies
+// the winning record from BeeingFemaleSE_Opt.esp, which is listed as a master so
+// the plugin sorts after it. It adds no FormID: the child bases keep the IDs that
+// 3.6.1 saves store, so do not reorder or edit the looks table below.
 //
 // The bases carry the "Is CharGen Face Preset" flag, like the BF Adult Pack, so
 // the engine computes their faces live: no FaceGen export, no dark-face bug.
@@ -54,6 +64,7 @@ using var kids = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(scDir, "FacegenF
 using var bfOpt = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(coreDir, "BeeingFemaleSE_Opt.esp"), SkyrimRelease.SkyrimSE);
 
 var bfChildRace = FormKey.Factory("05A082:BeeingFemale.esm");
+var nordRaceChild = FormKey.Factory("02C65B:Skyrim.esm");
 
 // HumanSkinBaseWhite01..10, the skin tone presets of the BF child race
 // (tint index 1 male / 2 female, preset numbers 1..10 male / 11..20 female).
@@ -123,6 +134,10 @@ outMod.ModHeader.Description = "Beeing Female NG - Simple Children child actors.
 
 var validRaces = outMod.FormLists.AddNew(Prefix + "ChildHeadPartRaces");
 validRaces.Items.Add(bfChildRace.ToLink<ISkyrimMajorRecordGetter>());
+
+var stockRace = bfOpt.Races.FirstOrDefault(r => r.FormKey == bfChildRace)
+    ?? throw new InvalidOperationException("BeeingFemaleSE_Opt.esp no longer overrides _FWNordRaceChild; copy the race from the plugin that now wins");
+outMod.Races.GetOrAddAsOverride(stockRace).MorphRace.SetTo(nordRaceChild);
 
 var scHeadParts = sc.HeadParts.Where(h => h.FormKey.ModKey == sc.ModKey).ToDictionary(h => h.EditorID!, StringComparer.OrdinalIgnoreCase);
 var scTextureSets = sc.TextureSets.ToDictionary(t => t.FormKey);
@@ -227,6 +242,7 @@ outMod.BeginWrite
     .ToPath(pluginPath)
     .WithLoadOrder(new[] { "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm", "BeeingFemale.esm", "BeeingFemaleBasicAddOn.esp", "BeeingFemaleSE_Opt.esp" }.Select(name => ModKey.FromFileName(name)).ToArray())
     .WithNoDataFolder()
+    .WithExtraIncludedMasters(bfOpt.ModKey)
     .Write();
 
 var sb = new StringBuilder();
