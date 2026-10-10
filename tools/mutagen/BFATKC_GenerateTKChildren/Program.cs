@@ -8,18 +8,30 @@
 // The plugin holds child actor bases for human parents (Nord, Imperial, Breton,
 // Redguard): copies of the stock BF child actors, as BeeingFemaleSE_Opt.esp ships
 // them, dressed in TK Children hair, eyes, head textures and face shapes.
-// They keep BF's own child race (_FWNordRaceChild), so no race, skin or clothing
-// record is touched. The RS Children patch restyles that same race and the Simple
-// Children pack answers for the same parent races, so only one child pack is run.
+// They keep BF's own child race (_FWNordRaceChild); no skin or clothing record is
+// touched. The RS Children patch restyles that same race and the Simple Children
+// pack answers for the same parent races, so only one child pack is run.
+//
+// The one BF record the plugin overrides is that race, to give it a Morph Race.
+// TK shapes the child head, eyes and mouth through the race morphs of its
+// *Race.tri files, which the engine picks by the race's EditorID or Morph Race.
+// BF's child race matches neither, so without the override its children keep the
+// vanilla head shape under TK's textures and sliders. One race serves all four
+// parent races, so every child borrows NordRaceChild's morph; TK's own Imperial,
+// Breton and Redguard children differ from it slightly. The override copies the
+// winning record from BeeingFemaleSE_Opt.esp, which is listed as a master so the
+// plugin sorts after it.
 //
 // The bases carry the "Is CharGen Face Preset" flag, like the BF Adult Pack, so
 // the engine computes their faces live: no FaceGen export, no dark-face bug.
 // TK Children's head, eye and hair parts are valid for the vanilla child races
-// only, so they are copied into the plugin with a valid-race list that names the
-// BF child race. That keeps TKChildren.esm out of the master list; its meshes,
-// textures and face morph (tri) files are still required at runtime, and the INI
-// gates on it with "required=". Nothing of TK Children itself is shipped: its
-// permissions forbid redistributing TKChildren.esm and the tri files.
+// only, so their records are copied into the plugin with a valid-race list that
+// names the BF child race. That keeps TKChildren.esm out of the master list; its
+// meshes, textures and face morph (tri) files are still required at runtime, and
+// the INI gates on it with "required=". No TK Children file is shipped (its
+// permissions forbid redistributing TKChildren.esm and the tri files); what the
+// plugin carries is copies of its head part and texture set records and the face
+// slider values of its children.
 //
 // HOW TO RUN (from the repo root)
 //   dotnet run --project tools/mutagen/BFATKC_GenerateTKChildren -- "<TK Children folder>"
@@ -56,6 +68,7 @@ using var kids = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(tkDir, "TKChildr
 using var bfOpt = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(coreDir, "BeeingFemaleSE_Opt.esp"), SkyrimRelease.SkyrimSE);
 
 var bfChildRace = FormKey.Factory("05A082:BeeingFemale.esm");
+var nordRaceChild = FormKey.Factory("02C65B:Skyrim.esm");
 
 // 1..10 are HumanSkinBaseWhite01..10, the skin tone presets of the BF child race
 // (tint index 1 male / 2 female, preset numbers 1..10 male / 11..20 female).
@@ -133,6 +146,10 @@ outMod.ModHeader.Description = "Beeing Female NG - TK Children child actors. Gen
 var validRaces = outMod.FormLists.AddNew(Prefix + "ChildHeadPartRaces");
 validRaces.Items.Add(bfChildRace.ToLink<ISkyrimMajorRecordGetter>());
 
+var stockRace = bfOpt.Races.FirstOrDefault(r => r.FormKey == bfChildRace)
+    ?? throw new InvalidOperationException("BeeingFemaleSE_Opt.esp no longer overrides _FWNordRaceChild; copy the race from the plugin that now wins");
+outMod.Races.GetOrAddAsOverride(stockRace).MorphRace.SetTo(nordRaceChild);
+
 // TKChildren.esm also overrides a few vanilla child head parts; only its own are copied.
 var tkHeadParts = tk.HeadParts.Where(h => h.FormKey.ModKey == tk.ModKey).ToDictionary(h => h.EditorID!, StringComparer.OrdinalIgnoreCase);
 var tkTextureSets = tk.TextureSets.ToDictionary(t => t.FormKey);
@@ -172,8 +189,25 @@ HeadPart CopyHeadPart(string edid)
     return part;
 }
 
+// A look names its three parts as bare strings; this catches a swapped column or
+// a boy's hair on a girl, which would otherwise write a head with no hair.
+HeadPart LookPart(string edid, HeadPart.TypeEnum type, bool female)
+{
+    var part = CopyHeadPart(edid);
+    if (part.Type != type)
+        throw new InvalidOperationException($"'{edid}' is a {part.Type} part, expected {type}");
+    if (part.Flags.HasFlag(female ? HeadPart.Flag.Male : HeadPart.Flag.Female))
+        throw new InvalidOperationException($"'{edid}' is for the other sex");
+    return part;
+}
+
 var kidsByName = kids.Npcs.ToDictionary(n => n.EditorID!, StringComparer.OrdinalIgnoreCase);
 var ini = new Dictionary<string, List<string>>();
+var bases = new List<(Npc Npc, Look Look, bool Female)>();
+
+// Every child base is created before any head part is copied, so the base FormIDs
+// (801 onwards) follow from the race list and LooksPerSex alone. Saves store them:
+// changing a look's parts is safe, reordering the races or the look count is not.
 
 foreach (var (race, _, _) in raceIds)
 {
@@ -199,31 +233,7 @@ foreach (var (race, _, _) in raceIds)
                 npc.ShortName = female ? "Girl" : "Boy";
                 npc.IsCompressed = false;
                 npc.Configuration.Flags |= NpcConfiguration.Flag.IsCharGenFacePreset;
-
-                npc.HeadParts.Clear();
-                npc.HeadParts.Add(CopyHeadPart(look.Head));
-                npc.HeadParts.Add(CopyHeadPart(look.Eyes));
-                npc.HeadParts.Add(CopyHeadPart(look.Hair));
-                npc.HairColor.SetTo(new FormKey(ModKey.FromFileName("Skyrim.esm"), hairColors[look.HairColor]));
-
-                var tone = skinTones[look.Skin - 1];
-                var skin = Color.FromArgb(0, tone.R, tone.G, tone.B);
-                npc.TextureLighting = skin;
-                npc.TintLayers.Clear();
-                npc.TintLayers.Add(new TintLayer
-                {
-                    Index = (ushort)(female ? 2 : 1),
-                    Color = skin,
-                    InterpolationValue = 1f,
-                    Preset = (short)(look.Skin > RacePresets ? -1 : female ? look.Skin + 10 : look.Skin),
-                });
-
-                if (!kidsByName.TryGetValue(look.Face, out var face))
-                    throw new InvalidOperationException($"TKChildren.esp has no '{look.Face}'");
-                if (face.FaceMorph == null || face.FaceParts == null)
-                    throw new InvalidOperationException($"TKChildren.esp leaves '{look.Face}' without face sliders; pick another face");
-                npc.FaceMorph = face.FaceMorph.DeepCopy();
-                npc.FaceParts = face.FaceParts.DeepCopy();
+                bases.Add((npc, look, female));
 
                 string key = $"{race}|BabyActor_{sex}{(player ? "Player" : "")}";
                 if (!ini.TryGetValue(key, out var list)) ini[key] = list = new List<string>();
@@ -233,12 +243,41 @@ foreach (var (race, _, _) in raceIds)
     }
 }
 
+foreach (var (npc, look, female) in bases)
+{
+    npc.HeadParts.Clear();
+    npc.HeadParts.Add(LookPart(look.Head, HeadPart.TypeEnum.Face, female));
+    npc.HeadParts.Add(LookPart(look.Eyes, HeadPart.TypeEnum.Eyes, female));
+    npc.HeadParts.Add(LookPart(look.Hair, HeadPart.TypeEnum.Hair, female));
+    npc.HairColor.SetTo(new FormKey(ModKey.FromFileName("Skyrim.esm"), hairColors[look.HairColor]));
+
+    var tone = skinTones[look.Skin - 1];
+    var skin = Color.FromArgb(0, tone.R, tone.G, tone.B);
+    npc.TextureLighting = skin;
+    npc.TintLayers.Clear();
+    npc.TintLayers.Add(new TintLayer
+    {
+        Index = (ushort)(female ? 2 : 1),
+        Color = skin,
+        InterpolationValue = 1f,
+        Preset = (short)(look.Skin > RacePresets ? -1 : female ? look.Skin + 10 : look.Skin),
+    });
+
+    if (!kidsByName.TryGetValue(look.Face, out var face))
+        throw new InvalidOperationException($"TKChildren.esp has no '{look.Face}'");
+    if (face.FaceMorph == null || face.FaceParts == null)
+        throw new InvalidOperationException($"TKChildren.esp leaves '{look.Face}' without face sliders; pick another face");
+    npc.FaceMorph = face.FaceMorph.DeepCopy();
+    npc.FaceParts = face.FaceParts.DeepCopy();
+}
+
 Directory.CreateDirectory(outDir);
 string pluginPath = Path.Combine(outDir, PluginName);
 outMod.BeginWrite
     .ToPath(pluginPath)
     .WithLoadOrder(new[] { "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm", "BeeingFemale.esm", "BeeingFemaleBasicAddOn.esp", "BeeingFemaleSE_Opt.esp" }.Select(name => ModKey.FromFileName(name)).ToArray())
     .WithNoDataFolder()
+    .WithExtraIncludedMasters(bfOpt.ModKey)
     .Write();
 
 var sb = new StringBuilder();

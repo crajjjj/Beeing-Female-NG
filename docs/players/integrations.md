@@ -25,9 +25,11 @@ The installer offers ready-made patches that hook other mods to Beeing Female. S
 - **FMR-Immersive Effects** -- removes FMR-IE's Fertility Mode requirement and drives its stretchmark/areola overlays, morning sickness, cravings, fetal kicks, Braxton-Hicks, and lactation effects from BF pregnancy progress, including a gradual fade-out during recovery.
 - **RS Children child actors** -- BF-born children use RS Children Overhaul's look, matching other children in your game.
 - **Simple Children child actors** -- BF-born children of Nord, Imperial, Breton, and Redguard parents get Simple Children hair, eyes, head textures, and skin tones (three looks per sex and race); other races keep the default child. Requires Simple Children.
-- **TK Children child actors** -- BF-born children of Nord, Imperial, Breton, and Redguard parents get TK Children hair, eyes, head textures, and face shapes (three looks per sex and race); other races keep the default child. Requires TK Children. The installer offers one child actor pack only (RS Children, Simple Children, *or* TK Children): pick the one matching the children overhaul you play with.
+- **TK Children child actors** -- BF-born children of Nord, Imperial, Breton, and Redguard parents get TK Children hair, eyes, head textures, and face shapes (three looks per sex and race); other races keep the default child. Requires TK Children.
 - **Creature child actors** -- species-matched offspring from creature impregnations (dog pup, falmer child, and so on).
 - **SlaveTats Tattoo Packs** -- the womb-state and BabyTracker overlay textures used by the SlaveTats tattoo features. Shown and pre-selected only when SlaveTats is installed; skip it if you do not use SlaveTats. See [Tattoos (SlaveTats)](tattoos.md).
+
+The three humanoid child actor packs (RS Children, Simple Children, TK Children) are an either-or choice: the installer offers one of them only, pre-selecting the one whose children overhaul it finds in your load order. Pick the pack when you start a playthrough, and reinstall Beeing Female without it if you later remove that overhaul.
 
 !!! note
     Patches that integrate via the add-on framework (RS Children child actors, Simple Children child actors, TK Children child actors, creature child actors) install into `BeeingFemale/AddOn/`. Mod authors can find the technical details of each bundled patch in [Add-on Framework](../authors/add-on-framework.md).

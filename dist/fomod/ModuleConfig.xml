@@ -123,7 +123,7 @@
 											<dependencies operator="And">
 												<fileDependency file="RSkyrimChildren.esm" state="Active"/> 
 											</dependencies>
-											<type name="Optional"/>
+											<type name="Recommended"/>
 										</pattern>
 									</patterns>
 								</dependencyType>
@@ -143,7 +143,7 @@
 											<dependencies operator="And">
 												<fileDependency file="SimpleChildren.esp" state="Active"/>
 											</dependencies>
-											<type name="Optional"/>
+											<type name="Recommended"/>
 										</pattern>
 									</patterns>
 								</dependencyType>
@@ -163,7 +163,7 @@
 											<dependencies operator="And">
 												<fileDependency file="TKChildren.esm" state="Active"/>
 											</dependencies>
-											<type name="Optional"/>
+											<type name="Recommended"/>
 										</pattern>
 									</patterns>
 								</dependencyType>
