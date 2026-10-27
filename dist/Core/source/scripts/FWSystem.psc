@@ -457,22 +457,29 @@ function CheckOtherMods()
 
 	; Estrus Unified replaces EstrusChaurus.esp / EstrusSpider.esp / EstrusDwemer.esp
 	; with one plugin whose forms carry new IDs; its DLL answers the pregnancy
-	; questions (EstrusUnifiedAPI, API version 1), so nothing here reads a form.
-	; The registration is repeated on every load: it is idempotent, and it does
-	; not survive a load whose Estrus Unified co-save was lost.
+	; question (EstrusUnifiedAPI, API version 1), so nothing here reads a form.
+	; Its pregnancies then run through the same tick and the same Pregnant*_State
+	; as the legacy plugins'. The API's change event is deliberately NOT used: a
+	; second entry into those states fires the moment the Estrus scene impregnates
+	; (OnBeginState can miscarry mid-scene) and races the tick.
+	; The result is computed into a local and assigned once: IsReady() unlocks this
+	; script, and a tick reading a half-set flag would take her out of her state.
+	; The plugin check comes first because the API doc requires it (an unbound
+	; native otherwise logs an error on every load).
 	bool bEstrusUnifiedWasActive = EstrusUnifiedActive
-	EstrusUnifiedActive = false
+	bool bEstrusUnified = false
 	if FWUtility.ModFile("EstrusUnified.esp")
-		if EstrusUnifiedAPI.IsReady()
-			EstrusUnifiedActive = true
-			EstrusUnifiedAPI.RegisterForPregnancyEvents(Self)
-			if bEstrusUnifiedWasActive
-			else
-				Message(Content.EstrusUnifiedFound,MSG_Debug)
-			endif
+		if SKSE.GetPluginVersion("EstrusUnified") == -1
+			FW_log.WriteLog("FWSystem.CheckOtherMods: EstrusUnified.esp is loaded but EstrusUnified.dll is not: Estrus Unified pregnancies stay invisible to Beeing Female", 2)
+		elseif EstrusUnifiedAPI.IsReady()
+			bEstrusUnified = true
 		else
-			Debug.Trace("[BeeingFemale] EstrusUnified.esp is loaded but EstrusUnified.dll did not answer: its pregnancies stay invisible to BeeingFemale")
+			FW_log.WriteLog("FWSystem.CheckOtherMods: EstrusUnifiedAPI.IsReady() is false (EstrusUnified.dll does not match the loaded EstrusUnified.esp): Estrus Unified pregnancies stay invisible to Beeing Female", 2)
 		endif
+	endif
+	EstrusUnifiedActive = bEstrusUnified
+	if bEstrusUnified && !bEstrusUnifiedWasActive
+		Message(Content.EstrusUnifiedFound,MSG_Debug)
 	endif
 
 	; Futa detection handles: SOS's schlongified faction, and TNG's
@@ -2302,16 +2309,6 @@ bool function IsActorPregnantByEstrusDwemer(actor woman)
 	return false
 endFunction
 
-
-; Estrus Unified reports a parasite pregnancy starting (1 chaurus, 2 spider,
-; 3 dwemer) or ending (0) the moment it happens; the woman's ability script
-; reacts at once instead of on its next game-time tick (the legacy plugins have
-; no such event, so that tick stays the fallback for everyone).
-event OnEstrusUnifiedPregnancyChanged(Actor target, Int pregnancyType)
-	if EstrusUnifiedActive && target
-		target.SendModEvent("BeeingFemale", "EstrusUnified", pregnancyType)
-	endif
-endEvent
 
 ; Get the time in days - how long the pill will work
 float function GetPillDuration(actor a)

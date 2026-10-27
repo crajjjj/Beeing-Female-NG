@@ -25,7 +25,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 2.3 | P1 | State spell switching | Exactly one `StatCycleID_List[i]` spell active; `StatMenstruationCycle` marker during 0–3, `StatPregnancyCycle` during 4–8 | FWAbilityBeeingFemale |
 | 2.4 | P1 | Invalid state (≥ 9) recovery | Error logged, no hang, state resets to 0 on next tick | FWAbilityBeeingFemale |
 | 2.5 | P2 | Chaurus/Estrus override active then removed | External pregnancy freezes `stateEnterTime`; after removal, BF cycle resumes without being stuck | FWAbilityBeeingFemale |
-| 2.6 | P2 | Estrus Unified pregnancy starts / ends | `OnEstrusUnifiedPregnancyChanged` relays the `EstrusUnified` mod event; the ability enters the matching parasite state at once (1 chaurus, 2 spider, 3 dwemer) and leaves it on the 0 event, cycle resumed; the Compatibility page row says found; with EstrusUnified.dll missing the row says not found, nothing registers, and a Papyrus trace says so | FWSystem, FWAbilityBeeingFemale |
+| 2.6 | P2 | Estrus Unified pregnancy starts / ends | Same as 2.5 through `EstrusUnifiedAPI.GetPregnancyType` (1 chaurus, 2 spider, 3 dwemer): within two cycle updates she is parked in the matching parasite state (the first update may pass through Luteal / a miscarriage, as with the legacy plugins), and leaves it for menstruation once the type is 0; the Compatibility page row says found; with EstrusUnified.dll missing the row says not found and the BF log says why | FWSystem, FWAbilityBeeingFemale |
 
 ## 3. Sperm & Impregnation
 

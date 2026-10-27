@@ -16,7 +16,7 @@ Bathing triggers sperm wash-out using the configured fluid wash-out chance.
 
 ### Estrus Chaurus, Estrus Spider, Estrus Dwemer and Estrus Unified
 
-A parasite pregnancy from the Estrus family takes over: Beeing Female pauses the woman's cycle (and its own belly scaling) in a "Pregnant by chaurus" state until the Estrus pregnancy ends, then resumes where it left off. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API, and its pregnancy-change event makes Beeing Female react at once instead of on the next cycle tick. The MCM's Compatibility page shows which of the four was found.
+A parasite pregnancy from the Estrus family takes over. On the woman's next cycle update Beeing Female notices it: a Beeing Female pregnancy she was carrying ends in a miscarriage, and her cycle (and its own belly scaling) is held in a "Pregnant by chaurus" state for as long as the Estrus pregnancy lasts. Once it is over, her cycle restarts with menstruation. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API and behaves the same way. The MCM's Compatibility page shows which of the four was found (Estrus Unified only when its DLL answers too).
 
 ## Optional Patches (FOMOD Installer)
 
