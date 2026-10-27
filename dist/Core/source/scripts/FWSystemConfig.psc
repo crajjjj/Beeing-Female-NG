@@ -329,6 +329,7 @@ bool bHAnimations=false
 bool bEstrusChaurus=false
 bool bEstrusSpider=false
 bool bEstrusDwemer=false
+bool bEstrusUnified=false
 
 FWStateWidget property StateWidget auto
 FWContraceptionWidget property ContraceptionWidget auto
@@ -480,6 +481,7 @@ function CheckForSexMods()
 	bEstrusChaurus=false
 	bEstrusSpider=false
 	bEstrusDwemer=false
+	bEstrusUnified=false
 	;/int c=Game.GetModCount()
 	while c>0
 		c-=1
@@ -568,6 +570,9 @@ function CheckForSexMods()
 		endIf
 		if FWUtility.ModFile("EstrusDwemer")
 			bEstrusDwemer=true
+		endIf
+		if FWUtility.ModFile("EstrusUnified")
+			bEstrusUnified=true
 		endIf
 endFunction
 
@@ -4170,6 +4175,12 @@ Event OnPageReset(string page)
 			AddTextOption("Estrus Dwemer Addon", cTxt[1], OPTION_FLAG_DISABLED)
 		else
 			AddTextOption("Estrus Dwemer Addon", cTxt[3], OPTION_FLAG_DISABLED)
+		endIf
+
+		if bEstrusUnified
+			AddTextOption("Estrus Unified", cTxt[1], OPTION_FLAG_DISABLED)
+		else
+			AddTextOption("Estrus Unified", cTxt[3], OPTION_FLAG_DISABLED)
 		endIf
 		
 	EndIf

@@ -184,6 +184,7 @@ Event hooks: `OnGiveBirthStart/End`, `OnLaborPain`, `OnBabySpawn`, `OnMagicEffec
 - **SexLab** (`BFA_ssl.psc`): hooks orgasm events, Devious Devices awareness, hentairim tag support
 - **OStim** (`BFA_Ostim.psc`): API 23+ with NG thread events, condom detection
 - **Bathing in Skyrim** (`BFA_BathingInSkyrim.psc`): hygiene/washout interaction
+- **Estrus family** (`FWSystem.CheckOtherMods`, `IsActorPregnantBy*`, the three `Pregnant*_State`s in `FWAbilityBeeingFemale`): the legacy EstrusChaurus / EstrusSpider / EstrusDwemer plugins by form; **Estrus Unified** (3.6.5+) through `EstrusUnifiedAPI` (native, its DLL: `IsReady`, `GetPregnancyType` 1 chaurus / 2 spider / 3 dwemer), checked first in those three functions, plus its `OnEstrusUnifiedPregnancyChanged` event, registered on every load and relayed to the woman's ability as the `EstrusUnified` mod event (`CheckEstrusPregnancy`, the tick's checks extracted). The API header is a machine-local ppj import of the extracted Estrus Unified source (`mods\build\Estrus Unified 1.1\Scripts\Source`, imported LAST: that folder also carries SkyUI / DD / SLIF copies and the first import wins), never a repo file.
 
 ### 8. HUD Widget System
 

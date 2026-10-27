@@ -72,7 +72,7 @@ Behavior notes:
 
 - The roll runs **per child** on each pregnancy tick across all three trimesters; once the female is in labor pains, no swap occurs.
 - Only the father record (`FW.ChildFather`) changes -- the pregnancy is *not* restarted. The new father determines the child's inherited race/traits at birth.
-- Estrus Chaurus impregnation (and the Spider / Dwemer add-ons) takes priority and is never overridden by an NTR swap.
+- Estrus Chaurus impregnation (the Spider / Dwemer add-ons and Estrus Unified included) takes priority and is never overridden by an NTR swap.
 
 See the commented `Allow_NTR_baby` / `Sperm_NTR_baby_Prob` block in `dist/Core/BeeingFemale/AddOn/CustomActor AddOn Example.ini` for a ready-to-copy template.
 

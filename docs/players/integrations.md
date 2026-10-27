@@ -14,6 +14,10 @@ Adds sperm on orgasm from OStim scenes. Requires OStim API 23+. Condom detection
 
 Bathing triggers sperm wash-out using the configured fluid wash-out chance.
 
+### Estrus Chaurus, Estrus Spider, Estrus Dwemer and Estrus Unified
+
+A parasite pregnancy from the Estrus family takes over: Beeing Female pauses the woman's cycle (and its own belly scaling) in a "Pregnant by chaurus" state until the Estrus pregnancy ends, then resumes where it left off. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API, and its pregnancy-change event makes Beeing Female react at once instead of on the next cycle tick. The MCM's Compatibility page shows which of the four was found.
+
 ## Optional Patches (FOMOD Installer)
 
 The installer offers ready-made patches that hook other mods to Beeing Female. Select them only when you use the mod in question:

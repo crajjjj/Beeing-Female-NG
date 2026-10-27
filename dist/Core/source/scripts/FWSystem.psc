@@ -125,6 +125,9 @@ MagicEffect[] property BabyHealingMagicEffects auto
 spell property ChaurusBreeder = none Auto hidden
 bool property EstrusActive = false Auto hidden
 Faction property zzEstrusChaurusBreederFaction = none auto hidden
+; Estrus Unified: the merged Estrus mod (one EstrusUnified.esp, forms under new
+; IDs, a DLL). Its pregnancies are read through EstrusUnifiedAPI, never by form.
+bool property EstrusUnifiedActive = false Auto hidden
 Faction property SOSFutaFaction = none auto hidden ; SOS schlongified faction, for futa detection
 FormList property TNGGentifiedList = none auto hidden ; TNG_Gentified list of schlonged females, for futa detection
 armor property DeviceBelt = none auto hidden
@@ -449,6 +452,26 @@ function CheckOtherMods()
 		if bEstrusDwemerWasActive
 		else
 			Message(Content.EstrusDwemerFound,MSG_Debug)
+		endif
+	endif
+
+	; Estrus Unified replaces EstrusChaurus.esp / EstrusSpider.esp / EstrusDwemer.esp
+	; with one plugin whose forms carry new IDs; its DLL answers the pregnancy
+	; questions (EstrusUnifiedAPI, API version 1), so nothing here reads a form.
+	; The registration is repeated on every load: it is idempotent, and it does
+	; not survive a load whose Estrus Unified co-save was lost.
+	bool bEstrusUnifiedWasActive = EstrusUnifiedActive
+	EstrusUnifiedActive = false
+	if FWUtility.ModFile("EstrusUnified.esp")
+		if EstrusUnifiedAPI.IsReady()
+			EstrusUnifiedActive = true
+			EstrusUnifiedAPI.RegisterForPregnancyEvents(Self)
+			if bEstrusUnifiedWasActive
+			else
+				Message(Content.EstrusUnifiedFound,MSG_Debug)
+			endif
+		else
+			Debug.Trace("[BeeingFemale] EstrusUnified.esp is loaded but EstrusUnified.dll did not answer: its pregnancies stay invisible to BeeingFemale")
 		endif
 	endif
 
@@ -2239,6 +2262,9 @@ float function getEggTravelingDuration(actor a)
 endFunction
 
 bool function IsActorPregnantByChaurus(actor woman)
+	if EstrusUnifiedActive
+		return EstrusUnifiedAPI.GetPregnancyType(woman) == 1
+	endif
 	if zzEstrusChaurusBreederFaction && woman.IsInFaction(zzEstrusChaurusBreederFaction)
 		return true
 	endif
@@ -2250,6 +2276,9 @@ endFunction
 
 
 bool function IsActorPregnantByEstrusSpider(actor woman)
+	if EstrusUnifiedActive
+		return EstrusUnifiedAPI.GetPregnancyType(woman) == 2
+	endif
 	if zzEstrusSpiderBreederFaction && woman.IsInFaction(zzEstrusSpiderBreederFaction)
 		return true
 	endif
@@ -2261,6 +2290,9 @@ endFunction
 
 
 bool function IsActorPregnantByEstrusDwemer(actor woman)
+	if EstrusUnifiedActive
+		return EstrusUnifiedAPI.GetPregnancyType(woman) == 3
+	endif
 	if zzEstrusDwemerBreederFaction && woman.IsInFaction(zzEstrusDwemerBreederFaction)
 		return true
 	endif
@@ -2270,6 +2302,16 @@ bool function IsActorPregnantByEstrusDwemer(actor woman)
 	return false
 endFunction
 
+
+; Estrus Unified reports a parasite pregnancy starting (1 chaurus, 2 spider,
+; 3 dwemer) or ending (0) the moment it happens; the woman's ability script
+; reacts at once instead of on its next game-time tick (the legacy plugins have
+; no such event, so that tick stays the fallback for everyone).
+event OnEstrusUnifiedPregnancyChanged(Actor target, Int pregnancyType)
+	if EstrusUnifiedActive && target
+		target.SendModEvent("BeeingFemale", "EstrusUnified", pregnancyType)
+	endif
+endEvent
 
 ; Get the time in days - how long the pill will work
 float function GetPillDuration(actor a)

@@ -316,20 +316,25 @@ event BeeingFemale(string eventName, string strArg, float numArg, Form sender)
 				endif
 			elseif strArg=="Dispel"
 				Dispel()
+			elseif strArg=="EstrusUnified"
+				; Estrus Unified reported a change for this woman (FWSystem relays its
+				; event): enter the parasite state now, or leave it, which the state's
+				; OnUpdateFunction does once the pregnancy is over
+				string stateNow = Self.GetState()
+				if stateNow == "PregnantChaurus_State" || stateNow == "PregnantEstrusSpider_State" || stateNow == "PregnantEstrusDwemer_State"
+					OnUpdateFunction()
+				else
+					CheckEstrusPregnancy(stateNow)
+				endIf
 			endIf
 		endIf
 	endif
 endEvent
 
-event OnUpdateGameTime()
-	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
-	float currentTime = GameDaysPassed.GetValue()
-	if ActorRef.Is3DLoaded()
-		; Idle-untrack timer: mark when she was last loaded (see FWSystem.TryUntrackIdleFemale).
-		StorageUtil.SetFloatValue(ActorRef,"FW.LastLoaded",currentTime)
-	endif
-	string ActorCurrentState = Self.GetState()
-	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime start - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState)
+; An Estrus pregnancy (the legacy plugins or Estrus Unified) parks the cycle in
+; its own state. Run on every game-time tick and, with Estrus Unified, the
+; moment it reports a change (the "EstrusUnified" mod event FWSystem relays).
+function CheckEstrusPregnancy(string ActorCurrentState)
 	;if System.IsActorPregnantByChaurus(ActorRef) && (Self.GetState() != "PregnantChaurus_State")
 	if System.IsActorPregnantByChaurus(ActorRef) ;Tkc (Loverslab): optimization
 	 if (ActorCurrentState == "PregnantChaurus_State")
@@ -357,7 +362,18 @@ event OnUpdateGameTime()
 		GoToState("PregnantEstrusDwemer_State")
 	 endIf
 	endIf
-	
+endFunction
+
+event OnUpdateGameTime()
+	float startTime = Utility.GetCurrentRealTime() ; paired with GetCurrentRealTime below - GameDaysPassed here made the logged "sec" meaningless
+	float currentTime = GameDaysPassed.GetValue()
+	if ActorRef.Is3DLoaded()
+		; Idle-untrack timer: mark when she was last loaded (see FWSystem.TryUntrackIdleFemale).
+		StorageUtil.SetFloatValue(ActorRef,"FW.LastLoaded",currentTime)
+	endif
+	string ActorCurrentState = Self.GetState()
+	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime start - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState)
+	CheckEstrusPregnancy(ActorCurrentState)
 
 	GetStorageVariable()
 	

@@ -202,6 +202,7 @@ string property ActorNotPregnant auto hidden
 
 string property EstrusSpiderFound = "BeeingFemale has located Estrus Spider" auto hidden
 string property EstrusDwemerFound = "BeeingFemale has located Estrus Dwemer" auto hidden
+string property EstrusUnifiedFound = "BeeingFemale has located Estrus Unified" auto hidden
 
 function Upgrade(int oldVersion, int newVersion)
 endFunction
@@ -284,6 +285,7 @@ function LoadContent()
 
 	EstrusSpiderFound = getLangText("GAME_CONTENT_EstrusSpiderFound")
 	EstrusDwemerFound = getLangText("GAME_CONTENT_EstrusDwemerFound")
+	EstrusUnifiedFound = getLangText("GAME_CONTENT_EstrusUnifiedFound")
 
 
 	StatesAddedForNPC = getLangText("GAME_CONTENT_StatesAddedForNPC")
