@@ -1024,7 +1024,7 @@ bool function checkAbortus() ; SensebilityPercent - 20 = up to 20% Chances to lo
 	else;if System.cfg.abortus==false
 		return false
 	endif
-	if currentState<4 && currentState==8
+	if currentState < 4 || currentState == 8
 		; Not pregnant or in replenish
 		return false
 	endif

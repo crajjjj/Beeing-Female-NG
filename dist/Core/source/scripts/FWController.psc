@@ -1601,7 +1601,7 @@ function DamageBaby(actor Mother,float Damage)
 			return
 		endif
 		int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-		if s<4 && s==8
+		if s < 4 || s == 8
 			; Not pregnant or in replenish
 			return
 		endif
@@ -1680,7 +1680,7 @@ function SetBabyHealth(actor Mother,float value)
 		return
 	endif
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif
@@ -1711,7 +1711,7 @@ function HealBaby(actor Mother,float Healing)
 		return
 	endif
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif
@@ -1764,7 +1764,7 @@ function AbortusBaby(actor Mother)
 		return; never was initialised - so can't be pregnant
 	EndIf
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif
@@ -1790,7 +1790,7 @@ function AbortusBabyTimed(actor Mother,Float Time)
 		return; never was initialised - so can't be pregnant
 	EndIf
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif
@@ -1818,7 +1818,7 @@ function AbortusState(actor Mother, int Abortus_State)
 		return; never was initialised - so can't be pregnant
 	EndIf
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif
@@ -1845,7 +1845,7 @@ function AbortusStateTimed(actor Mother, float Time, int Abortus_State)
 		return; never was initialised - so can't be pregnant
 	EndIf
 	int s = StorageUtil.GetIntValue(Mother,"FW.CurrentState",0)
-	if s<4 && s==8
+	if s < 4 || s == 8
 		; Not pregnant or in replenish
 		return
 	endif

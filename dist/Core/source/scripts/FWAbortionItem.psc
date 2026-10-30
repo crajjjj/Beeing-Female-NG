@@ -40,8 +40,8 @@ function execute()
 	; mid-abortus guard of its own - unlike DamageBaby and SetBabyHealth, which both
 	; bail on FW.Abortus > 1 - so a second draught would knock FW.Abortus back to 2
 	; and FW.AbortusTime forward to now, postponing the resolution every time she
-	; drinks. Its own state guard cannot help here either: "s < 4 && s == 8" can
-	; never be true, so it does not refuse during labor or replenish.
+	; drinks. Its own state guard cannot help here either: it refuses only before
+	; conception and during replenish, and a loss under way is still a pregnancy.
 	if StorageUtil.GetIntValue(ActorRef, "FW.Abortus", 0) > 1
 		Debug.Notification("Nothing happens - the pregnancy is already ending")
 		return
