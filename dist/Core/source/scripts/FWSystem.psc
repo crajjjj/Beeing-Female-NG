@@ -4530,7 +4530,7 @@ Event OnKeyDown(int keyCode)
 					elseif cmd[0]=="bf:damagebaby" || cmd[0]=="damagebaby"
 						if validate>0
 							if cmd.length>1
-								int val = cmd[0] as int
+								int val = cmd[1] as int
 								if val<0
 									val=0
 								elseif val>100
@@ -4546,14 +4546,14 @@ Event OnKeyDown(int keyCode)
 					elseif cmd[0]=="bf:babyhealth" || cmd[0]=="babyhealth"
 						if validate>0
 							if cmd.length>1
-								int val = cmd[0] as int
+								int val = cmd[1] as int
 								if val<0
 									val=0
 								elseif val>100
 									val=100
 								endif
 								Controller.SetBabyHealth(a,val)
-								msg=FWUtility.MultiStringReplace(Content.BabyHealth,a.GetDisplayname(),val)
+								msg=FWUtility.MultiStringReplace(Content.BabyHealth,a.GetDisplayname(),Controller.GetBabyHealth(a))
 							else
 								msg=FWUtility.MultiStringReplace(Content.BabyHealth,a.GetDisplayname(),Controller.GetBabyHealth(a))
 							endif

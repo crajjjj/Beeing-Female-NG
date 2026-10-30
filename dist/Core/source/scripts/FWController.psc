@@ -1609,10 +1609,14 @@ function DamageBaby(actor Mother,float Damage)
 		
 		
 		int num_babies_orig = StorageUtil.FormListCount(Mother, "FW.ChildFather")
+		if num_babies_orig <= 0
+			; Nothing to damage, and the scale below divides by this count
+			return
+		endif
 		actor Father = none
 		float DamageScaleByFather = 0
 		float HealingScaleByFather = 0
-		
+
 		int num_babies = num_babies_orig
 		while(num_babies > 0)
 			num_babies -= 1

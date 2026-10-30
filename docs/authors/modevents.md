@@ -17,7 +17,7 @@ Beeing Female NG listens for a few mod events you can emit from your own Papyrus
         - `7` Labor pains, `8` Replenish from birth
         - Note: UI-only states `20` (Pregnant) and `21` (Pregnant by chaurus) are not valid targets here.
     - `InfoBox` (numArg = sort mode): open the info window for the sender; 100 is the default sort mode.
-    - `DamageBaby` / `HealBaby` (numArg = amount): apply damage/heal to the unborn baby of the sender.
+    - `DamageBaby` / `HealBaby` (numArg = amount): apply damage/heal to the unborn baby of the sender. Ignored unless she is carrying a Beeing Female pregnancy (states `4` to `7`); during the cycle and replenish there is no baby to affect.
     - `CanBecomePregnant` / `CanBecomePMS` (numArg = 1 or 0): toggle eligibility flags for the sender (1 = allow, 0 = disallow).
     - `TestScale` (numArg = scale): run a scaling test on the sender (debug).
     - `CheckAbortus` (numArg unused): run the abortus state machine on the sender; it may start/advance/resolve abortus based on unborn health, trimester timing, and randomness.
