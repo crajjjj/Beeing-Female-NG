@@ -4929,6 +4929,8 @@ string function getValidateMessage(int id)
 				return Content.ForbiddenReason11
 			elseif id==-12
 				return Content.ForbiddenReason12
+			elseif id==-13
+				return Content.ForbiddenReason13
 			endif
 		endIf
 	endIf

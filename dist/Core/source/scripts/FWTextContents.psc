@@ -109,6 +109,7 @@ string property ForbiddenReason9 = "{0} is an elder" auto hidden
 string property ForbiddenReason10 = "{0} is an elder" auto hidden
 string property ForbiddenReason11 = "{0} is an elder" auto hidden
 string property ForbiddenReason12 = "{0} is a mannequin" auto hidden
+string property ForbiddenReason13 = "{0} is a futa (futa pregnancy is off)" auto hidden
 
 ; Female info
 string property InfoSpell_GotSpermInside="{0} got some sperm inside" auto hidden
@@ -329,6 +330,10 @@ function LoadContent()
 	string sForbidden12 = getLangText("FW_INFOWINDOW_ForbiddenReason12")
 	if sForbidden12 != ""
 		ForbiddenReason12 = sForbidden12
+	endif
+	string sForbidden13 = getLangText("FW_INFOWINDOW_ForbiddenReason13")
+	if sForbidden13 != ""
+		ForbiddenReason13 = sForbidden13
 	endif
 
 ; Female info
