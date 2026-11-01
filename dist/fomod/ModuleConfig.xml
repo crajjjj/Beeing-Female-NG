@@ -110,7 +110,7 @@
 				<group name="Child Actor Pack" type="SelectAtMostOne">
 					<plugins order="Explicit">
 						<plugin name="BeeingFemale_RS_ChildActors">
-							<description>Spawns BF-born children using RS Children Overhaul's actor templates instead of vanilla child meshes / textures, so BF babies match the look of every other child in your game. Requires RSkyrimChildren.esm (auto-detected). Use only one child actor pack: this, Simple Children, TK Children or TKAA Children.</description>
+							<description>Spawns BF-born children using RS Children Overhaul's actor templates instead of vanilla child meshes / textures, so BF babies match the look of every other child in your game. Requires RSkyrimChildren.esm (auto-detected). Use only one child actor pack: this, Simple Children or TK Children.</description>
                             <image path="Fomod_resources\fw.jpg" />
                             <files>
                                 <folder source="Addon\BFARSC" destination="" priority="0" /> 
@@ -130,7 +130,7 @@
 							</typeDescriptor>
 						</plugin>
 						<plugin name="BeeingFemale_SimpleChildren_ChildActors">
-							<description>Spawns the BF-born children of Nord, Imperial, Breton and Redguard parents with Simple Children hair, eyes, head textures and skin tones (three looks per sex and race), so BF babies match the other children in a Simple Children game. Other races keep the default child. Faces are computed live by the engine, so no FaceGen files are needed. Requires Simple Children (SimpleChildren.esp, auto-detected). Use only one child actor pack: this, RS Children, TK Children or TKAA Children.</description>
+							<description>Spawns the BF-born children of Nord, Imperial, Breton and Redguard parents with Simple Children hair, eyes, head textures and skin tones (three looks per sex and race), so BF babies match the other children in a Simple Children game. Other races keep the default child. Faces are computed live by the engine, so no FaceGen files are needed. Requires Simple Children (SimpleChildren.esp, auto-detected). Use only one child actor pack: this, RS Children or TK Children.</description>
 							<image path="Fomod_resources\fw.jpg" />
 							<files>
 								<folder source="Addon\BFASC" destination="" priority="0" />
@@ -150,7 +150,7 @@
 							</typeDescriptor>
 						</plugin>
 						<plugin name="BeeingFemale_TKChildren_ChildActors">
-							<description>Spawns the BF-born children of Nord, Imperial, Breton and Redguard parents with TK Children hair, eyes, head textures and face shapes (three looks per sex and race), so BF babies match the other children in a TK Children game. Other races keep the default child. Faces are computed live by the engine, so no FaceGen files are needed. Requires TK Children (TKChildren.esm, auto-detected). Use only one child actor pack: this, RS Children, Simple Children or TKAA Children.</description>
+							<description>Spawns the BF-born children of Nord, Imperial, Breton and Redguard parents with TK Children hair, eyes, head textures and face shapes (three looks per sex and race), so BF babies match the other children in a TK Children game. Other races keep the default child. Faces are computed live by the engine, so no FaceGen files are needed. Requires TK Children (TKChildren.esm, auto-detected). Use only one child actor pack: this, RS Children or Simple Children.</description>
 							<image path="Fomod_resources\fw.jpg" />
 							<files>
 								<folder source="Addon\BFATKC" destination="" priority="0" />
@@ -162,26 +162,6 @@
 										<pattern>
 											<dependencies operator="And">
 												<fileDependency file="TKChildren.esm" state="Active"/>
-											</dependencies>
-											<type name="Recommended"/>
-										</pattern>
-									</patterns>
-								</dependencyType>
-							</typeDescriptor>
-						</plugin>
-						<plugin name="BeeingFemale_TKAAChildren_ChildActors">
-							<description>Spawns the BF-born children of all ten playable races in The Kids Are Alright's child races, each looking like one of TKAA's children (its own and the vanilla ones it restyles), so BF babies match the other children in a TKAA game. Faces come from TKAA's FaceGen, so these children don't take their parents' hair color or features. Requires The Kids Are Alright Renewal (TKAA.esp, auto-detected). Use only one child actor pack: this, RS Children, Simple Children or TK Children.</description>
-							<image path="Fomod_resources\fw.jpg" />
-							<files>
-								<folder source="Addon\BFATKAA" destination="" priority="0" />
-							</files>
-							<typeDescriptor>
-								<dependencyType>
-									<defaultType name="NotUsable"/>
-									<patterns>
-										<pattern>
-											<dependencies operator="And">
-												<fileDependency file="TKAA.esp" state="Active"/>
 											</dependencies>
 											<type name="Recommended"/>
 										</pattern>
