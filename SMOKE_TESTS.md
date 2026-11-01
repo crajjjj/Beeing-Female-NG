@@ -73,6 +73,7 @@ Pre-release checklist. Each scenario should be verified in-game or by code inspe
 | 5.1 | P1 | Abortus during Trimester 1 | `abortus > 1` blocks advance to states 4–6, returns to cycle | FWAbilityBeeingFemale |
 | 5.2 | P1 | Stillbirth during Trimester 3 | `abortus > 2` blocks state 7, notification shown | FWAbilityBeeingFemale |
 | 5.3 | P2 | Abortus disabled in MCM | `cfg.abortus == false` → suppressed regardless of health | FWController |
+| 5.4 | P2 | Abortion Draught price | Inventory value 250, merchants charge more than that (not 1 septim); a Value edited in xEdit changes it. The record needs No Auto Calc: auto calc ignores Value and its effect's base cost is 0 | BeeingFemaleSE_Opt.esp ALCH 0xD72 |
 
 ## 6. Male Virility
 

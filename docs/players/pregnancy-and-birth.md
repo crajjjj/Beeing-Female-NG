@@ -54,7 +54,7 @@ These damage the mother *after* the pregnancy has ended -- they are not a cause 
 
 A craftable potion that deliberately ends an ongoing pregnancy, as opposed to the miscarriage the cycle can roll on its own.
 
-- **Where to get it** -- cook it at any **cooking pot** (not an alchemy lab), the same place the contraception fluids and fertility tonics are made. With the optional **SPID item distribution** component installed, general merchants also stock it, more sparsely than the tonics.
+- **Where to get it** -- cook it at any **cooking pot** (not an alchemy lab), the same place the contraception fluids and fertility tonics are made. With the optional **SPID item distribution** component installed, general merchants also stock it, more sparsely than the tonics. Its base value is 250 gold, above every contraception fluid.
 - **It is not instant.** Drinking it commits the loss immediately and irreversibly, but the pregnancy takes roughly **one in-game day** to actually end, and it ends the same way a miscarriage does -- with the usual pain and bleeding. Do not expect the belly to vanish on the spot.
 - **It needs the Abortus option enabled** (MCM: Pregnancy -> Abortus). With that toggle off nothing would ever resolve the loss, so the draught declines to start one and says so in the corner instead of leaving you pregnant and puzzled.
 - **Drinking a second one changes nothing** while a loss is already under way -- it will not speed the loss up or restart it.
