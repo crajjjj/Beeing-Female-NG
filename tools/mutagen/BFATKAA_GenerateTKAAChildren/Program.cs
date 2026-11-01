@@ -23,8 +23,14 @@
 // FaceGen ships in TKAA.bsa too), so a BF child can be a look-alike of a named
 // town child. The ghost, skeleton and vampire children are left out.
 //
-// TKAA.esp is a master: the templates and races live in it. Nothing of TKAA is
-// shipped. The INI gates on it with "required=".
+// The only BF records the plugin overrides are the armor addons of BF's child
+// dresses, which gain TKAA's races so the dresses render on these children.
+//
+// TKAA.esp is a master: the templates and races live in it, so the plugin cannot
+// load without it, and the FOMOD offers the pack only with TKAA.esp active.
+// Nothing of TKAA is shipped. Vanilla templates are drawn from whichever plugin
+// wins their records, so a mod loading after TKAA that restyles them restyles
+// these BF children too.
 //
 // HOW TO RUN (from the repo root)
 //   dotnet run --project tools/mutagen/BFATKAA_GenerateTKAAChildren -- "<TKAA folder>"
@@ -55,6 +61,7 @@ string coreDir = Path.Combine(repo, "dist", "Core");
 string outDir = Path.Combine(repo, "dist", "Addon", "BFATKAA");
 
 using var tkaa = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(tkaaDir, "TKAA.esp"), SkyrimRelease.SkyrimSE);
+using var bf = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(coreDir, "BeeingFemale.esm"), SkyrimRelease.SkyrimSE);
 using var bfOpt = SkyrimMod.CreateFromBinaryOverlay(Path.Combine(coreDir, "BeeingFemaleSE_Opt.esp"), SkyrimRelease.SkyrimSE);
 
 // FaceGen of every template must be in TKAA.bsa: without it the engine draws a
@@ -116,9 +123,14 @@ INpcGetter Template(Look look, string tkaaRace)
         throw new InvalidOperationException($"'{look.Template}' is not in {tkaaRace}");
     if (!src.Template.IsNull)
         throw new InvalidOperationException($"'{look.Template}' is itself templated; pick a child with its own face");
-    string face = $"meshes\\actors\\character\\facegendata\\facegeom\\{src.FormKey.ModKey.FileName}\\{src.FormKey.ID:x8}.nif";
-    if (!faceGen.Contains(face))
-        throw new InvalidOperationException($"TKAA.bsa has no FaceGen for '{look.Template}' ({face})");
+    // A FaceGen face is a head mesh plus its tint texture; either one missing shows.
+    foreach (string face in new[]
+    {
+        $"meshes\\actors\\character\\facegendata\\facegeom\\{src.FormKey.ModKey.FileName}\\{src.FormKey.ID:x8}.nif",
+        $"textures\\actors\\character\\facegendata\\facetint\\{src.FormKey.ModKey.FileName}\\{src.FormKey.ID:x8}.dds",
+    })
+        if (!faceGen.Contains(face))
+            throw new InvalidOperationException($"TKAA.bsa has no FaceGen for '{look.Template}' ({face})");
     return src;
 }
 
@@ -129,7 +141,7 @@ outMod.ModHeader.Description = "Beeing Female NG - The Kids Are Alright child ac
 
 var ini = new Dictionary<string, List<string>>();
 
-// Bases are the only records, created in table order, so their FormIDs (801
+// Bases are the only new records, created in table order, so their FormIDs (800
 // onwards) follow from the race list and the looks table alone. Saves store them:
 // swapping a look's template is safe, adding, removing or reordering looks is not.
 foreach (var (race, _, _, tkaaRace, display) in raceIds)
@@ -184,6 +196,39 @@ foreach (var (race, _, _, tkaaRace, display) in raceIds)
     }
 }
 
+// BF dresses its children through the stock bases' outfits, and an armor addon
+// only renders on a race it lists, directly or through that race's Armor Race.
+// TKAA's races use DefaultRace as Armor Race and BF's dresses list neither, so a
+// TKAA child would wear them invisibly. TKAA itself adds its races to vanilla's
+// child clothes the same way. Overrides keep their FormIDs, so this adds no new
+// record IDs; it copies the winning BF record, so re-run when BF changes it.
+T Winner<T>(Func<ISkyrimModGetter, IEnumerable<T>> records, FormKey key) where T : class, IMajorRecordGetter
+    => new ISkyrimModGetter[] { bfOpt, bf }.SelectMany(records).FirstOrDefault(r => r.FormKey == key)
+        ?? throw new InvalidOperationException($"neither BeeingFemaleSE_Opt.esp nor BeeingFemale.esm has {key}");
+var defaultRace = FormKey.Factory("000019:Skyrim.esm");
+var tkaaRaceKeys = raceIds.Select(r => tkaaRaces[r.TkaaRace].FormKey).ToArray();
+var stockOutfits = bfOpt.Npcs.Where(n => n.EditorID is "_BFChildActor_Female" or "_BFChildActor_Male" or "_BFChildActorPlayer_Female" or "_BFChildActorPlayer_Male")
+    .SelectMany(n => new[] { n.DefaultOutfit.FormKey, n.SleepingOutfit.FormKey })
+    .Where(k => !k.IsNull).Distinct();
+foreach (var outfitKey in stockOutfits)
+{
+    var outfit = Winner(m => m.Outfits, outfitKey);
+    foreach (var item in outfit.Items ?? Array.Empty<IFormLinkGetter<IOutfitTargetGetter>>())
+    {
+        var armor = Winner(m => m.Armors, item.FormKey);
+        foreach (var addonLink in armor.Armature)
+        {
+            var addon = Winner(m => m.ArmorAddons, addonLink.FormKey);
+            var races = addon.AdditionalRaces.Select(r => r.FormKey).Append(addon.Race.FormKey).ToHashSet();
+            if (races.Contains(defaultRace)) continue;
+            var missing = tkaaRaceKeys.Where(k => !races.Contains(k)).ToArray();
+            if (missing.Length == 0) continue;
+            var over = outMod.ArmorAddons.GetOrAddAsOverride(addon);
+            foreach (var race in missing) over.AdditionalRaces.Add(race);
+        }
+    }
+}
+
 Directory.CreateDirectory(outDir);
 string pluginPath = Path.Combine(outDir, PluginName);
 outMod.BeginWrite
@@ -195,7 +240,7 @@ outMod.BeginWrite
 var sb = new StringBuilder();
 sb.AppendLine("# Generated by tools/mutagen/BFATKAA_GenerateTKAAChildren - regenerate rather than hand-edit the FormIDs.");
 sb.AppendLine("# Every child looks exactly like one TKAA child (an NPC template), in TKAA's child race of its parents.");
-sb.AppendLine("# Answers for the same parent races as the RS Children, Simple Children and TK Children packs, so run one child pack, not several.");
+sb.AppendLine("# Answers for all ten playable parent races: the four human ones overlap the Simple Children and TK Children packs, all ten the RS Children patch, so run one child pack, not several.");
 sb.AppendLine("[AddOn]");
 sb.AppendLine("name=BF TKAA Children");
 sb.AppendLine("description=Spawns the children of all ten playable races in The Kids Are Alright's child races, each looking like one of TKAA's children (its own and the vanilla ones it restyles), so they match the other children in a TKAA game. Faces come from TKAA's FaceGen, so children don't take their parents' hair color or features. Do not combine with the RS Children, Simple Children or TK Children add-on.");
@@ -222,7 +267,7 @@ string iniPath = Path.Combine(outDir, "BeeingFemale", "AddOn", IniName);
 Directory.CreateDirectory(Path.GetDirectoryName(iniPath)!);
 File.WriteAllText(iniPath, sb.ToString().ReplaceLineEndings("\r\n"), new UTF8Encoding(false));
 
-Console.WriteLine($"{pluginPath}: {outMod.Npcs.Count} child actors");
+Console.WriteLine($"{pluginPath}: {outMod.Npcs.Count} child actors, {outMod.ArmorAddons.Count} child armor addons opened to TKAA's races");
 Console.WriteLine(iniPath);
 return 0;
 

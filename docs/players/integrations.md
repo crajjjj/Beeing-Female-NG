@@ -16,13 +16,13 @@ Bathing triggers sperm wash-out using the configured fluid wash-out chance.
 
 ### Ultimate Animated Potions NG
 
-Beeing Female ships the bottle UAP NG puts in the hand while a BF potion is drunk, so the hand is no longer empty. UAP NG animates Contraception Fluid Low, Fertility Tonic and the Abortion Draught on its own. To animate Contraception Fluid Medium and High and Fertility Tonic Potent too, add them to `SKSE\Plugins\UAPNG.ini`:
+Beeing Female ships the bottle UAP NG puts in the hand while a BF potion is drunk, so the hand is no longer empty. UAP NG animates Contraception Fluid Low, Fertility Tonic and the Abortion Draught on its own. To animate Contraception Fluid Medium and High and Fertility Tonic Potent too, add their EditorIDs under `[AllowedPotions]` in `SKSE\Plugins\UAPNG.ini`:
 
 ```ini
 [AllowedPotions]
-0x38CB~BeeingFemale.esm
-0x6D551~BeeingFemale.esm
-0x6E86~BeeingFemaleBasicAddOn.esp
+_BF_ContraceptionMedium
+_BF_ContraceptionHighest
+_BF_FertilityTonicPotent
 ```
 
 ### Estrus Chaurus, Estrus Spider, Estrus Dwemer and Estrus Unified

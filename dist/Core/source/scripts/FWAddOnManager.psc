@@ -4049,7 +4049,9 @@ ActorBase function validateBabyCustomRace(ActorBase b)
 	Race childRace = b.GetRace()
 	if childRace
 		string childRaceName = FWUtility.toLower(childRace.GetName() + MiscUtil.GetRaceEditorID(childRace))
-		if StringUtil.Find(childRaceName, "child") == -1 && childRace.HasKeywordString("ActorTypeNPC")
+		; The race's Child flag (0x4) counts too: a translated child race such as
+		; TKAA's (EditorIDs like TKAANordRace) can carry "child" in no language
+		if StringUtil.Find(childRaceName, "child") == -1 && !childRace.IsRaceFlagSet(0x00000004) && childRace.HasKeywordString("ActorTypeNPC")
 			FW_log.WriteLog("BeeingFemale - AddonManager - getBabyActor - Child race " + childRace + " is not labeled as child; skipping addon")
 			if cfg.ShowDebugMessage
 				Debug.Messagebox("Child race is not labeled as child; skipping addon")

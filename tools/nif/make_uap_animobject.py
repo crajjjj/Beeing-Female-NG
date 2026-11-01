@@ -145,6 +145,8 @@ def build(src):
             struct.pack_into("<i", b, p, ref(texset))
         elif kind == "NiAlphaProperty":
             plain_net(b)
+        elif kind == "BSFadeNode":
+            raise SystemExit("a BSFadeNode below the root, not handled")
         out.append((kind, b))
     return prefix, nblocks_at, out, used
 

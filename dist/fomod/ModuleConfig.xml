@@ -177,7 +177,7 @@
 							</files>
 							<typeDescriptor>
 								<dependencyType>
-									<defaultType name="Optional"/>
+									<defaultType name="NotUsable"/>
 									<patterns>
 										<pattern>
 											<dependencies operator="And">
