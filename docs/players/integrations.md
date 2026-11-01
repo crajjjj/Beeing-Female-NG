@@ -14,6 +14,17 @@ Adds sperm on orgasm from OStim scenes. Requires OStim API 23+. Condom detection
 
 Bathing triggers sperm wash-out using the configured fluid wash-out chance.
 
+### Ultimate Animated Potions NG
+
+Beeing Female ships the bottle UAP NG puts in the hand while a BF potion is drunk, so the hand is no longer empty. UAP NG animates Contraception Fluid Low, Fertility Tonic and the Abortion Draught on its own. To animate Contraception Fluid Medium and High and Fertility Tonic Potent too, add them to `SKSE\Plugins\UAPNG.ini`:
+
+```ini
+[AllowedPotions]
+0x38CB~BeeingFemale.esm
+0x6D551~BeeingFemale.esm
+0x6E86~BeeingFemaleBasicAddOn.esp
+```
+
 ### Estrus Chaurus, Estrus Spider, Estrus Dwemer and Estrus Unified
 
 A parasite pregnancy from the Estrus family takes over. On the woman's next cycle update Beeing Female notices it: a Beeing Female pregnancy she was carrying ends in a miscarriage, and her cycle (and its own belly scaling) is held in a "Pregnant by chaurus" state for as long as the Estrus pregnancy lasts. Once it is over, her cycle restarts with menstruation. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API and behaves the same way. The MCM's Compatibility page shows which of the four was found (Estrus Unified only when its DLL answers too).
