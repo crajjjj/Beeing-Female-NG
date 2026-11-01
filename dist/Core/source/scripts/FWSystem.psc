@@ -130,6 +130,7 @@ Faction property zzEstrusChaurusBreederFaction = none auto hidden
 bool property EstrusUnifiedActive = false Auto hidden
 Faction property SOSFutaFaction = none auto hidden ; SOS schlongified faction, for futa detection
 FormList property TNGGentifiedList = none auto hidden ; TNG_Gentified list of schlonged females, for futa detection
+bool property SexLabPPlusFuta = false auto hidden ; SexLab P+ 2.17.1+ decides futas (SexLabRegistry.GetSex)
 armor property DeviceBelt = none auto hidden
 bool property DeviceActive = false auto hidden
 bool property HearthFiresActive = true auto hidden ; Skyrim SE has HearthFires
@@ -482,9 +483,11 @@ function CheckOtherMods()
 		Message(Content.EstrusUnifiedFound,MSG_Debug)
 	endif
 
-	; Futa detection handles: SOS's schlongified faction, and TNG's
+	; Futa detection: SexLab P+'s own verdict when P+ 2.17.1+ is loaded (the same
+	; gate as BFA_ssl); otherwise SOS's schlongified faction and TNG's
 	; TNG_Gentified FormList (TNG setups run without Schlongs of Skyrim.esp -
 	; TNG's own FAQ says to remove it from the load order)
+	SexLabPPlusFuta = FWUtility.ModFile("SexLab.esm") != "" && SKSE.GetPluginVersion("SexLabUtil") >= 34668560
 	SOSFutaFaction = none
 	if FWUtility.ModFile("Schlongs of Skyrim.esp")
 		SOSFutaFaction = Game.GetFormFromFile(0x000AFF8, "Schlongs of Skyrim.esp") as Faction
@@ -1752,6 +1755,7 @@ endFunction
 ; -10 = actor or actorbase doesn't exist
 ; -11 = actor is creature and creatures are disabled in settings
 ; -12 = actor is a mannequin
+; -13 = actor is a futa and futas can't get pregnant (women only)
 int function IsValidateActor(actor a, bool bIgnoreRelevance = false)
 	if a ;Tkc (Loverslab): optimization
 	else;if a==none
@@ -1777,10 +1781,10 @@ bool function IsMannequinRaceName(string RaceName)
 	return StringUtil.Find(RaceName, "Manakin") != -1 || StringUtil.Find(RaceName, "Manikin") != -1 || StringUtil.Find(RaceName, "Mannequin") != -1 || StringUtil.Find(RaceName, "Femmequin") != -1
 endFunction
 
-; True if the actor is a futa: female base sex wearing a schlong. Detected
-; via SOS's schlongified faction or TNG's TNG_Gentified FormList, both
-; resolved in CheckOtherMods; with neither mod installed every actor
-; reports false. Both are cheap native lookups - no caching needed.
+; True if the actor is a futa: female base sex wearing a schlong. With SexLab
+; P+ it is P+'s answer; otherwise SOS's schlongified faction or TNG's
+; TNG_Gentified FormList, both resolved in CheckOtherMods, and with neither mod
+; installed every actor reports false. All cheap native lookups - no caching needed.
 bool function IsFutaActor(actor a)
 	if a
 	else
@@ -1790,6 +1794,12 @@ bool function IsFutaActor(actor a)
 	if ab && ab.GetSex() == 1
 	else
 		return false
+	endif
+	; P+ already decides this for its scenes: TNG's penis skin, SOS's schlong
+	; minus the pubic hair addons in its SKSE\SexLab\SchlongsOfSkyrim.yaml, and
+	; the user's "treat as" setting. One answer for both mods, fixed in one place.
+	if SexLabPPlusFuta
+		return SexLabRegistry.GetSex(a, false) == 2
 	endif
 	; SOS stores the schlong size in the faction RANK and keeps actors it reverted
 	; or never schlongified in the faction at rank -1, so membership alone is not

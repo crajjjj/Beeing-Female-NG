@@ -30,4 +30,4 @@ Beeing Female NG can auto-import sperm donors from JSON couple files and apply t
     - `-8`: actor is a child race or in forbidden races.
     - `-9`: actor is an elder race and elder females are disabled.
     - `-12`: actor is a mannequin.
-    - `-13`: actor is a futa (SOS or TNG schlong) and "Futas Can Get Pregnant" is off.
+    - `-13`: actor is a futa (as SexLab P+ 2.17.1+ sees her, else an SOS or TNG schlong) and "Futas Can Get Pregnant" is off.

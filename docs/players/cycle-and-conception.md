@@ -45,7 +45,7 @@ Sperm is deposited during sex events (SexLab or OStim) or manually via mod event
 A futanari setup (a female-bodied actor with an SOS schlong) is treated as female by the game, so by default she gets the full cycle and can become pregnant like any other female. Two Settings-page toggles control both sides of her fertility:
 
 - **Allow FF Cum** — whether she can **father children**. This is the single switch for every insemination path (SexLab, OStim, and mod events). Virility, sperm amounts, and child race inheritance work exactly as they do for males.
-- **Futas Can Get Pregnant** — whether she runs a cycle and can **become pregnant** herself. BF detects futas via the Schlongs of Skyrim faction or The New Gentleman's gentified list, so this toggle needs SOS or TNG installed; without either, all females are treated alike.
+- **Futas Can Get Pregnant**: whether she runs a cycle and can **become pregnant** herself. With SexLab P+ 2.17.1 or later, BF takes P+'s own answer to who is a futa, the one SexLab uses in its scenes: women with a TNG penis addon or an SOS schlong (minus the SOS pubic hair addons listed in P+'s `SKSE\SexLab\SchlongsOfSkyrim.yaml`), and anyone you mark "treat as futa" in SexLab. A woman P+ gets wrong is fixed there, for both mods. Without P+, BF detects futas via the Schlongs of Skyrim faction or The New Gentleman's gentified list; without either, all females are treated alike. In that setup an SOS pubic hair addon counts as a schlong, so leave this toggle on.
 
 The four combinations:
 
