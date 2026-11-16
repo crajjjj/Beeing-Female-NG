@@ -2017,7 +2017,12 @@ function ChangeState(actor female, int state_number)
 		; Failed to change state - woman got an abortus
 		return
 	endif
-	
+	if state_number == 4 && System.IsParasitePregnant(female)
+		; Refused before the storage write: the player's ability blocks the same
+		; change, so writing first would leave FW.CurrentState ahead of it.
+		return
+	endif
+
 	StorageUtil.SetIntValue(female,"FW.CurrentState",state_number)
 	StorageUtil.SetFloatValue(female,"FW.StateEnterTime", GameDaysPassed.GetValue())
 

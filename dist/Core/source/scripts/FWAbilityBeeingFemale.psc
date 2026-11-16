@@ -3231,7 +3231,8 @@ state Replanish_State
 	endFunction
 	
 	function onUpdateFunction()
-		if(System.IsActorPregnantByChaurus(ActorRef) || System.IsActorPregnantByEstrusSpider(ActorRef) || System.IsActorPregnantByEstrusDwemer(ActorRef))
+		bool bParasite = System.IsParasitePregnant(ActorRef)
+		if bParasite
 		else
 			actor a = none
 			race abr = none
@@ -3280,7 +3281,7 @@ state Replanish_State
 			endwhile
 		endIf
 
-		if CurrentStatePercent >=4 || System.IsParasitePregnant(ActorRef)
+		if CurrentStatePercent >=4 || bParasite
 			FWUtility.ActorRemoveSpell(ActorRef,Effect_Nachwehen)
 		else
 			System.ActorAddSpellOpt(ActorRef,Effect_Nachwehen, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
