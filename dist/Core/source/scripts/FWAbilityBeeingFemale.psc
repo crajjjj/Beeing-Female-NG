@@ -330,6 +330,7 @@ event OnUpdateGameTime()
 	endif
 	string ActorCurrentState = Self.GetState()
 	bool bParasite = false
+	bool bParasiteEntered = false
 	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime start - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState)
 	;if System.IsActorPregnantByChaurus(ActorRef) && (Self.GetState() != "PregnantChaurus_State")
 	if System.IsActorPregnantByChaurus(ActorRef) ;Tkc (Loverslab): optimization
@@ -339,6 +340,7 @@ event OnUpdateGameTime()
 		Controller.Pause(ActorRef,true)
 		;System.setObjective(21)	
 		GoToState("PregnantChaurus_State")
+		bParasiteEntered = true
 	 endIf
 	endIf
 	
@@ -349,6 +351,7 @@ event OnUpdateGameTime()
 	 else
 		Controller.Pause(ActorRef,true)
 		GoToState("PregnantEstrusSpider_State")
+		bParasiteEntered = true
 	 endIf
 	endIf
 	
@@ -359,12 +362,15 @@ event OnUpdateGameTime()
 	 else
 		Controller.Pause(ActorRef,true)
 		GoToState("PregnantEstrusDwemer_State")
+		bParasiteEntered = true
 	 endIf
 	endIf
 
-	if bParasite
-		; The abort above lands her in replenish, which is then held at 0% for
-		; the whole parasite pregnancy, so its afterpains would never time out.
+	if bParasiteEntered
+		ParasiteSweep()
+	elseif bParasite
+		; Saves that entered the parasite state before the sweep existed: the
+		; replenish she is held in sits at 0%, so its afterpains never time out.
 		FWUtility.ActorRemoveSpell(ActorRef, Effect_Nachwehen)
 	endIf
 
@@ -878,6 +884,27 @@ function ResyncStateMachine()
 	endIf
 endFunction
 
+; Clears what the phase she was in left on her when a parasite pregnancy takes
+; over, and again when it ends. The tick switches to the parasite state before
+; any phase change runs, so that phase's own onExitState never fires. A sweep
+; and not a call to onExitState: the labor state's exit would give birth.
+function ParasiteSweep()
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_Vorwehen)
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_Eroeffnungswehen)
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_Presswehen)
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_Nachwehen)
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_Mittelschmerz)
+	FWUtility.ActorRemoveSpell(ActorRef, Effect_MenstruationCramps)
+	FWUtility.ActorRemoveSpell(ActorRef, FeverSpell)
+	FWUtility.ActorRemoveSpell(ActorRef, InfectionSpell)
+	ActorRef.DispelSpell(Effect_VaginalBloodLow)
+	ActorRef.DispelSpell(Effect_VaginalBloodHigh)
+	Controller.StopOvulationArousal(ActorRef)
+	Controller.StopPMSArousalDebuff(ActorRef)
+	Manager.RemoveCME(ActorRef)
+	bHasPMS = false
+endFunction
+
 function castStateSpell()
 	if ActorRef ;Tkc (Loverslab): optimization
 	else;if !ActorRef
@@ -1164,6 +1191,7 @@ function AbortusPains()
 		; Find the list of fathers
 		int my_num_men = StorageUtil.FormListCount(ActorRef, "FW.ChildFather")
 		float my_Abortus_DamageScale = 0
+		bool bAbortusFatherFound = false
 		float temp_Abortus_DamageScale = 0
 		actor a = none
 		race abr = none
@@ -1171,6 +1199,7 @@ function AbortusPains()
 			my_num_men -= 1
 			a = (StorageUtil.FormListGet(ActorRef, "FW.ChildFather", my_num_men) As Actor)
 			if a
+				bAbortusFatherFound = true
 				temp_Abortus_DamageScale = StorageUtil.GetFloatValue(a, "FW.AddOn.Modify_Pain_Abortus_by_FatherRace", 1.0)
 				if(temp_Abortus_DamageScale == 1.0)
 					abr = a.GetRace()
@@ -1184,6 +1213,11 @@ function AbortusPains()
 				endIf
 			endIf
 		endWhile
+		; No father actor resolved (unloaded, deleted, or stored by race only):
+		; that is not an add-on asking for a painless loss, so use the neutral scale.
+		if !bAbortusFatherFound
+			my_Abortus_DamageScale = 1.0
+		endIf
 		Abortus_DamageScale *= my_Abortus_DamageScale
 				
 		if(Abortus_DamageScale > 0)
@@ -1276,6 +1310,7 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 	; Find the list of fathers
 	int my_num_men = StorageUtil.FormListCount(ActorRef, "FW.ChildFather")
 	float my_Abortus_DamageScale = 0
+	bool bAbortusFatherFound = false
 	float temp_Abortus_DamageScale = 0
 	actor a = none
 	race abr = none
@@ -1283,6 +1318,7 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 		my_num_men -= 1
 		a = (StorageUtil.FormListGet(ActorRef, "FW.ChildFather", my_num_men) As Actor)
 		if a
+			bAbortusFatherFound = true
 			temp_Abortus_DamageScale = StorageUtil.GetFloatValue(a, "FW.AddOn.Modify_Pain_Abortus_by_FatherRace", 1.0)
 			if(temp_Abortus_DamageScale == 1.0)
 				abr = a.GetRace()
@@ -1296,6 +1332,11 @@ function castAbortus(float Strength, bool AllowBleedOut = false)
 			endIf
 		endIf
 	endWhile
+	; No father actor resolved (unloaded, deleted, or stored by race only):
+	; that is not an add-on asking for a painless loss, so use the neutral scale.
+	if !bAbortusFatherFound
+		my_Abortus_DamageScale = 1.0
+	endIf
 	Abortus_DamageScale *= (Strength * my_Abortus_DamageScale)
 	if(Abortus_DamageScale > 0)
 		if IsPlayer
@@ -3369,8 +3410,12 @@ state PregnantChaurus_State
 		else;If !System.IsActorPregnantByChaurus(ActorRef)
 			ResetBelly()
 			Controller.Pause(ActorRef,false)
+			ParasiteSweep()
 			changeState(3)
-			Controller.ChangeState(ActorRef,3) ;Ensure Controller and FWAbilityBeeingFemale are in a consistent state
+			; changeState already wrote the storage keys and the parent faction;
+			; Controller.ChangeState would call back into it and run the
+			; transition a second time. Its only other step is the irregulation.
+			Controller.setIrregulation(ActorRef, 3)
 		EndIf
 	EndFunction
 
@@ -3422,8 +3467,12 @@ state PregnantEstrusSpider_State
 		else
 			ResetBelly()
 			Controller.Pause(ActorRef,false)
+			ParasiteSweep()
 			changeState(3)
-			Controller.ChangeState(ActorRef,3) ;Ensure Controller and FWAbilityBeeingFemale are in a consistent state
+			; changeState already wrote the storage keys and the parent faction;
+			; Controller.ChangeState would call back into it and run the
+			; transition a second time. Its only other step is the irregulation.
+			Controller.setIrregulation(ActorRef, 3)
 		EndIf
 	EndFunction
 
@@ -3475,8 +3524,12 @@ state PregnantEstrusDwemer_State
 		else
 			ResetBelly()
 			Controller.Pause(ActorRef,false)
+			ParasiteSweep()
 			changeState(3)
-			Controller.ChangeState(ActorRef,3) ;Ensure Controller and FWAbilityBeeingFemale are in a consistent state
+			; changeState already wrote the storage keys and the parent faction;
+			; Controller.ChangeState would call back into it and run the
+			; transition a second time. Its only other step is the irregulation.
+			Controller.setIrregulation(ActorRef, 3)
 		EndIf
 	EndFunction
 

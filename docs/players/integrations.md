@@ -36,7 +36,7 @@ _BF_FertilityTonicPotent
 
 ### Estrus Chaurus, Estrus Spider, Estrus Dwemer and Estrus Unified
 
-A parasite pregnancy from the Estrus family takes over. On the woman's next cycle update Beeing Female notices it: a Beeing Female pregnancy she was carrying ends in a miscarriage, and her cycle (and its own belly scaling) is held in a "Pregnant by chaurus" state for as long as the Estrus pregnancy lasts. She cannot conceive during that time, and the afterpains of the lost pregnancy are not applied. Once it is over, her cycle restarts with menstruation. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API and behaves the same way. The MCM's Compatibility page shows which of the four was found (Estrus Unified only when its DLL answers too).
+A parasite pregnancy from the Estrus family takes over. On the woman's next cycle update Beeing Female notices it: a Beeing Female pregnancy she was carrying ends in a miscarriage, and her cycle (and its own belly scaling) is held in a "Pregnant by chaurus" state for as long as the Estrus pregnancy lasts. She cannot conceive during that time, and the effects of the phase she was in (cramps, ovulation pain and arousal, PMS, afterpains, fever, infection) are cleared. Once it is over, her cycle restarts with menstruation. The three legacy plugins are read through their forms; **Estrus Unified** (the merged mod with a DLL, 1.1+) is read through its API and behaves the same way. The MCM's Compatibility page shows which of the four was found (Estrus Unified only when its DLL answers too).
 
 ## Optional Patches (FOMOD Installer)
 
