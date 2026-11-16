@@ -338,6 +338,12 @@ function ImpregnateA(actor Mother, actor[] Fathers, int NumChilds=1)
 			return
 		endif
 	endif
+	if System.IsParasitePregnant(Mother)
+		; Checked before anything is written: the abort in the Pregnant*_States
+		; would otherwise end this pregnancy again on her next tick.
+		FW_log.WriteLog("FWController.ImpregnateA: blocked, " + Mother + " carries a parasite pregnancy")
+		return
+	endif
 	int cSperm=Fathers.length
 	int xNumChilds=NumChilds
 	if xNumChilds<=0
@@ -3084,6 +3090,11 @@ endFunction
 ; Returns true if the given woman will become pregnant in the current cycle
 bool function canBecomePregnant(actor Woman)
 	;System.Trace("FWController.canBecomePregnant", Woman)
+	; A parasite pregnancy blocks conception whatever the cycle flag says. This
+	; is the gate every sperm-driven conception path reads.
+	if System.IsParasitePregnant(Woman)
+		return false
+	endif
 	int flag = StorageUtil.GetIntValue(woman, "FW.Flags",0)
 	return Math.LogicalAnd(flag,1)==1
 endFunction

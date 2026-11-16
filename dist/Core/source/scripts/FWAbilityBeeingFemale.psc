@@ -329,9 +329,11 @@ event OnUpdateGameTime()
 		StorageUtil.SetFloatValue(ActorRef,"FW.LastLoaded",currentTime)
 	endif
 	string ActorCurrentState = Self.GetState()
+	bool bParasite = false
 	;FW_log.WriteLog("FWAbilityBeeingFemale::OnUpdateGameTime start - " + ActorRef.GetLeveledActorBase().GetName() + " state=" + CurrentState)
 	;if System.IsActorPregnantByChaurus(ActorRef) && (Self.GetState() != "PregnantChaurus_State")
 	if System.IsActorPregnantByChaurus(ActorRef) ;Tkc (Loverslab): optimization
+	 bParasite = true
 	 if (ActorCurrentState == "PregnantChaurus_State")
 	 else;if (Self.GetState() != "PregnantChaurus_State")
 		Controller.Pause(ActorRef,true)
@@ -342,6 +344,7 @@ event OnUpdateGameTime()
 	
 
 	if System.IsActorPregnantByEstrusSpider(ActorRef)
+	 bParasite = true
 	 if (ActorCurrentState == "PregnantEstrusSpider_State")
 	 else
 		Controller.Pause(ActorRef,true)
@@ -351,13 +354,20 @@ event OnUpdateGameTime()
 	
 
 	if System.IsActorPregnantByEstrusDwemer(ActorRef)
+	 bParasite = true
 	 if (ActorCurrentState == "PregnantEstrusDwemer_State")
 	 else
 		Controller.Pause(ActorRef,true)
 		GoToState("PregnantEstrusDwemer_State")
 	 endIf
 	endIf
-	
+
+	if bParasite
+		; The abort above lands her in replenish, which is then held at 0% for
+		; the whole parasite pregnancy, so its afterpains would never time out.
+		FWUtility.ActorRemoveSpell(ActorRef, Effect_Nachwehen)
+	endIf
+
 
 	GetStorageVariable()
 	
@@ -744,6 +754,10 @@ endFunction
 function changeState(int NewState)
 	if (abortus > 1 && (NewState==4 || NewState==5 || NewState==6)) || (abortus > 2 && NewState==7)
 		FW_log.WriteLog("FWAbilityBeeingFemale.changeState: blocked state " + NewState + " for " + ActorRef + " (abortus=" + abortus + ")")
+		return
+	endif
+	if NewState == 4 && System.IsParasitePregnant(ActorRef)
+		FW_log.WriteLog("FWAbilityBeeingFemale.changeState: blocked conception for " + ActorRef + " (parasite pregnancy)")
 		return
 	endif
 	FW_log.WriteLog("FWAbilityBeeingFemale.changeState: " + ActorRef + " state " + currentState + " -> " + NewState)
@@ -3208,7 +3222,7 @@ state Replanish_State
 				ActorRef.AddItem(ContraceptionLow, 10, false)
 			endif
 		endif
-		if CurrentStatePercent < 4
+		if CurrentStatePercent < 4 && !System.IsParasitePregnant(ActorRef)
 			System.ActorAddSpellOpt(ActorRef,Effect_Nachwehen, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode
 		endif
 		if IsPlayer ;Tkc (Loverslab): show widged when state was changed
@@ -3266,7 +3280,7 @@ state Replanish_State
 			endwhile
 		endIf
 
-		if CurrentStatePercent >=4
+		if CurrentStatePercent >=4 || System.IsParasitePregnant(ActorRef)
 			FWUtility.ActorRemoveSpell(ActorRef,Effect_Nachwehen)
 		else
 			System.ActorAddSpellOpt(ActorRef,Effect_Nachwehen, ShowMsg=cfg.Messages<4) ;Tkc (Loverslab): added ShowMsg parameter to not show messages when Innmersion or None Messages mode

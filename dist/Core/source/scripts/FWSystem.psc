@@ -2319,6 +2319,15 @@ bool function IsActorPregnantByEstrusDwemer(actor woman)
 	return false
 endFunction
 
+; True while any Estrus parasite pregnancy (chaurus, spider, dwemer) holds the
+; woman. Her own cycle is paused for that time and she cannot conceive.
+bool function IsParasitePregnant(actor woman)
+	if woman == none
+		return false
+	endif
+	return IsActorPregnantByChaurus(woman) || IsActorPregnantByEstrusSpider(woman) || IsActorPregnantByEstrusDwemer(woman)
+endFunction
+
 
 ; Get the time in days - how long the pill will work
 float function GetPillDuration(actor a)
