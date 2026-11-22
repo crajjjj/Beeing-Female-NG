@@ -896,40 +896,44 @@ endFunction
 ; its birth pain running.
 ; False when PCBirth showed nothing, so the caller can fall back to the built-in birth:
 ; PCBirth gives up after 8 s when its animations were never generated (Pandora / Nemesis),
-; and a scene that ended sooner than 12 s is taken for that.
+; and a scene that ended sooner than 12 s is taken for that. Measured in real time:
+; DoDamage waits several seconds itself, so loop passes are no clock.
 bool function PlayPCBirthScenes(actor Mother, int NumChilds, bool BirthPain, float DamageScale)
 	bool triplets = NumChilds >= 3
 	int scenes = 1
 	if NumChilds == 2
 		scenes = 2
 	endif
-	int cap = 80 ; one birth runs about 36 s, PCBirth's own limit is 50 s plus the start
+	float cap = 80.0 ; one birth runs about 36 s, PCBirth's own limit is 50 s plus the start
 	if triplets
-		cap = 200
+		cap = 200.0
 	endif
 	bool played = false
 	while scenes > 0
 		scenes -= 1
 		if FWPCBirth.StartScene(triplets)
+			float started = Utility.GetCurrentRealTime()
+			float ran = 0.0
 			int ticks = 0
-			while FWPCBirth.IsSceneActive() && ticks < cap
+			while FWPCBirth.IsSceneActive() && ran < cap
 				Utility.Wait(1.0)
 				ticks += 1
 				if BirthPain && ticks % 6 == 0
 					System.DoDamage(Mother, 9 * DamageScale, 10)
 				endif
+				ran = Utility.GetCurrentRealTime() - started
 			endWhile
 			if FWPCBirth.IsSceneActive()
-				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene still running after " + cap + " s - stopping it")
+				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene still running after " + ran + " s - stopping it")
 				FWPCBirth.StopScene()
 			endif
-			if ticks >= 12
+			if ran >= 12.0
 				played = true
 				if scenes > 0
 					Utility.Wait(2.0)
 				endif
 			else
-				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene ended after " + ticks + " s - its animations are probably not generated")
+				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene ended after " + ran + " s - its animations are probably not generated")
 				scenes = 0
 			endif
 		else

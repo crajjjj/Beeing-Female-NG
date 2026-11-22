@@ -386,8 +386,9 @@ endFunction
 ; PCBirth (optional, PCB_Childbirth.esp) with the input DLL its scene refuses to start
 ; without. Asked here and not in FWPCBirth: that script is typed against PCBirth's
 ; controller and does not link on an install without it.
+; The plugin is ESL-flagged, hence ModFile and not Game.GetModByName.
 bool function IsPCBirthInstalled()
-	return Game.GetModByName("PCB_Childbirth.esp") != 255 && SKSE.GetPluginVersion("PCBirthInput") >= 1
+	return FWUtility.ModFile("PCB_Childbirth.esp") != "" && SKSE.GetPluginVersion("PCBirthInput") >= 1
 endFunction
 
 function CheckOtherMods()
