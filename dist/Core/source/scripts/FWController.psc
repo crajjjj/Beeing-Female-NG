@@ -889,6 +889,62 @@ bool function IsBirthAnimationBlocked(actor Mother)
 	return false
 endFunction
 
+; Plays the player's labor as PCBirth's scene and returns when it is over. PCBirth knows two
+; scenes, one birth and three births in a row, so twins are two single scenes and four or
+; more children get the triple scene (the rest are born with it, unseen). Its scene shows
+; the expressions, voice, tears, opening and wet floor itself; Beeing Female only keeps
+; its birth pain running.
+; False when PCBirth showed nothing, so the caller can fall back to the built-in birth:
+; PCBirth gives up after 8 s when its animations were never generated (Pandora / Nemesis),
+; and a scene that ended sooner than 12 s is taken for that.
+bool function PlayPCBirthScenes(actor Mother, int NumChilds, bool BirthPain, float DamageScale)
+	bool triplets = NumChilds >= 3
+	int scenes = 1
+	if NumChilds == 2
+		scenes = 2
+	endif
+	int cap = 80 ; one birth runs about 36 s, PCBirth's own limit is 50 s plus the start
+	if triplets
+		cap = 200
+	endif
+	bool played = false
+	while scenes > 0
+		scenes -= 1
+		if FWPCBirth.StartScene(triplets)
+			int ticks = 0
+			while FWPCBirth.IsSceneActive() && ticks < cap
+				Utility.Wait(1.0)
+				ticks += 1
+				if BirthPain && ticks % 6 == 0
+					System.DoDamage(Mother, 9 * DamageScale, 10)
+				endif
+			endWhile
+			if FWPCBirth.IsSceneActive()
+				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene still running after " + cap + " s - stopping it")
+				FWPCBirth.StopScene()
+			endif
+			if ticks >= 12
+				played = true
+				if scenes > 0
+					Utility.Wait(2.0)
+				endif
+			else
+				FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth scene ended after " + ticks + " s - its animations are probably not generated")
+				scenes = 0
+			endif
+		else
+			FW_log.WriteLog("FWController.PlayPCBirthScenes: PCBirth did not start a scene")
+			scenes = 0
+		endif
+	endWhile
+	if played
+		; Beeing Female delivers its own children next; PCBirth's newborn items on
+		; the ground would be the same babies a second time.
+		FWPCBirth.RemoveNewborns(Mother)
+	endif
+	return played
+endFunction
+
 function GiveBirth(actor Mother)
 
 	;System.Trace("FW Debug: FWController.GiveBirth",Mother)
@@ -1075,7 +1131,12 @@ function GiveBirth(actor Mother)
 	; to the non-animated birth so we never force a broken idle on the restraint.
 	bool blocked = IsBirthAnimationBlocked(Mother)
 	bool playAnim = cfg.PlayAnimations && !blocked
-	if(playAnim)
+	; PCBirth (optional): the player's birth plays as PCBirth's scene. That scene strips,
+	; locks the controls and handles the camera itself, so the lay-down, LockPlayer and
+	; the birth camera below are left out and only run if PCBirth turns the scene down.
+	bool usePCBirth = playAnim && Mother == PlayerRef && System.IsPCBirthInstalled()
+	bool pcbScene = false
+	if(playAnim && !usePCBirth)
 		dropedItems = System.StripActor(Mother)
 	
 		bool useBed = System.LayDown(Mother)
@@ -1089,7 +1150,7 @@ function GiveBirth(actor Mother)
 		; another system already owns the player (DD bondage, furniture). Layering
 		; our global control toggles on top risks a stuck AI-driven / no-controls
 		; softlock, and UnlockPlayer below would clobber their control state.
-		if !blocked
+		if !blocked && !usePCBirth
 			FWUtility.LockPlayer()
 			Manager.StartCamera()
 		endif
@@ -1112,6 +1173,23 @@ function GiveBirth(actor Mother)
 	endIf
 	FW_log.WriteLog("FWController.GiveBirth: DamageScale=" + DamageScale + ", my_BirthPain=" + my_BirthPain)
 	
+	if usePCBirth
+		pcbScene = PlayPCBirthScenes(Mother, NumChilds, my_BirthPain, DamageScale)
+		if pcbScene
+			; The whole labor was shown. The children below are delivered at once:
+			; no animation, no waits, no second round of pain.
+			playAnim = false
+		else
+			; PCBirth showed nothing (behaviour not generated, or it was busy):
+			; Beeing Female's own birth, as on an install without it.
+			FW_log.WriteLog("FWController.GiveBirth: PCBirth did not play its scene - using the built-in birth animation")
+			dropedItems = System.StripActor(Mother)
+			System.LayDown(Mother)
+			FWUtility.LockPlayer()
+			Manager.StartCamera()
+		endif
+	endif
+
 	if(playAnim)
 		Utility.Wait(3*IntervalLaborScale)
 		Debug.SendAnimationEvent(Mother, "Birth_S1")
@@ -1123,11 +1201,13 @@ function GiveBirth(actor Mother)
 		Utility.Wait(3*IntervalLaborScale)
 	endif
 
-	System.Mimik(Mother, "Pained", 90)
-	System.PlayPainSound(Mother, 40)
-	if(my_BirthPain)
-		System.DoDamage(Mother, 11 * DamageScale ,10)
-	endIf
+	if !pcbScene
+		System.Mimik(Mother, "Pained", 90)
+		System.PlayPainSound(Mother, 40)
+		if(my_BirthPain)
+			System.DoDamage(Mother, 11 * DamageScale ,10)
+		endIf
+	endif
 	; Raise the birth count (baby count is incremented per live birth in the loop below)
 	StorageUtil.SetIntValue(Mother,"FW.NumBirth", StorageUtil.GetIntValue(Mother,"FW.NumBirth") + 1)
 
@@ -1137,6 +1217,7 @@ function GiveBirth(actor Mother)
 
 	while NumChilds > 0
 		NumChilds -= 1
+		if !pcbScene
 		Utility.Wait(4*IntervalBabyScale)
 
 		System.Mimik(Mother, "Pained", 75)
@@ -1177,7 +1258,8 @@ function GiveBirth(actor Mother)
 		if(my_BirthPain)
 			System.DoDamage(Mother,18 * DamageScale,9)
 		endIf
-		
+		endif ; !pcbScene
+
 		; Claim this child before delivering it. FW.NumChilds is the count still to be
 		; born, and it is shared with System.InstantBornChilds and with a second GiveBirth
 		; let in by a stale guard: whoever lowers it past this index delivers the child,
@@ -1212,16 +1294,20 @@ function GiveBirth(actor Mother)
 			Utility.Wait(1)
 			Debug.SendAnimationEvent(Mother, "Birth_S1")
 		endif
-		Utility.Wait(2)
+		if !pcbScene
+			Utility.Wait(2)
 
-		System.Mimik(Mother, "Pained", 100)
+			System.Mimik(Mother, "Pained", 100)
+		endif
 
 		if NumChilds ;Tkc (Loverslab): optimization
 			SetBelly(Mother,false)
 		else;if NumChilds==0
 			SetBelly(Mother,true)
 		endIf
-		Utility.Wait(3*IntervalBabyScale)
+		if !pcbScene
+			Utility.Wait(3*IntervalBabyScale)
+		endif
 	endWhile
 	System.Mimik(Mother, "Happy", 80)
 	
@@ -1249,7 +1335,8 @@ function GiveBirth(actor Mother)
 	if Mother==PlayerRef
 		; Only release what we took: if birth was blocked we never locked, so
 		; leave the player's control state to whoever owns it (DD, furniture).
-		if !blocked
+		; ... and not after a PCBirth scene, which released its own lock when it ended.
+		if !blocked && !pcbScene
 			FWUtility.UnlockPlayer()
 			Manager.StopCamera()
 		endif

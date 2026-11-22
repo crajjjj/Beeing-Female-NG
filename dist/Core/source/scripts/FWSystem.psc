@@ -383,6 +383,13 @@ float function IrregulationValue(actor woman, int state_number)
 	endif
 endFunction
 
+; PCBirth (optional, PCB_Childbirth.esp) with the input DLL its scene refuses to start
+; without. Asked here and not in FWPCBirth: that script is typed against PCBirth's
+; controller and does not link on an install without it.
+bool function IsPCBirthInstalled()
+	return Game.GetModByName("PCB_Childbirth.esp") != 255 && SKSE.GetPluginVersion("PCBirthInput") >= 1
+endFunction
+
 function CheckOtherMods()
 	bool bEstrusWasActive = EstrusActive
 	bool bDeviceWasActive = DeviceActive
@@ -481,6 +488,16 @@ function CheckOtherMods()
 	EstrusUnifiedActive = bEstrusUnified
 	if bEstrusUnified && !bEstrusUnifiedWasActive
 		Message(Content.EstrusUnifiedFound,MSG_Debug)
+	endif
+
+	; PCBirth (optional): its birth scene replaces the player's lay-down birth
+	; (FWController.GiveBirth). It also runs a pregnancy of its own for the player,
+	; which next to this mod is a second one on the same woman: switched off on
+	; every load (PCBirth can turn it back on by itself when it migrates its settings).
+	if IsPCBirthInstalled()
+		if FWPCBirth.TakeOverPregnancy()
+			FW_log.WriteLog("FWSystem.CheckOtherMods: PCBirth found - its own pregnancy system was switched off, Beeing Female drives its birth scene")
+		endif
 	endif
 
 	; Futa detection: SexLab P+'s own verdict when P+ 2.17.1+ is loaded (the same
