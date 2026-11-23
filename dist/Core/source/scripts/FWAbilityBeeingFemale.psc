@@ -236,11 +236,13 @@ Event OnPlayerLoadGame()
 		Self.UnregisterForModEvent("BeeingFemale")
 		Self.RegisterForModEvent("BeeingFemale", "BeeingFemale")
 		Self.RegisterForSleep()
-		; Always resync Papyrus state with FW.CurrentState on load — a previous
-		; session may have saved with state machine desynced (stale nextState,
-		; mismatched Self.GetState()). InitState() rebuilds it from currentState.
+		; Resync the Papyrus state with FW.CurrentState on load: a previous session
+		; may have saved with the state machine desynced. Only when they disagree.
+		; An unconditional InitState() here left and re-entered the current phase
+		; on every load, and leaving labor runs its missed-birth fallback: a save
+		; loaded during labor pains gave birth on the spot.
 		InitValues()
-		InitState()
+		ResyncStateMachine()
 		if oldUpdateDelay>0
 			Self.RegisterForSingleUpdateGameTime(oldUpdateDelay)
 		endif

@@ -977,6 +977,13 @@ function GiveBirth(actor Mother)
 	; below still de-dupes concurrent triggers (the claim happens after this
 	; wait), and the wait is capped so a leaked suspend from a misbehaving mod
 	; can never block birth forever (~15 min: 90 * 10s).
+	; Game-time ticks keep arriving under the sleep / wait menu, and a labor that
+	; runs out there lands here with the menu still open: the control lock, the
+	; birth camera and the lay-down would all be applied to a paused game.
+	; Utility.Wait only returns once no menu is open.
+	if Mother == PlayerRef
+		Utility.Wait(0.1)
+	endif
 	int dhlpWaited = 0
 	if System.IsDHLPSuspended()
 		FW_log.WriteLog("FWController.GiveBirth: DHLP suspend active for " + Mother + " - deferring birth scene start")
