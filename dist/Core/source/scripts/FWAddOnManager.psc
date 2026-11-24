@@ -64,6 +64,11 @@ endProperty
 
 
 string AddOnFolderHash=""
+; Load-order fingerprint of the last add-on scan (full plugins * 10000 + light plugins).
+; An add-on is dropped from the list when its required plugin is missing, and the folder
+; hash alone never noticed that plugin arriving later: OStim or SexLab installed after
+; Beeing Female stayed "not compatible" until Refresh AddOns was pressed by hand.
+int AddOnModSignature = 0
 
 
 
@@ -111,10 +116,12 @@ function OnGameLoad()
 		endif
 		i+=1
 	endWhile
-	if H==AddOnFolderHash && bAddOnMiscOK ;Tkc (Loverslab): optimization
-	else;if H!=AddOnFolderHash||bAddOnMiscOK==false
+	int modSig = Game.GetModCount() * 10000 + Game.GetLightModCount()
+	if H==AddOnFolderHash && bAddOnMiscOK && modSig==AddOnModSignature
+	else
 		RefreshAddOnH()
 	endif
+	AddOnModSignature = modSig
 	bAddOnMiscOK=true
 	i=0
 	while i<iMisc
