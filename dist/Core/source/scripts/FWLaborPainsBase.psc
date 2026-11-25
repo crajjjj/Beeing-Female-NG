@@ -115,26 +115,37 @@ function OnUpdateGameTime()
 	endif
 
 	; Find the list of fathers
+	; Find the list of fathers. The strongest modifier among them counts.
+	; A father who no longer resolves to an actor (a leveled NPC that was cleaned up, a
+	; removed mod) falls back to his recorded race, and to 1.0 without one. The loop used
+	; to skip him, which left the scale at its starting 0: no labor pain at all for the
+	; whole first stage whenever no father was still around.
 	int my_num_men = StorageUtil.FormListCount(ActorRef, "FW.ChildFather")
+	int my_num_races = StorageUtil.FormListCount(ActorRef, "FW.ChildFatherRace")
 	float my_LaborPains_DamageScale = 0
 	float temp_LaborPains_DamageScale = 0
 	actor a = none
 	race abr = none
+	if my_num_men <= 0
+		my_LaborPains_DamageScale = 1.0
+	endIf
 	while my_num_men > 0
 		my_num_men -= 1
 		a = (StorageUtil.FormListGet(ActorRef, "FW.ChildFather", my_num_men) As Actor)
+		abr = none
+		temp_LaborPains_DamageScale = 1.0
 		if a
 			temp_LaborPains_DamageScale = StorageUtil.GetFloatValue(a, "FW.AddOn.Modify_Pain_LaborPains_by_FatherRace", 1.0)
-			if(temp_LaborPains_DamageScale == 1.0)
-				abr = a.GetRace()
-				if abr
-					temp_LaborPains_DamageScale = StorageUtil.GetFloatValue(abr, "FW.AddOn.Modify_Pain_LaborPains_by_FatherRace", 1.0)
-				endIf
-			endIf
+			abr = a.GetRace()
+		elseif my_num_races > my_num_men
+			abr = StorageUtil.FormListGet(ActorRef, "FW.ChildFatherRace", my_num_men) as race
+		endIf
+		if temp_LaborPains_DamageScale == 1.0 && abr
+			temp_LaborPains_DamageScale = StorageUtil.GetFloatValue(abr, "FW.AddOn.Modify_Pain_LaborPains_by_FatherRace", 1.0)
+		endIf
 
-			if(temp_LaborPains_DamageScale > my_LaborPains_DamageScale)
-				my_LaborPains_DamageScale = temp_LaborPains_DamageScale
-			endIf
+		if(temp_LaborPains_DamageScale > my_LaborPains_DamageScale)
+			my_LaborPains_DamageScale = temp_LaborPains_DamageScale
 		endIf
 	endWhile
 	my_LaborPains_DamageScale *= ((DamageBase + rnd) * (System.getDamageScale(3, ActorRef)))

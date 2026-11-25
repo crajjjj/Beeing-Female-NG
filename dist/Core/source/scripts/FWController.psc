@@ -1101,7 +1101,8 @@ function GiveBirth(actor Mother)
 		else
 			temp_BirthPainDamageScale = 1.0
 		endIf
-		if(temp_BirthPainDamageScale == 1.0)
+		; Only off a race that resolved: a None form reads the global key instead
+		if temp_BirthPainDamageScale == 1.0 && my_ChildFather_abr
 			temp_BirthPainDamageScale = StorageUtil.GetFloatValue(my_ChildFather_abr, "FW.AddOn.Modify_Pain_GivingBirth_by_FatherRace", 1.0)
 		endIf
 		
@@ -1125,7 +1126,9 @@ function GiveBirth(actor Mother)
 	if(my_IntervalLaborScale < 0.3)
 		my_IntervalLaborScale = 0.3
 	endIf
-	my_BirthPainDamageScale *= System.getDamageScale(4,Mother)
+	float my_MotherPainScale = System.getDamageScale(4,Mother)
+	FW_log.WriteLog("FWController.GiveBirth: pain scale by father = " + my_BirthPainDamageScale + ", by mother = " + my_MotherPainScale)
+	my_BirthPainDamageScale *= my_MotherPainScale
 	
 	float IntervalBabyScale = my_IntervalBabyScale
 	float IntervalLaborScale = my_IntervalLaborScale
