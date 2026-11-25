@@ -126,9 +126,8 @@ function OnUpdateGameTime()
 	float temp_LaborPains_DamageScale = 0
 	actor a = none
 	race abr = none
-	if my_num_men <= 0
-		my_LaborPains_DamageScale = 1.0
-	endIf
+	; An empty father list keeps the scale at 0, as it always did: the after pains run
+	; on this script too, after the birth has cleared the list, and they do no damage.
 	while my_num_men > 0
 		my_num_men -= 1
 		a = (StorageUtil.FormListGet(ActorRef, "FW.ChildFather", my_num_men) As Actor)
